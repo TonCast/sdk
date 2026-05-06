@@ -1,0 +1,65 @@
+{
+  "name": "@toncast/sdk-react",
+  "version": "0.0.1",
+  "description": "React hooks + provider for @toncast/sdk (paris, bets, live streams, betting flow, optional TonConnect sync)",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "toncast",
+    "ton",
+    "react",
+    "hooks",
+    "tonconnect"
+  ],
+  "license": "MIT",
+  "author": "Toncast",
+  "dependencies": {
+    "@toncast/sdk": "*"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "@tonconnect/ui-react": "^2.0.0",
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@tonconnect/ui-react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "^5.62.0",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.0.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "jsdom": "^29.0.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

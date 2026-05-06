@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@toncast/widget/react": ["../../packages/widget/src/react.ts"],
+      "@toncast/widget/styles/widget.css": ["../../packages/widget/src/styles/widget.css"],
+      "@toncast/widget/*": ["../../packages/widget/src/*"],
+      "@toncast/sdk-react": ["../../packages/sdk-react/src/index.ts"],
+      "@toncast/sdk": ["../../packages/sdk/src/index.ts"]
+    }
+  },
+  "include": ["src"]
+}

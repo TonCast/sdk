@@ -1,0 +1,51 @@
+{
+  "name": "@toncast/sdk",
+  "version": "0.0.1",
+  "description": "SDK for Toncast protocol: markets, bets, websocket, betting via @toncast/tx-sdk",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "toncast",
+    "ton",
+    "pari",
+    "prediction-market",
+    "sdk"
+  ],
+  "license": "MIT",
+  "author": "Toncast",
+  "dependencies": {
+    "@ston-fi/api": "^0.32.0",
+    "@ston-fi/sdk": "^2.7.0",
+    "@ton/core": "^0.63.1",
+    "@ton/ton": "^16.2.4",
+    "@toncast/tx-sdk": "^0.1.4",
+    "zod": "^4.3.6"
+  }
+}

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Toncast SDK demo</title>
+    <!-- Pre-open TLS sessions to every host the SDK + TonConnect hit during
+         the first second of page load. DNS + TCP + TLS handshakes happen in
+         parallel with the HTML parse / JS bundle download instead of after,
+         saving ~200-400 ms per host on cold loads.
+
+         `crossorigin` is required for endpoints we hit via fetch (CORS) —
+         without it the browser would only preconnect for non-CORS subres-
+         ources and the warm connection wouldn't be reused. -->
+    <link rel="preconnect" href="https://config.ton.org" crossorigin />
+    <link rel="preconnect" href="https://toncast.me" crossorigin />
+    <link rel="preconnect" href="https://toncenter.com" crossorigin />
+    <link rel="preconnect" href="https://api.ston.fi" crossorigin />
+  </head>
+  <body>
+    <!-- Apply theme BEFORE React boots so there's no flash of the wrong
+         palette. Mirrors the logic in `src/lib/theme.tsx#getInitialTheme`
+         (localStorage win, OS preference fallback, dark default). -->
+    <script>
+      (() => {
+        var saved, dark;
+        try {
+          saved = localStorage.getItem("toncast-demo-theme");
+          dark =
+            saved === "dark" ||
+            (saved !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (dark) document.documentElement.classList.add("dark");
+          document.documentElement.style.colorScheme = dark ? "dark" : "light";
+        } catch (_) {}
+      })();
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

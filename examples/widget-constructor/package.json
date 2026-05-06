@@ -1,0 +1,39 @@
+{
+  "name": "@toncast/widget-constructor",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write ."
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.0",
+    "@radix-ui/react-select": "^2.1.0",
+    "@radix-ui/react-slider": "^1.2.0",
+    "@tanstack/react-query": "^5.62.0",
+    "@ton/core": "^0.63.1",
+    "@toncast/sdk": "*",
+    "@toncast/sdk-react": "*",
+    "@toncast/widget": "*",
+    "@tonconnect/ui-react": "^2.0.0",
+    "jszip": "^3.10.1",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "vite-plugin-node-polyfills": "^0.26.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.9.3",
+    "vite": "~7.3.2"
+  }
+}

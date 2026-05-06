@@ -1,0 +1,161 @@
+import { useState } from "react";
+import type { ConstructorConfig } from "../types";
+import { buildJsSnippet, buildManifestJson, buildStyleCss, downloadZip } from "../utils/generateZip";
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }}
+      className="text-xs px-2.5 py-1 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors font-medium"
+    >
+      {copied ? "✓ Copied" : "Copy"}
+    </button>
+  );
+}
+
+function CodeBlock({ title, code }: { title: string; code: string }) {
+  return (
+    <div className="rounded-lg border border-slate-700 overflow-hidden text-xs">
+      <div className="flex items-center justify-between px-3 py-2 bg-slate-800 border-b border-slate-700">
+        <span className="text-slate-400 font-semibold uppercase tracking-wide text-[10px]">
+          {title}
+        </span>
+        <CopyButton text={code} />
+      </div>
+      <pre className="p-3 overflow-x-auto bg-slate-900 text-slate-300 leading-relaxed font-mono text-[11px]">
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+}
+
+export function ExportTab({ config }: { config: ConstructorConfig }) {
+  const [downloading, setDownloading] = useState(false);
+  const domainMissing = !config.domain;
+  const cssContent = buildStyleCss(config);
+
+  const handleDownload = async () => {
+    if (domainMissing) return;
+    setDownloading(true);
+    try {
+      await downloadZip(config);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {domainMissing && (
+        <div className="rounded-lg bg-amber-900/20 border border-amber-700/40 px-3 py-2 text-xs text-amber-400">
+          Set <strong>app domain</strong> in Config tab to enable ZIP download.
+        </div>
+      )}
+
+      {/* Download ZIP */}
+      <div className="rounded-lg border-2 border-dashed border-slate-700 p-4 text-center">
+        <div className="text-2xl mb-2">📦</div>
+        <p className="text-xs font-semibold text-slate-200 mb-1">Download ZIP</p>
+        <p className="text-xs text-slate-500 mb-3">
+          Deploy to Cloudflare Pages or any static host —{" "}
+          <code className="text-slate-400">index.html</code> +{" "}
+          <code className="text-slate-400">tonconnect-manifest.json</code>
+          {cssContent ? (
+            <>
+              {" "}
+              + <code className="text-slate-400">style.css</code>
+            </>
+          ) : (
+            ""
+          )}
+        </p>
+        <button
+          type="button"
+          disabled={domainMissing || downloading}
+          onClick={handleDownload}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sky-500 text-white font-semibold text-xs hover:bg-sky-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {downloading ? "⏳ Generating…" : "⬇️ Download ZIP"}
+        </button>
+      </div>
+
+      {/* JS snippet */}
+      <div>
+        <p className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">
+          Option A — CDN snippet
+        </p>
+        <CodeBlock title="HTML" code={buildJsSnippet(config)} />
+      </div>
+
+      {/* Manifest */}
+      <div>
+        <p className="text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">
+          tonconnect-manifest.json
+        </p>
+        <p className="text-xs text-slate-600 mb-2">
+          Host at{" "}
+          <code className="text-slate-500">
+            {config.domain ? `${config.domain}/tonconnect-manifest.json` : "https://your-domain.com/…"}
+          </code>
+        </p>
+        <CodeBlock
+          title="tonconnect-manifest.json"
+          code={buildManifestJson(config.domain || "https://your-domain.com")}
+        />
+      </div>
+
+      {/* CSS overrides */}
+      {cssContent && (
+        <div>
+          <p className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">
+            CSS overrides
+          </p>
+          <CodeBlock title="style.css" code={cssContent} />
+        </div>
+      )}
+
+      {/* Option B */}
+      <div>
+        <p className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">
+          Option B — React (integrated)
+        </p>
+        <CodeBlock
+          title="React component"
+          code={`import { useEffect, useRef } from 'react';
+import { useTonConnectUI } from '@tonconnect/ui-react';
+import ToncastWidgetLoader from '@toncast/widget-loader';
+
+function ToncastBettingWidget() {
+  const [tonconnect] = useTonConnectUI();
+  const ref = useRef(null);
+  const widgetRef = useRef(null);
+
+  useEffect(() => {
+    let active = true;
+    ToncastWidgetLoader.load().then((Widget) => {
+      if (!active || !ref.current) return;
+      widgetRef.current = new Widget({
+        tonconnect: { type: 'integrated', instance: tonconnect },${
+          config.referralAddress && config.referralPct > 0
+            ? `\n        widget: { referral: { address: '${config.referralAddress}', pct: ${config.referralPct} } },`
+            : ""
+        }
+      });
+      widgetRef.current.mount(ref.current);
+    });
+    return () => { active = false; widgetRef.current?.unmount(); };
+  }, [tonconnect]);
+
+  return <div ref={ref} style={{ width: '100%' }} />;
+}`}
+        />
+      </div>
+    </div>
+  );
+}

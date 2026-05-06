@@ -1,0 +1,195 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ */
+/* Token map.                                                         */
+/* `@theme inline` registers Tailwind utilities (`bg-card`, `text-fg`,*/
+/* …); the actual *values* are CSS custom properties so light / dark  */
+/* swap at runtime by toggling the `.dark` class on `<html>`.         */
+/* ------------------------------------------------------------------ */
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-fg);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-fg);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-fg);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-fg);
+  --color-success: var(--success);
+  --radius: 1rem;
+}
+
+/* Light theme — clean, airy, blueish-white. Mirrors macOS Big Sur
+   "frost on white" feel where translucent surfaces sit on a soft
+   gradient sky and the eye reads them as glass. */
+:root {
+  --bg: oklch(0.98 0.01 240);
+  --fg: oklch(0.16 0.01 240);
+  --muted: oklch(0.95 0.01 240);
+  --muted-fg: oklch(0.4 0.012 240);
+  --card: oklch(1 0 0);
+  --card-fg: oklch(0.16 0.01 240);
+  --border: oklch(0.85 0.008 240);
+  --input: oklch(0.94 0.005 240);
+  --primary: oklch(0.50 0.22 245);
+  --primary-fg: oklch(0.99 0 0);
+  --destructive: oklch(0.42 0.22 25);
+  --destructive-fg: oklch(0.99 0 0);
+  --success: oklch(0.42 0.18 150);
+
+  /* Glass tokens — surface tint + edge highlight that simulates
+     refraction. Alpha values are tuned for AAA-ish contrast against
+     the aurora behind the glass. `glass` is fully covering;
+     `glass-subtle` is an inset panel inside `glass`. */
+  --glass-bg: 255 255 255;
+  --glass-bg-alpha: 0.82;
+  --glass-subtle-bg: 255 255 255;
+  --glass-subtle-bg-alpha: 0.55;
+  --glass-border: 255 255 255;
+  --glass-border-alpha: 0.85;
+  --glass-shadow: 0 12px 40px -12px oklch(0.5 0.05 240 / 0.25);
+
+  /* Aurora colours — three soft blobs blurred behind everything. */
+  --aurora-1: oklch(0.85 0.18 250 / 0.7);
+  --aurora-2: oklch(0.88 0.16 320 / 0.6);
+  --aurora-3: oklch(0.92 0.14 200 / 0.6);
+}
+
+/* Dark theme — deep navy sky, vibrant aurora. Same glass formula as
+   light, just colours flipped. The translucent layer turns the
+   aurora behind it into a soft glow without ever showing raw
+   saturation. */
+.dark {
+  --bg: oklch(0.14 0.02 250);
+  --fg: oklch(0.98 0.005 240);
+  --muted: oklch(0.22 0.018 250);
+  --muted-fg: oklch(0.78 0.012 240);
+  --card: oklch(0.2 0.018 250);
+  --card-fg: oklch(0.98 0.005 240);
+  --border: oklch(0.32 0.018 250);
+  --input: oklch(0.24 0.018 250);
+  --primary: oklch(0.75 0.18 230);
+  --primary-fg: oklch(0.14 0.02 250);
+  --destructive: oklch(0.7 0.2 25);
+  --destructive-fg: oklch(0.99 0.01 25);
+  --success: oklch(0.75 0.18 150);
+
+  /* Glass surfaces in dark mode: white-tinted at low alpha lifts
+     the surface above the bg without losing the aurora bleed. The
+     subtle variant uses a slightly TINTED dark fill so inset panels
+     read as wells (darker than the parent card), not lighter — the
+     classic "frosted glass over dark glass" depth cue. */
+  --glass-bg: 255 255 255;
+  --glass-bg-alpha: 0.1;
+  --glass-subtle-bg: 8 12 28;
+  --glass-subtle-bg-alpha: 0.55;
+  --glass-border: 255 255 255;
+  --glass-border-alpha: 0.18;
+  --glass-shadow: 0 12px 40px -12px oklch(0 0 0 / 0.6);
+
+  --aurora-1: oklch(0.5 0.22 270 / 0.4);
+  --aurora-2: oklch(0.55 0.22 320 / 0.32);
+  --aurora-3: oklch(0.55 0.2 200 / 0.35);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  min-height: 100vh;
+  letter-spacing: -0.01em;
+  /* Prevents any portal/widget from expanding body width and
+     causing position:fixed elements to misalign on Safari. */
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  position: relative;
+  isolation: isolate;
+}
+
+/* Aurora background — three large soft blurred radial-gradient
+   blobs positioned absolutely behind everything. Cheap to render
+   (CSS-only, GPU-composited), gives the glass layers something
+   pretty to refract. Fixed-position so they stay in place while
+   content scrolls. */
+#root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(60vmax 50vmax at 12% 18%, var(--aurora-1), transparent 60%),
+    radial-gradient(55vmax 45vmax at 88% 28%, var(--aurora-2), transparent 65%),
+    radial-gradient(70vmax 55vmax at 50% 100%, var(--aurora-3), transparent 70%);
+  pointer-events: none;
+  /* Gentle drift so the page doesn't feel completely static — slow
+     enough to never distract, long-enough loop to be unnoticed. */
+  animation: aurora-drift 28s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1.06);
+  }
+  50% {
+    transform: translate3d(-2%, 1%, 0) scale(1.06);
+  }
+  100% {
+    transform: translate3d(2%, -1%, 0) scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root::before {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Glass utilities.                                                   */
+/* `.glass` = translucent surface + backdrop-blur + subtle highlight  */
+/* edge. Compose with normal Tailwind utilities for layout.           */
+/* ------------------------------------------------------------------ */
+@utility glass {
+  background: rgb(var(--glass-bg) / var(--glass-bg-alpha));
+  /* Two-tone border: bright top/left edge (specular) + subtle bottom/right rim.
+     Simulates the edge-refraction that makes Apple glass feel physical. */
+  border: 1px solid rgb(var(--glass-border) / calc(var(--glass-border-alpha) * 0.6));
+  backdrop-filter: blur(40px) saturate(200%) brightness(1.04);
+  -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(1.04);
+  box-shadow:
+    var(--glass-shadow),
+    /* specular top highlight */
+    inset 0 1px 0 rgb(var(--glass-border) / calc(var(--glass-border-alpha) * 0.9)),
+    /* subtle side rim */
+    inset 1px 0 0 rgb(var(--glass-border) / calc(var(--glass-border-alpha) * 0.4));
+}
+
+/* Inset panel for inline boxes inside a Card (quote breakdown,
+   order-book panes). Uses its own tint token so light mode picks a
+   tinted-white "fog" while dark mode picks a tinted-navy "well" —
+   either way the inset reads as DEPTH below the parent surface, not
+   another floating layer. */
+@utility glass-subtle {
+  background: rgb(var(--glass-subtle-bg) / var(--glass-subtle-bg-alpha));
+  border: 1px solid rgb(var(--glass-border) / calc(var(--glass-border-alpha) * 0.5));
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgb(var(--glass-border) / calc(var(--glass-border-alpha) * 0.6));
+}

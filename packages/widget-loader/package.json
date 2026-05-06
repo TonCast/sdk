@@ -1,0 +1,28 @@
+{
+  "name": "@toncast/widget-loader",
+  "version": "0.0.1",
+  "description": "Loads the Toncast betting widget CDN bundle at runtime — analog of @ston-fi/omniston-widget-loader",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write ."
+  },
+  "keywords": ["toncast", "ton", "widget", "loader"],
+  "license": "MIT",
+  "author": "Toncast"
+}
