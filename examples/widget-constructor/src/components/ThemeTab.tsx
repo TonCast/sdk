@@ -17,7 +17,7 @@ export function ThemeTab({ theme, onChange }: Props) {
           Color scheme
         </p>
         <div className="flex gap-2">
-          {(["light", "dark"] as const).map((s) => (
+          {(["light", "dark", "system"] as const).map((s) => (
             <button
               key={s}
               type="button"
@@ -28,7 +28,7 @@ export function ThemeTab({ theme, onChange }: Props) {
                   : "bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-500"
               }`}
             >
-              {s === "light" ? "☀️ Light" : "🌙 Dark"}
+              {s === "light" ? "☀️ Light" : s === "dark" ? "🌙 Dark" : "🖥️ System"}
             </button>
           ))}
         </div>
@@ -49,7 +49,7 @@ export function ThemeTab({ theme, onChange }: Props) {
             type="color"
             value={theme.accent}
             onChange={(e) => set("accent", e.target.value)}
-            className="w-9 h-9 rounded-lg border border-slate-700 cursor-pointer bg-slate-800 p-0.5 flex-shrink-0"
+            className="w-9 h-9 rounded-lg border border-slate-700 cursor-pointer bg-slate-800 p-0.5 shrink-0"
             aria-label="Accent color picker"
           />
           <input
@@ -58,7 +58,7 @@ export function ThemeTab({ theme, onChange }: Props) {
             value={theme.accent}
             onChange={(e) => set("accent", e.target.value)}
             placeholder="#0098ea"
-            className="flex-1 h-9 px-3 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-xs font-mono focus:outline-none focus:border-sky-500/50 focus:bg-slate-750"
+            className="flex-1 h-9 px-3 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-xs font-mono focus:outline-none focus:border-sky-500/50 focus:bg-slate-900"
           />
           <button
             type="button"
@@ -84,7 +84,7 @@ export function ThemeTab({ theme, onChange }: Props) {
             type="color"
             value={theme.bg || (theme.colorScheme === "dark" ? "#0f172a" : "#ffffff")}
             onChange={(e) => set("bg", e.target.value)}
-            className="w-9 h-9 rounded-lg border border-slate-700 cursor-pointer bg-slate-800 p-0.5 flex-shrink-0"
+            className="w-9 h-9 rounded-lg border border-slate-700 cursor-pointer bg-slate-800 p-0.5 shrink-0"
             aria-label="Background color picker"
           />
           <input
@@ -92,7 +92,7 @@ export function ThemeTab({ theme, onChange }: Props) {
             type="text"
             value={theme.bg}
             onChange={(e) => set("bg", e.target.value)}
-            placeholder={theme.colorScheme === "dark" ? "#0f172a" : "#ffffff"}
+            placeholder={theme.colorScheme === "dark" ? "#0f172a" : theme.colorScheme === "system" ? "auto" : "#ffffff"}
             className="flex-1 h-9 px-3 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-xs font-mono focus:outline-none focus:border-sky-500/50"
           />
           {theme.bg && (

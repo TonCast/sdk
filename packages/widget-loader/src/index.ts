@@ -34,30 +34,69 @@
 
 export type ToncastWidgetConstructor = new (config: ToncastWidgetConfig) => ToncastWidgetInstance;
 
+/** Base CSS custom property overrides (applied regardless of theme). */
+export interface ToncastWidgetCssVarsBase {
+  /** Primary accent color — buttons, links, highlights. Default: #0098ea */
+  accent?: string;
+  /** Hover/darker variant of accent. Defaults to accent when accent is set. */
+  accentHover?: string;
+  /** Widget root background. Default: #ffffff (light) / #0f172a (dark) */
+  bg?: string;
+  /** Card/panel background. Default: #f8fafc (light) / #1e293b (dark) */
+  bgCard?: string;
+  /** Muted/subtle background. Default: #f1f5f9 (light) / #1e293b (dark) */
+  bgMuted?: string;
+  /** Primary text color. Default: #1e293b (light) / #f1f5f9 (dark) */
+  fg?: string;
+  /** Muted text color. Default: #64748b (light) / #94a3b8 (dark) */
+  fgMuted?: string;
+  /** Border color. Default: #e2e8f0 (light) / #334155 (dark) */
+  border?: string;
+  /** Border-radius for cards and buttons. Default: 12px */
+  radius?: string;
+}
+
+/** CSS custom property overrides for per-instance theming. */
+export interface ToncastWidgetCssVars extends ToncastWidgetCssVarsBase {
+  /** Overrides applied only in light mode (takes precedence over base vars). */
+  light?: ToncastWidgetCssVarsBase;
+  /** Overrides applied only in dark mode (takes precedence over base vars). */
+  dark?: ToncastWidgetCssVarsBase;
+}
+
 export interface ToncastWidgetConfig {
   tonconnect:
-    | {
-        type: "standalone";
-        options: { domain: string };
-      }
+    | { type: "standalone"; options: { domain: string } }
     | {
         type: "integrated";
-        // biome-ignore lint/suspicious/noExplicitAny: TonConnectUI type from peer dep
-        instance: any;
+        /** Existing TonConnectUI instance from your app. */
+        instance: unknown;
       };
   client?:
-    | {
-        type: "standalone";
-      }
+    | { type: "standalone" }
     | {
         type: "integrated";
-        // biome-ignore lint/suspicious/noExplicitAny: ToncastClient type from peer dep
-        instance: any;
+        /** Existing ToncastClient instance from your app. */
+        instance: unknown;
       };
   widget?: {
     language?: string;
-    theme?: "light" | "dark";
+    /**
+     * "light" / "dark" — locked palette. "system" — follows OS prefers-color-scheme.
+     * Defaults to "light" when omitted.
+     */
+    theme?: "light" | "dark" | "system";
+    /** Override CSS custom properties for per-instance theming. */
+    cssVars?: ToncastWidgetCssVars;
     referral?: { address: string; pct: number };
+    /**
+     * Languages shown in the in-widget language picker.
+     * Omit to show all supported languages.
+     * Pass [] to hide the picker entirely.
+     */
+    languages?: string[];
+    /** Called when the user successfully sends a bet transaction. */
+    onBet?: (pariId: string, amount: bigint, side: "yes" | "no") => void;
   };
 }
 

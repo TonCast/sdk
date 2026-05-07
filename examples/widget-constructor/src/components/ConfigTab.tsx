@@ -7,6 +7,8 @@ const LANGUAGES = [
   { code: "es", label: "Español" },
   { code: "zh", label: "中文" },
   { code: "pt", label: "Português" },
+  { code: "fr", label: "Français" },
+  { code: "de", label: "Deutsch" },
   { code: "fa", label: "فارسی" },
   { code: "ar", label: "العربية" },
 ];
@@ -61,6 +63,42 @@ export function ConfigTab({ config, onChange }: Props) {
             Leave empty — preview uses Toncast dev manifest.
           </p>
         )}
+      </div>
+
+      {/* App name */}
+      <div>
+        <label htmlFor="tc-app-name" className={labelCls}>
+          App name
+        </label>
+        <input
+          id="tc-app-name"
+          type="text"
+          value={config.appName}
+          onChange={(e) => set("appName", e.target.value)}
+          placeholder="My App"
+          className={inputCls}
+        />
+        <p className="mt-1 text-[10px] text-slate-600">
+          Shown in wallet connection dialogs (tonconnect-manifest.json).
+        </p>
+      </div>
+
+      {/* Icon URL */}
+      <div>
+        <label htmlFor="tc-icon-url" className={labelCls}>
+          App icon URL
+        </label>
+        <input
+          id="tc-icon-url"
+          type="url"
+          value={config.iconUrl}
+          onChange={(e) => set("iconUrl", e.target.value)}
+          placeholder="https://your-app.com/icon-192.png"
+          className={inputCls}
+        />
+        <p className="mt-1 text-[10px] text-slate-600">
+          Square PNG ≥ 180×180px for TonConnect wallet dialogs.
+        </p>
       </div>
 
       {/* Available languages */}

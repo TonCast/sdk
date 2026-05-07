@@ -9,6 +9,9 @@ import { Widget } from "./Widget";
 const STYLE_ID = "toncast-widget-styles";
 const STYLE_VERSION = "0.0.1";
 
+/** Tracks how many ToncastWidget instances are currently mounted. */
+let mountedCount = 0;
+
 function injectStyles(): void {
   if (document.getElementById(STYLE_ID)) return;
   const style = document.createElement("style");
@@ -16,6 +19,10 @@ function injectStyles(): void {
   style.setAttribute("data-version", STYLE_VERSION);
   style.textContent = widgetCss as unknown as string;
   document.head.appendChild(style);
+}
+
+function removeStyles(): void {
+  document.getElementById(STYLE_ID)?.remove();
 }
 
 type EventListener<T> = T extends void ? () => void : (payload: T) => void;
@@ -39,10 +46,20 @@ export class ToncastWidget {
     }
 
     injectStyles();
+    mountedCount++;
     this.container = container;
     this.root = createRoot(container);
-    this.root.render(createElement(Widget, { config: this.config }));
 
+    const onBet = (pariId: string, amount: bigint, side: "yes" | "no") => {
+      this.emit("bet", { pariId, amount, side });
+    };
+
+    const configWithBet: ToncastWidgetConfig = {
+      ...this.config,
+      widget: { ...this.config.widget, onBet },
+    };
+
+    this.root.render(createElement(Widget, { config: configWithBet }));
     this.emit("mount", { container } as ToncastWidgetEventMap["mount"]);
   }
 
@@ -51,6 +68,11 @@ export class ToncastWidget {
     this.root.unmount();
     this.root = null;
     this.container = null;
+    mountedCount--;
+    if (mountedCount <= 0) {
+      mountedCount = 0;
+      removeStyles();
+    }
     this.emit("unmount", undefined);
   }
 

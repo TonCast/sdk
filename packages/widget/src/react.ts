@@ -4,4 +4,11 @@
  * via esbuild loader and is only safe in IIFE/CDN builds).
  */
 export { Widget } from "./Widget";
-export type { ToncastWidgetConfig, TonConnectDescriptor, ClientDescriptor } from "./types";
+export type { WidgetProps } from "./Widget";
+export type {
+  ToncastWidgetConfig,
+  ToncastWidgetCssVars,
+  ToncastWidgetCssVarsBase,
+  TonConnectDescriptor,
+  ClientDescriptor,
+} from "./types";

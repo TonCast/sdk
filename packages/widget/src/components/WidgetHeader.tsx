@@ -1,8 +1,9 @@
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@toncast/sdk";
+import { useEffect } from "react";
+import { useWidgetConfig } from "../context";
 import { useI18n } from "../i18n/I18nProvider";
 import { useTcState } from "../tc-bridge";
 import { shortAddr } from "../utils/format";
-import { useWidgetConfig } from "../context";
 
 function GlobeIcon() {
   return (
@@ -45,6 +46,8 @@ const LANG_LABELS: Partial<Record<SupportedLanguage, string>> = {
   es: "ES",
   zh: "中文",
   pt: "PT",
+  fr: "FR",
+  de: "DE",
   fa: "FA",
   ar: "AR",
 };
@@ -65,6 +68,14 @@ export function WidgetHeader() {
       : (SUPPORTED_LANGUAGES as unknown as SupportedLanguage[]);
 
   const showPicker = availableLangs.length > 1;
+
+  // Auto-reset to first available language if current is not in the list.
+  useEffect(() => {
+    const first = availableLangs[0];
+    if (first && !availableLangs.includes(lang)) {
+      setLang(first);
+    }
+  }, [availableLangs, lang, setLang]);
 
   return (
     <div className="tc-header">

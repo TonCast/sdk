@@ -29,13 +29,57 @@ export type ClientIntegratedDescriptor = {
 
 export type ClientDescriptor = ClientStandaloneDescriptor | ClientIntegratedDescriptor;
 
+/** Base CSS custom property overrides (applied regardless of theme). */
+export interface ToncastWidgetCssVarsBase {
+  /** Primary accent color — buttons, links, highlights. Default: #0098ea */
+  accent?: string;
+  /** Hover/darker variant of accent. Defaults to accent when accent is set. */
+  accentHover?: string;
+  /** Widget root background. Default: #ffffff (light) / #0f172a (dark) */
+  bg?: string;
+  /** Card/panel background. Default: #f8fafc (light) / #1e293b (dark) */
+  bgCard?: string;
+  /** Muted/subtle background. Default: #f1f5f9 (light) / #1e293b (dark) */
+  bgMuted?: string;
+  /** Primary text color. Default: #1e293b (light) / #f1f5f9 (dark) */
+  fg?: string;
+  /** Muted text color. Default: #64748b (light) / #94a3b8 (dark) */
+  fgMuted?: string;
+  /** Border color. Default: #e2e8f0 (light) / #334155 (dark) */
+  border?: string;
+  /** Border-radius for cards and buttons. Default: 12px */
+  radius?: string;
+}
+
+/** CSS custom property overrides applied inline on the widget root element. */
+export interface ToncastWidgetCssVars extends ToncastWidgetCssVarsBase {
+  /**
+   * Overrides applied only when the effective theme is "light".
+   * Takes precedence over base vars for light mode.
+   */
+  light?: ToncastWidgetCssVarsBase;
+  /**
+   * Overrides applied only when the effective theme is "dark".
+   * Takes precedence over base vars for dark mode.
+   */
+  dark?: ToncastWidgetCssVarsBase;
+}
+
 export interface ToncastWidgetConfig {
   tonconnect: TonConnectDescriptor;
   /** Omit to create an internal ToncastClient with default API/WS URLs */
   client?: ClientDescriptor;
   widget?: {
     language?: SupportedLanguage;
-    theme?: "light" | "dark";
+    /**
+     * Visual theme.
+     * - "light" / "dark" — locked to that palette.
+     * - "system" — follows the OS `prefers-color-scheme` media query.
+     * Defaults to "light" when omitted.
+     */
+    theme?: "light" | "dark" | "system";
+    /** Override CSS custom properties for per-instance theming. */
+    cssVars?: ToncastWidgetCssVars;
     referral?: {
       /** TON wallet address receiving the referral share */
       address: string;
@@ -48,6 +92,8 @@ export interface ToncastWidgetConfig {
      * Pass an empty array [] to hide the picker entirely.
      */
     languages?: SupportedLanguage[];
+    /** Called when the user successfully sends a bet transaction. */
+    onBet?: (pariId: string, amount: bigint, side: "yes" | "no") => void;
   };
 }
 

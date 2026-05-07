@@ -125,7 +125,7 @@
   padding: 0 10px;
   height: 30px;
   border-radius: 999px;
-  background: linear-gradient(180deg, #0098ea 0%, #0087d4 100%);
+  background: linear-gradient(180deg, var(--tc-accent) 0%, var(--tc-accent-hover) 100%);
   color: #ffffff;
   border: none;
   cursor: pointer;
@@ -435,7 +435,7 @@
   padding: 0 16px;
   height: 40px;
   border-radius: 999px;
-  background: linear-gradient(180deg, #0098ea 0%, #0087d4 100%);
+  background: linear-gradient(180deg, var(--tc-accent) 0%, var(--tc-accent-hover) 100%);
   color: #ffffff;
   border: none;
   cursor: pointer;

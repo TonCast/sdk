@@ -50,6 +50,11 @@ export function useWidgetConfig(): ToncastWidgetConfig {
   return ctx;
 }
 
+/** Returns the onBet callback from widget config, or undefined if not set. */
+export function useOnBet(): ((pariId: string, amount: bigint, side: "yes" | "no") => void) | undefined {
+  return useWidgetConfig().widget?.onBet;
+}
+
 export function ConfigProvider({
   config,
   children,

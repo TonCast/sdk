@@ -1,7 +1,7 @@
 export type Device = "mobile" | "tablet" | "desktop";
 
 export interface ThemeConfig {
-  colorScheme: "light" | "dark";
+  colorScheme: "light" | "dark" | "system";
   accent: string;
   bg: string;
   radius: number;
@@ -9,6 +9,10 @@ export interface ThemeConfig {
 
 export interface ConstructorConfig {
   domain: string;
+  /** App name shown in tonconnect-manifest.json */
+  appName: string;
+  /** Icon URL shown in tonconnect-manifest.json (square PNG ≥ 180×180) */
+  iconUrl: string;
   /** Default language for the widget */
   language: string;
   /** Languages available in the widget's in-app picker. Empty = show all. */
@@ -20,6 +24,8 @@ export interface ConstructorConfig {
 
 export const DEFAULT_CONFIG: ConstructorConfig = {
   domain: "",
+  appName: "",
+  iconUrl: "",
   language: "",
   languages: [],
   referralAddress: "",

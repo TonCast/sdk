@@ -21,7 +21,8 @@ function WalletSync({ address }: WalletSyncProps) {
 export interface BetCardProps {
   pariId: string;
   initialSide?: "yes" | "no";
-  onBetSent?: (pariId: string, side: "yes" | "no") => void;
+  /** Called after the transaction is sent. amount is the total cost in nano-units. */
+  onBetSent?: (pariId: string, amount: bigint, side: "yes" | "no") => void;
 }
 
 export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps) {
@@ -69,7 +70,7 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
         messages: confirmed.messages,
         validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
       });
-      onBetSent?.(pariId, bet.side);
+      onBetSent?.(pariId, bet.quote.totalCost, bet.side);
       void bet.refresh();
       setTimeout(() => void bet.refresh(), 8_000);
     } catch (err) {

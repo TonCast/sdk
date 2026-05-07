@@ -36,7 +36,7 @@ function Shell() {
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-4 py-3">
           <Link
             to="/"
-            className="truncate min-w-0 bg-gradient-to-r from-primary to-foreground bg-clip-text text-lg font-semibold tracking-tight text-transparent"
+            className="truncate min-w-0 bg-linear-to-r from-primary to-foreground bg-clip-text text-lg font-semibold tracking-tight text-transparent"
           >
             {t("header.title")}
           </Link>

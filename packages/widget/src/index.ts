@@ -5,5 +5,7 @@ export type {
   TcStandaloneDescriptor,
   TonConnectDescriptor,
   ToncastWidgetConfig,
+  ToncastWidgetCssVars,
+  ToncastWidgetCssVarsBase,
   ToncastWidgetEventMap,
 } from "./types";

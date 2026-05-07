@@ -5,7 +5,7 @@ import { BetCard } from "../components/BetCard";
 import { CoefficientChart } from "../components/CoefficientChart";
 import { OrderBook } from "../components/OrderBook";
 import { Skeleton } from "../components/ui/Skeleton";
-import { useNav, type WidgetView } from "../context";
+import { useNav, useOnBet, type WidgetView } from "../context";
 import { useT } from "../i18n/useT";
 
 function isSettledOutcome(pari: Pari): boolean {
@@ -84,6 +84,7 @@ function OutcomeBanner({ pari }: { pari: Pari }) {
 export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "detail" }> }) {
   const t = useT();
   const { back } = useNav();
+  const onBet = useOnBet();
   const {
     data: snap,
     isLoading,
@@ -167,7 +168,11 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
         <div className="tc-notice tc-notice-muted">{t("pari.bettingClosed")}</div>
       ) : (
         <div className="tc-card">
-          <BetCard pariId={view.pariId} initialSide={view.initialSide} />
+          <BetCard
+          pariId={view.pariId}
+          initialSide={view.initialSide}
+          onBetSent={onBet}
+        />
         </div>
       )}
 
