@@ -369,6 +369,7 @@
 .tc-badge-matched { background: rgba(0, 152, 234, 0.1); color: var(--tc-accent); }
 .tc-badge-won { background: var(--tc-success-bg); color: var(--tc-success-fg); }
 .tc-badge-lost { background: var(--tc-danger-bg); color: var(--tc-danger-fg); }
+.tc-badge-cancelled { background: var(--tc-warn-bg); color: var(--tc-warn); }
 .tc-badge-refunded { background: var(--tc-warn-bg); color: var(--tc-warn); }
 
 /* ===== ALERT / NOTICE ===== */
@@ -509,7 +510,8 @@
 .tc-ob-bar-fill-no { left: 0; background: rgba(220, 38, 38, 0.35); }
 .tc-ob-bar-text {
   position: absolute;
-  inset-y: 0;
+  top: 0;
+  bottom: 0;
   display: flex;
   align-items: center;
   gap: 5px;

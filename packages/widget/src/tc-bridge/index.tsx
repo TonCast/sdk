@@ -13,6 +13,7 @@ import {
   useTonConnectUI,
 } from "@tonconnect/ui-react";
 import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
+import { toTonConnectManifestUrl } from "./domain";
 
 interface TcState {
   address: string;
@@ -50,7 +51,7 @@ function StandaloneBridge({ children }: { children: ReactNode }) {
 }
 
 export function StandaloneProvider({ domain, children }: { domain: string; children: ReactNode }) {
-  const manifestUrl = `${domain.replace(/\/$/, "")}/tonconnect-manifest.json`;
+  const manifestUrl = toTonConnectManifestUrl(domain);
   return (
     <TonConnectUIProvider manifestUrl={manifestUrl} analytics={{ mode: "off" }}>
       <StandaloneBridge>{children}</StandaloneBridge>

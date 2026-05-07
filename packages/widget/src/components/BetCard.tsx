@@ -344,12 +344,10 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
 function CoefficientSlider({ bet }: { bet: ReturnType<typeof useBet> }) {
   const fillLeftPct = useMemo(() => {
     if (bet.mode !== "limit") return 0;
-    const sliderPos = bet.oddsSliderProps.value[0];
-    return (
-      ((sliderPos - bet.oddsSliderProps.min) /
-        (bet.oddsSliderProps.max - bet.oddsSliderProps.min)) *
-      100
-    );
+    const { min, max, value } = bet.oddsSliderProps;
+    const range = max - min;
+    if (range === 0) return 0;
+    return ((value[0] - min) / range) * 100;
   }, [bet.mode, bet.oddsSliderProps]);
 
   return (

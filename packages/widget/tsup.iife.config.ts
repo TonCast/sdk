@@ -8,7 +8,7 @@ export default defineConfig({
   globalName: "ToncastWidget",
   outDir: "dist",
   minify: true,
-  sourcemap: true,
+  sourcemap: false,
   target: "es2020",
   platform: "browser",
   // Bundle every dependency so the CDN script is fully self-contained.
@@ -16,5 +16,8 @@ export default defineConfig({
   esbuildOptions(options) {
     // Embed CSS files as text strings so the widget can inject them at mount time.
     options.loader = { ...options.loader, ".css": "text" };
+  },
+  outExtension() {
+    return { js: ".js" };
   },
 });

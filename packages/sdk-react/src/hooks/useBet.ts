@@ -1,27 +1,23 @@
-import {
-  type UseMutationResult,
-  type UseQueryResult,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { type UseMutationResult, type UseQueryResult, useQueryClient } from "@tanstack/react-query";
 import {
   type BetOptionFailureReason,
   type BetQuote,
   type BetSummary,
   type BreakdownTotals,
   breakdownTotals,
-  calcWinnings,
   type CoinCapacity,
   type ConfirmedQuote,
+  calcWinnings,
   DEFAULT_WALLET_RESERVE,
   fixedTicketsForBudget,
-  oddsLiquidity,
   ODDS_MAX,
   ODDS_MIN,
   ODDS_STEP,
+  oddsLiquidity,
   PARI_EXECUTION_FEE,
-  sameSideMedianYesOdds,
   type PriceCoinsOptions,
   type QuoteCommon,
+  sameSideMedianYesOdds,
   sliderPositionToYesOdds,
   stepOdds,
   TON_ADDRESS,
@@ -31,9 +27,9 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useToncastClient } from "../client/useToncastClient";
 import { useBetQuote } from "./useBetQuote";
-import type { UseObservableQueryResult } from "./useObservableQuery";
 import { useBetSummary } from "./useBetSummary";
 import { useConfirmBet } from "./useConfirmBet";
+import type { UseObservableQueryResult } from "./useObservableQuery";
 
 export type BetSide = "yes" | "no";
 export type BetMode = "market" | "fixed" | "limit";
@@ -222,6 +218,7 @@ export function useBet(params: UseBetParams): UseBetResult {
   // is a long-lived two-phase stream that the SDK pool keeps warm; staleness
   // semantics don't apply.
   const summary = useBetSummary(pariId, priceCoinsOptions);
+  void summaryStaleTime;
   // Capacities = fully-priced coins (always selectable). loadingCoins =
   // wallet jettons whose pricing is still being computed (phase-1 of
   // `subscribeSummary`); we include them in `coins` as non-feasible
@@ -330,7 +327,7 @@ export function useBet(params: UseBetParams): UseBetResult {
     const oddsState = summary.data?.oddsState;
     const median = oddsState ? sameSideMedianYesOdds(oddsState, isYes) : null;
     setYesOdds(median ?? ODDS_MID);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, isBookEmpty]);
 
   // ─── Quote ────────────────────────────────────────────────────────────────
@@ -380,7 +377,7 @@ export function useBet(params: UseBetParams): UseBetResult {
       ticketsCount: tickets,
       oddsState: summary.data.oddsState,
     };
-  }, [summary.data, selectedCoin, tickets, pariId, isYes, mode, yesOdds]);
+  }, [summary.data, selectedCoin, tickets, pariId, isYes, mode, yesOdds, isBookEmpty, ODDS_MID]);
 
   const underlyingQuote = useBetQuote(quoteParams, { staleTime: quoteStaleTime });
 
@@ -558,8 +555,7 @@ export function useBet(params: UseBetParams): UseBetResult {
     return oddsLiquidity(summary.data.oddsState, isYes).map(({ yesOdds: yo, tickets: count }) => ({
       yesOdds: yo,
       tickets: count,
-      leftPct:
-        ((yesOddsToSliderPosition(yo, isYes) - ODDS_MIN) / (ODDS_MAX - ODDS_MIN)) * 100,
+      leftPct: ((yesOddsToSliderPosition(yo, isYes) - ODDS_MIN) / (ODDS_MAX - ODDS_MIN)) * 100,
     }));
   }, [summary.data, isYes]);
 

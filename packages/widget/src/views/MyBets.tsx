@@ -8,10 +8,7 @@ import { useNav } from "../context";
 import type { TranslationKey } from "../i18n/translations";
 import { useT } from "../i18n/useT";
 import { useTcState } from "../tc-bridge";
-
-function cursorKey(c: Cursor | null): string {
-  return c === null ? "__initial__" : JSON.stringify(c);
-}
+import { appendBetsPage, cursorKey, MAX_RENDERED_BETS } from "./myBetsState";
 
 const STATUS_CLASS: Record<BetStatus, string> = {
   placed: "tc-badge-placed",
@@ -20,7 +17,7 @@ const STATUS_CLASS: Record<BetStatus, string> = {
   won_yes: "tc-badge-won",
   won_no: "tc-badge-won",
   lost: "tc-badge-lost",
-  cancelled: "tc-badge-placed",
+  cancelled: "tc-badge-cancelled",
   refunded: "tc-badge-refunded",
 };
 
@@ -113,10 +110,11 @@ export function MyBetsView() {
     if (appendedRef.current.has(key)) return;
     appendedRef.current.add(key);
     setNextCursor(query.data.nextCursor);
-    setHasMore(query.data.hasMore);
     const items = query.data.items;
-    setAll((prev) => (cursor === null ? items : [...prev, ...items]));
-  }, [query.data, cursor]);
+    const next = appendBetsPage(all, items, { reset: cursor === null });
+    setAll(next);
+    setHasMore(query.data.hasMore && next.length < MAX_RENDERED_BETS);
+  }, [query.data, cursor, all]);
 
   const prevAddrRef = useRef(address);
   useEffect(() => {
@@ -136,7 +134,7 @@ export function MyBetsView() {
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {canGoBack && (
         <button type="button" className="tc-back-btn" onClick={back}>
-          ← {t("page.paris.detail.back").replace("← ", "")}
+          {t("page.paris.detail.back")}
         </button>
       )}
       <h2 className="tc-page-title">{t("page.bets.title")}</h2>

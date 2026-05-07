@@ -11,7 +11,13 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    }
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.js",
+      "require": "./dist/react.cjs"
+    },
+    "./styles/widget.css": "./dist/index.css"
   },
   "files": [
     "dist",
@@ -24,11 +30,18 @@
     "build": "tsup",
     "build:iife": "tsup --config tsup.iife.config.ts",
     "dev": "tsup --watch",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --write ."
   },
-  "keywords": ["toncast", "ton", "widget", "betting", "tonconnect"],
+  "keywords": [
+    "toncast",
+    "ton",
+    "widget",
+    "betting",
+    "tonconnect"
+  ],
   "license": "MIT",
   "author": "Toncast",
   "dependencies": {

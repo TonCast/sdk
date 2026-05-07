@@ -99,7 +99,9 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
           {t("page.paris.detail.back")}
         </button>
         <div className="tc-error">
-          {t("page.paris.detail.failed", { error: (error as Error).message })}
+          {t("page.paris.detail.failed", {
+            error: error instanceof Error ? error.message : String(error),
+          })}
         </div>
       </div>
     );
@@ -146,14 +148,14 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
             <ExpandableDescription text={snap.pari.description} />
             <div className="tc-detail-meta">
               <span>
-                YES vol <strong>{snap.pari.yesVolume.toFixed(2)} TON</strong>
+                {t("pari.meta.yesVol")} <strong>{snap.pari.yesVolume.toFixed(2)} TON</strong>
               </span>
               <span>
-                NO vol <strong>{snap.pari.noVolume.toFixed(2)} TON</strong>
+                {t("pari.meta.noVol")} <strong>{snap.pari.noVolume.toFixed(2)} TON</strong>
               </span>
               {snap.pari.bestYesOdds !== null && (
                 <span>
-                  best YES <strong>{snap.pari.bestYesOdds}</strong>
+                  {t("pari.meta.bestYes")} <strong>{snap.pari.bestYesOdds}</strong>
                 </span>
               )}
             </div>
@@ -168,11 +170,7 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
         <div className="tc-notice tc-notice-muted">{t("pari.bettingClosed")}</div>
       ) : (
         <div className="tc-card">
-          <BetCard
-          pariId={view.pariId}
-          initialSide={view.initialSide}
-          onBetSent={onBet}
-        />
+          <BetCard pariId={view.pariId} initialSide={view.initialSide} onBetSent={onBet} />
         </div>
       )}
 

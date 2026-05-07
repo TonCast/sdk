@@ -30,7 +30,6 @@ type EventListener<T> = T extends void ? () => void : (payload: T) => void;
 export class ToncastWidget {
   private readonly config: ToncastWidgetConfig;
   private root: Root | null = null;
-  private container: Element | null = null;
   protected readonly listeners: Partial<{
     [K in keyof ToncastWidgetEventMap]: Array<EventListener<ToncastWidgetEventMap[K]>>;
   }> = {};
@@ -47,7 +46,6 @@ export class ToncastWidget {
 
     injectStyles();
     mountedCount++;
-    this.container = container;
     this.root = createRoot(container);
 
     const onBet = (pariId: string, amount: bigint, side: "yes" | "no") => {
@@ -67,7 +65,6 @@ export class ToncastWidget {
     if (!this.root) return;
     this.root.unmount();
     this.root = null;
-    this.container = null;
     mountedCount--;
     if (mountedCount <= 0) {
       mountedCount = 0;
@@ -109,7 +106,12 @@ export class ToncastWidget {
         // biome-ignore lint/suspicious/noExplicitAny: payload type varies per event
         (handler as (p: any) => void)(payload);
       } catch (err) {
-        this.emit("error", err as ToncastWidgetEventMap["error"]);
+        if (event === "error") {
+          // Avoid infinite recursion: if an error handler itself throws, log it.
+          console.error("[ToncastWidget] error handler threw:", err);
+        } else {
+          this.emit("error", err as ToncastWidgetEventMap["error"]);
+        }
       }
     }
   }

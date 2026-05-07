@@ -37,7 +37,7 @@ export function ThemeTab({ theme, onChange }: Props) {
       {/* Accent color */}
       <div>
         <label
-          htmlFor="tc-accent-text"
+          htmlFor="tc-accent-color"
           className="flex items-center justify-between text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide"
         >
           Accent color

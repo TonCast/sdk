@@ -1,10 +1,38 @@
 import type { Pari } from "@toncast/sdk";
 import { ODDS_MAX, ODDS_MIN, pariCoverUrl, yesOddsToDecimalOdds } from "@toncast/sdk";
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
 import { useNav } from "../context";
 import { useT } from "../i18n/useT";
 import { formatTimeLeft } from "../utils/format";
 import { Button } from "./ui/Button";
+
+/**
+ * Shared minute-tick clock — single setInterval shared across all PariCard instances.
+ */
+const minuteTickListeners = new Set<() => void>();
+let minuteTickInterval: ReturnType<typeof setInterval> | null = null;
+
+function subscribeMinuteTick(cb: () => void): () => void {
+  minuteTickListeners.add(cb);
+  if (!minuteTickInterval) {
+    minuteTickInterval = setInterval(() => {
+      for (const listener of minuteTickListeners) listener();
+    }, 60_000);
+  }
+  return () => {
+    minuteTickListeners.delete(cb);
+    if (minuteTickListeners.size === 0 && minuteTickInterval !== null) {
+      clearInterval(minuteTickInterval);
+      minuteTickInterval = null;
+    }
+  };
+}
+
+/** Triggers a re-render on every 60-second tick. */
+function useMinuteTick() {
+  const [, tick] = useReducer((n: number) => n + 1, 0);
+  useEffect(() => subscribeMinuteTick(tick), []);
+}
 
 function ClockIcon() {
   return (
@@ -29,11 +57,7 @@ export function PariCard({ pari }: { pari: Pari }) {
   const { navigate } = useNav();
   const img = pariCoverUrl(pari.image);
 
-  const [, forceUpdate] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => forceUpdate((n) => n + 1), 60_000);
-    return () => clearInterval(id);
-  }, []);
+  useMinuteTick();
 
   const yesOdds = pari.bestYesOdds;
   const oddsOk =

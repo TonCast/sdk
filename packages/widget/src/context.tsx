@@ -28,7 +28,12 @@ export function NavProvider({ children }: { children: ReactNode }) {
   const view = history[history.length - 1] ?? { name: "list" };
 
   const navigate = useCallback((to: WidgetView) => {
-    setHistory((h) => [...h, to]);
+    setHistory((h) => {
+      const current = h[h.length - 1];
+      // Avoid pushing duplicate entries (e.g. tapping "Markets" twice).
+      if (current && current.name === to.name && !("pariId" in to)) return h;
+      return [...h, to];
+    });
   }, []);
 
   const back = useCallback(() => {
@@ -37,7 +42,11 @@ export function NavProvider({ children }: { children: ReactNode }) {
 
   const canGoBack = history.length > 1;
 
-  return <NavContext.Provider value={{ view, navigate, back, canGoBack }}>{children}</NavContext.Provider>;
+  return (
+    <NavContext.Provider value={{ view, navigate, back, canGoBack }}>
+      {children}
+    </NavContext.Provider>
+  );
 }
 
 // ─── Widget config context ───
@@ -51,7 +60,9 @@ export function useWidgetConfig(): ToncastWidgetConfig {
 }
 
 /** Returns the onBet callback from widget config, or undefined if not set. */
-export function useOnBet(): ((pariId: string, amount: bigint, side: "yes" | "no") => void) | undefined {
+export function useOnBet():
+  | ((pariId: string, amount: bigint, side: "yes" | "no") => void)
+  | undefined {
   return useWidgetConfig().widget?.onBet;
 }
 

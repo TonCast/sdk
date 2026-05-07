@@ -35,7 +35,9 @@ export function ParisListView() {
 
       {isError ? (
         <div className="tc-error">
-          {t("page.paris.loadFailed", { error: (error as Error).message })}
+          {t("page.paris.loadFailed", {
+            error: error instanceof Error ? error.message : String(error),
+          })}
         </div>
       ) : isLoading || !data ? (
         <div className="tc-pari-grid">

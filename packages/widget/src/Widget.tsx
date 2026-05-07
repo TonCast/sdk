@@ -15,13 +15,13 @@ import { ParisListView } from "./views/ParisList";
 
 /** Subscribes to OS color scheme preference and returns the effective theme. */
 function useSystemTheme(): "light" | "dark" {
-  const [theme, setTheme] = useState<"light" | "dark">(() =>
-    typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light",
-  );
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof window === "undefined") return "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const handler = (e: MediaQueryListEvent) => setTheme(e.matches ? "dark" : "light");
     mq.addEventListener("change", handler);
@@ -32,10 +32,7 @@ function useSystemTheme(): "light" | "dark" {
 }
 
 /** Converts a cssVarsBase object to inline CSS custom properties record. */
-function applyVarsBase(
-  vars: ToncastWidgetCssVarsBase,
-  style: Record<string, string>,
-): void {
+function applyVarsBase(vars: ToncastWidgetCssVarsBase, style: Record<string, string>): void {
   if (vars.accent) {
     style["--tc-accent"] = vars.accent;
     // Mirror hover to accent unless separately overridden.

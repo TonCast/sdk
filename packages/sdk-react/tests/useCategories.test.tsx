@@ -29,8 +29,11 @@ describe("useCategories", () => {
     expect(result.current.isLoading).toBe(true);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual([
-      { id: 1, title: "Sport" },
-      { id: 3, title: "Crypto" },
+      { name: "All", param: {} },
+      { name: "Sport", param: { categoryId: 1 } },
+      { name: "Crypto", param: { categoryId: 3 } },
+      { name: "Pending result", param: { showPendingResults: true } },
+      { name: "Finished", param: { includeInactive: true } },
     ]);
   });
 

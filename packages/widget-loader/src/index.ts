@@ -32,6 +32,8 @@
  * ```
  */
 
+export type SupportedLanguage = "en" | "ru" | "hi" | "es" | "zh" | "fr" | "de" | "pt" | "fa" | "ar";
+
 export type ToncastWidgetConstructor = new (config: ToncastWidgetConfig) => ToncastWidgetInstance;
 
 /** Base CSS custom property overrides (applied regardless of theme). */
@@ -64,23 +66,26 @@ export interface ToncastWidgetCssVars extends ToncastWidgetCssVarsBase {
   dark?: ToncastWidgetCssVarsBase;
 }
 
-export interface ToncastWidgetConfig {
+export interface ToncastWidgetConfig<
+  TonConnectInstance = unknown,
+  ToncastClientInstance = unknown,
+> {
   tonconnect:
     | { type: "standalone"; options: { domain: string } }
     | {
         type: "integrated";
         /** Existing TonConnectUI instance from your app. */
-        instance: unknown;
+        instance: TonConnectInstance;
       };
   client?:
     | { type: "standalone" }
     | {
         type: "integrated";
         /** Existing ToncastClient instance from your app. */
-        instance: unknown;
+        instance: ToncastClientInstance;
       };
   widget?: {
-    language?: string;
+    language?: SupportedLanguage;
     /**
      * "light" / "dark" — locked palette. "system" — follows OS prefers-color-scheme.
      * Defaults to "light" when omitted.
@@ -94,7 +99,7 @@ export interface ToncastWidgetConfig {
      * Omit to show all supported languages.
      * Pass [] to hide the picker entirely.
      */
-    languages?: string[];
+    languages?: SupportedLanguage[];
     /** Called when the user successfully sends a bet transaction. */
     onBet?: (pariId: string, amount: bigint, side: "yes" | "no") => void;
   };
@@ -113,6 +118,18 @@ export interface ToncastWidgetInstance {
   off(event: string, listener: (...args: unknown[]) => void): this;
 }
 
+export interface ToncastWidgetLoaderOptions {
+  /**
+   * Subresource Integrity hash for the CDN bundle.
+   * When set without `crossOrigin`, the loader uses `anonymous`.
+   */
+  integrity?: string;
+  /** Cross-origin mode for SRI/CORS-enabled script loading. */
+  crossOrigin?: "" | "anonymous" | "use-credentials";
+  /** CSP nonce to attach to the injected script element. */
+  nonce?: string;
+}
+
 /** CDN URL template — major-versioned for non-breaking auto-updates. */
 const CDN_URL = "https://widget.toncast.app/v0/index.iife.js";
 
@@ -123,12 +140,15 @@ let pendingPromise: Promise<ToncastWidgetConstructor> | null = null;
  * Download and cache the Toncast widget bundle from CDN.
  * Subsequent calls return the cached constructor without re-fetching.
  */
-async function load(cdnUrl: string = CDN_URL): Promise<ToncastWidgetConstructor> {
+async function load(
+  cdnUrl: string = CDN_URL,
+  options: ToncastWidgetLoaderOptions = {},
+): Promise<ToncastWidgetConstructor> {
   if (cachedConstructor) return cachedConstructor;
   if (pendingPromise) return pendingPromise;
 
   pendingPromise = (async () => {
-    await injectScript(cdnUrl);
+    await injectScript(cdnUrl, options);
 
     // The IIFE sets window.ToncastWidget = { ToncastWidget: [class] }
     // biome-ignore lint/suspicious/noExplicitAny: global set by CDN bundle
@@ -144,25 +164,45 @@ async function load(cdnUrl: string = CDN_URL): Promise<ToncastWidgetConstructor>
 
     cachedConstructor = ctor;
     return ctor;
-  })();
+  })().catch((err) => {
+    pendingPromise = null;
+    throw err;
+  });
 
   return pendingPromise;
 }
 
-function injectScript(src: string): Promise<void> {
+function injectScript(src: string, options: ToncastWidgetLoaderOptions): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[data-tc-widget-loader="${src}"]`)) {
+    if (findLoaderScript(src)) {
       resolve();
       return;
     }
     const el = document.createElement("script");
     el.src = src;
     el.async = true;
+    if (options.integrity) {
+      el.integrity = options.integrity;
+      el.crossOrigin = options.crossOrigin ?? "anonymous";
+    } else if (options.crossOrigin !== undefined) {
+      el.crossOrigin = options.crossOrigin;
+    }
+    if (options.nonce) el.nonce = options.nonce;
     el.setAttribute("data-tc-widget-loader", src);
     el.onload = () => resolve();
-    el.onerror = () => reject(new Error(`[ToncastWidgetLoader] Failed to load bundle from ${src}`));
+    el.onerror = () => {
+      el.remove();
+      reject(new Error(`[ToncastWidgetLoader] Failed to load bundle from ${src}`));
+    };
     document.head.appendChild(el);
   });
+}
+
+function findLoaderScript(src: string): HTMLScriptElement | null {
+  for (const el of Array.from(document.scripts)) {
+    if (el.getAttribute("data-tc-widget-loader") === src) return el;
+  }
+  return null;
 }
 
 const ToncastWidgetLoader = { load };

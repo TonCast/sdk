@@ -1,7 +1,8 @@
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@toncast/sdk";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useWidgetConfig } from "../context";
 import { useI18n } from "../i18n/I18nProvider";
+import { useT } from "../i18n/useT";
 import { useTcState } from "../tc-bridge";
 import { shortAddr } from "../utils/format";
 
@@ -28,7 +29,14 @@ function GlobeIcon() {
 
 function TonDiamondSmall() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+    >
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -54,18 +62,22 @@ const LANG_LABELS: Partial<Record<SupportedLanguage, string>> = {
 
 export function WidgetHeader() {
   const { lang, setLang } = useI18n();
+  const t = useT();
   const { address, connect, disconnect } = useTcState();
   const config = useWidgetConfig();
   const connected = Boolean(address);
 
-  // Determine which languages to show in the picker.
+  // Derive stable array — memoised to prevent the useEffect below firing on every render.
   // widget.languages === [] → hide picker entirely.
   // widget.languages === undefined → show all.
   const configuredLangs = config.widget?.languages;
-  const availableLangs: SupportedLanguage[] =
-    configuredLangs !== undefined
-      ? configuredLangs
-      : (SUPPORTED_LANGUAGES as unknown as SupportedLanguage[]);
+  const availableLangs: SupportedLanguage[] = useMemo(
+    () =>
+      configuredLangs !== undefined
+        ? configuredLangs
+        : (SUPPORTED_LANGUAGES as unknown as SupportedLanguage[]),
+    [configuredLangs],
+  );
 
   const showPicker = availableLangs.length > 1;
 
@@ -121,7 +133,7 @@ export function WidgetHeader() {
         className={`tc-header-connect${connected ? " tc-header-connected" : ""}`}
       >
         {!connected && <TonDiamondSmall />}
-        <span>{connected ? shortAddr(address) : "Connect"}</span>
+        <span>{connected ? shortAddr(address) : t("wallet.connect")}</span>
       </button>
     </div>
   );

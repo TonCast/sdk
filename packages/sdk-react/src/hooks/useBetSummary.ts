@@ -28,10 +28,7 @@ import {
 export function useBetSummary(
   pariId: string | null | undefined,
   opts: PriceCoinsOptions = {},
-  options?: Omit<
-    UseObservableQueryOptions<BetSummary>,
-    "queryKey" | "requestFn" | "enabled"
-  >,
+  options?: Omit<UseObservableQueryOptions<BetSummary>, "queryKey" | "requestFn" | "enabled">,
 ): UseObservableQueryResult<BetSummary> {
   const client = useToncastClient();
   return useObservableQuery<BetSummary>({

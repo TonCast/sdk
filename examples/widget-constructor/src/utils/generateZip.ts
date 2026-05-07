@@ -1,5 +1,29 @@
-import JSZip from "jszip";
 import type { ConstructorConfig } from "../types";
+
+const WIDGET_CDN_URL = "https://widget.toncast.app/v0/index.iife.js";
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function stringifyForScript(value: unknown, space: number): string {
+  return JSON.stringify(value, null, space)
+    .replace(/</g, "\\u003C")
+    .replace(/>/g, "\\u003E")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
+function safeHexColor(value: string): string | null {
+  const trimmed = value.trim();
+  return /^#[\da-fA-F]{3,8}$/.test(trimmed) ? trimmed : null;
+}
 
 /** Builds tonconnect-manifest.json content. */
 export function buildManifestJson(config: ConstructorConfig): string {
@@ -18,16 +42,19 @@ export function buildManifestJson(config: ConstructorConfig): string {
 /** Builds optional host CSS overrides for the widget container. */
 export function buildStyleCss(config: ConstructorConfig): string | null {
   const { theme } = config;
-  const hasOverrides = theme.accent !== "#0098ea" || theme.bg !== "" || theme.radius !== 12;
+  const accent = safeHexColor(theme.accent);
+  const bg = theme.bg ? safeHexColor(theme.bg) : null;
+  const radius = Number.isFinite(theme.radius) ? Math.max(0, Math.min(64, theme.radius)) : 12;
+  const hasOverrides = (accent !== null && accent !== "#0098ea") || bg !== null || radius !== 12;
   if (!hasOverrides) return null;
 
   const lines: string[] = ["#toncast-widget {"];
-  if (theme.accent !== "#0098ea") {
-    lines.push(`  --tc-accent: ${theme.accent};`);
-    lines.push(`  --tc-accent-hover: ${theme.accent};`);
+  if (accent !== null && accent !== "#0098ea") {
+    lines.push(`  --tc-accent: ${accent};`);
+    lines.push(`  --tc-accent-hover: ${accent};`);
   }
-  if (theme.bg) lines.push(`  --tc-bg: ${theme.bg};`);
-  if (theme.radius !== 12) lines.push(`  --tc-radius: ${theme.radius}px;`);
+  if (bg !== null) lines.push(`  --tc-bg: ${bg};`);
+  if (radius !== 12) lines.push(`  --tc-radius: ${radius}px;`);
   lines.push("}");
 
   return lines.join("\n");
@@ -36,13 +63,16 @@ export function buildStyleCss(config: ConstructorConfig): string | null {
 /** Builds the widget.cssVars object for JS/React configs. */
 function buildCssVarsConfig(config: ConstructorConfig): Record<string, string> | undefined {
   const { theme } = config;
+  const accent = safeHexColor(theme.accent);
+  const bg = theme.bg ? safeHexColor(theme.bg) : null;
+  const radius = Number.isFinite(theme.radius) ? Math.max(0, Math.min(64, theme.radius)) : 12;
   const vars: Record<string, string> = {};
-  if (theme.accent !== "#0098ea") {
-    vars.accent = theme.accent;
-    vars.accentHover = theme.accent;
+  if (accent !== null && accent !== "#0098ea") {
+    vars.accent = accent;
+    vars.accentHover = accent;
   }
-  if (theme.bg) vars.bg = theme.bg;
-  if (theme.radius !== 12) vars.radius = `${theme.radius}px`;
+  if (bg !== null) vars.bg = bg;
+  if (radius !== 12) vars.radius = `${radius}px`;
   return Object.keys(vars).length > 0 ? vars : undefined;
 }
 
@@ -75,7 +105,7 @@ export function buildIndexHtml(config: ConstructorConfig): string {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${config.appName || "Toncast Widget"}</title>
+    <title>${escapeHtml(config.appName || "Toncast Widget")}</title>
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
@@ -96,9 +126,9 @@ export function buildIndexHtml(config: ConstructorConfig): string {
   <body>
     <div id="toncast-widget"></div>
 
-    <script src="https://widget.toncast.app/v0/index.iife.js"></script>
+    <script src="${WIDGET_CDN_URL}"></script>
     <script>
-      const widget = new window.ToncastWidget.ToncastWidget(${JSON.stringify(widgetConfig, null, 6).replace(/^/gm, "      ").trimStart()});
+      const widget = new window.ToncastWidget.ToncastWidget(${stringifyForScript(widgetConfig, 6).replace(/^/gm, "      ").trimStart()});
       widget.mount(document.getElementById('toncast-widget'));
     </script>
   </body>
@@ -109,21 +139,19 @@ export function buildIndexHtml(config: ConstructorConfig): string {
 export function buildJsSnippet(config: ConstructorConfig): string {
   const domain = config.domain || "https://your-domain.com";
   const widgetOptions = buildWidgetOptions(config);
-  const widgetPart =
-    Object.keys(widgetOptions).length > 0
-      ? `\n    widget: ${JSON.stringify(widgetOptions, null, 4).replace(/\n/g, "\n    ")},`
-      : "";
+  const widgetConfig: Record<string, unknown> = {
+    tonconnect: {
+      type: "standalone",
+      options: { domain },
+    },
+  };
+  if (Object.keys(widgetOptions).length > 0) widgetConfig.widget = widgetOptions;
 
   return `<div id="toncast-widget"></div>
 
-<script src="https://widget.toncast.app/v0/index.iife.js"></script>
+<script src="${WIDGET_CDN_URL}"></script>
 <script>
-  const widget = new window.ToncastWidget.ToncastWidget({
-    tonconnect: {
-      type: 'standalone',
-      options: { domain: '${domain}' },
-    },${widgetPart}
-  });
+  const widget = new window.ToncastWidget.ToncastWidget(${stringifyForScript(widgetConfig, 4).replace(/\n/g, "\n  ")});
   widget.mount(document.getElementById('toncast-widget'));
 </script>`;
 }
@@ -132,7 +160,7 @@ export function buildReactSnippet(config: ConstructorConfig): string {
   const widgetOptions = buildWidgetOptions(config);
   const widgetPart =
     Object.keys(widgetOptions).length > 0
-      ? `,\n        widget: ${JSON.stringify(widgetOptions, null, 8).replace(/\n/g, "\n        ")}`
+      ? `,\n        widget: ${stringifyForScript(widgetOptions, 8).replace(/\n/g, "\n        ")}`
       : "";
 
   return `import { useEffect, useRef } from 'react';
@@ -161,6 +189,7 @@ function ToncastBettingWidget() {
 }
 
 export async function downloadZip(config: ConstructorConfig): Promise<void> {
+  const { default: JSZip } = await import("jszip");
   const zip = new JSZip();
   const folder = zip.folder("toncast-widget");
   if (!folder) throw new Error("Failed to create zip folder");
@@ -177,5 +206,6 @@ export async function downloadZip(config: ConstructorConfig): Promise<void> {
   a.href = url;
   a.download = "toncast-widget.zip";
   a.click();
-  URL.revokeObjectURL(url);
+  // Delay revocation to let the browser start the download before the URL is invalidated.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
