@@ -19,18 +19,38 @@ export function ParisListView() {
 
       {/* Category filter */}
       <div className="tc-category-bar">
-        {categories.data?.map((c) => (
-          <Button
-            key={c.name}
-            variant={current.name === c.name ? "primary" : "secondary"}
-            size="sm"
-            className="tc-btn-rounded"
-            onClick={() => setActive(c)}
-            style={{ whiteSpace: "nowrap", flexShrink: 0 }}
-          >
-            {c.name === "All" ? t("category.all") : c.name}
-          </Button>
-        ))}
+        {categories.isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton
+              key={String(i)}
+              style={{
+                width: 56,
+                height: 28,
+                borderRadius: 999,
+                flexShrink: 0,
+              }}
+            />
+          ))
+        ) : categories.isError ? (
+          <span className="tc-text-sm tc-text-muted">
+            {t("category.loadFailed")}
+          </span>
+        ) : (
+          categories.data?.map((c) => (
+            <Button
+              key={c.name}
+              variant={current.name === c.name ? "primary" : "secondary"}
+              size="sm"
+              className="tc-btn-rounded"
+              onClick={() => setActive(c)}
+              style={{ whiteSpace: "nowrap", flexShrink: 0 }}
+            >
+              {c.param === ALL_CATEGORY_FILTER.param
+                ? t("category.all")
+                : c.name}
+            </Button>
+          ))
+        )}
       </div>
 
       {isError ? (

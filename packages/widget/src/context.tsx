@@ -30,8 +30,19 @@ export function NavProvider({ children }: { children: ReactNode }) {
   const navigate = useCallback((to: WidgetView) => {
     setHistory((h) => {
       const current = h[h.length - 1];
-      // Avoid pushing duplicate entries (e.g. tapping "Markets" twice).
-      if (current && current.name === to.name && !("pariId" in to)) return h;
+      if (!current) return [...h, to];
+      // Skip duplicate for tab-level views (list, bets).
+      if (current.name === to.name && !("pariId" in to)) return h;
+      // Skip duplicate for detail view with same pariId AND same initialSide.
+      // If initialSide differs (e.g. YES→NO pre-selection), allow the push so
+      // the detail view can update its default bet side.
+      if (
+        current.name === "detail" &&
+        to.name === "detail" &&
+        current.pariId === to.pariId &&
+        current.initialSide === to.initialSide
+      )
+        return h;
       return [...h, to];
     });
   }, []);

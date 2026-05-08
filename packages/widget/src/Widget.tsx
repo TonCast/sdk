@@ -2,6 +2,7 @@ import { createTonClient, ToncastClient } from "@toncast/sdk";
 import { ToncastProvider } from "@toncast/sdk-react";
 import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
+import type { ClientStandaloneDescriptor } from "./types";
 import { NavBar } from "./components/NavBar";
 import { WidgetHeader } from "./components/WidgetHeader";
 import { ConfigProvider, NavProvider, useNav } from "./context";
@@ -84,7 +85,43 @@ function WidgetShell() {
   );
 }
 
-// Wraps with ToncastProvider + I18n
+/**
+ * Isolated component that holds a single standalone ToncastClient.
+ * Rendered with a `key` by ToncastLayer — React remounts it (and resets TanStack
+ * Query cache) whenever client-critical config changes: endpoint, apiKey, network,
+ * language, or referral. All other config changes (theme, cssVars, …) don't affect
+ * the key, so the client survives cosmetic re-renders.
+ */
+function StandaloneClientLayer({
+  desc,
+  config,
+  children,
+}: {
+  desc: ClientStandaloneDescriptor | undefined;
+  config: ToncastWidgetConfig;
+  children: React.ReactNode;
+}) {
+  const clientRef = useRef<ToncastClient | null>(null);
+  if (!clientRef.current) {
+    clientRef.current = new ToncastClient({
+      tonClient: createTonClient({
+        endpoint: desc?.endpoint,
+        apiKey: desc?.apiKey,
+        network: desc?.network,
+      }),
+      referral: config.widget?.referral,
+      language: config.widget?.language,
+    });
+  }
+
+  return (
+    <ToncastProvider client={clientRef.current}>
+      <I18nProvider>{children}</I18nProvider>
+    </ToncastProvider>
+  );
+}
+
+/** Wraps children with the correct ToncastProvider + I18n layer. */
 function ToncastLayer({
   config,
   children,
@@ -92,26 +129,32 @@ function ToncastLayer({
   config: ToncastWidgetConfig;
   children: React.ReactNode;
 }) {
-  const clientRef = useRef<ToncastClient | null>(null);
-
-  let client: ToncastClient;
+  // Integrated: host controls the client — always use the latest instance.
   if (config.client?.type === "integrated") {
-    client = config.client.instance;
-  } else {
-    if (!clientRef.current) {
-      clientRef.current = new ToncastClient({
-        tonClient: createTonClient({ endpoint: "https://toncenter.com/api/v2/jsonRPC" }),
-        referral: config.widget?.referral,
-        language: config.widget?.language,
-      });
-    }
-    client = clientRef.current;
+    return (
+      <ToncastProvider client={config.client.instance}>
+        <I18nProvider>{children}</I18nProvider>
+      </ToncastProvider>
+    );
   }
 
+  // Standalone: build a stable key from client-critical config. When any of
+  // these change the StandaloneClientLayer remounts, creating a fresh client
+  // and resetting TanStack Query cache (correct — the data source changed).
+  const desc = config.client as ClientStandaloneDescriptor | undefined;
+  const clientKey = [
+    desc?.endpoint ?? "",
+    desc?.apiKey ?? "",
+    desc?.network ?? "mainnet",
+    config.widget?.language ?? "",
+    config.widget?.referral?.address ?? "",
+    String(config.widget?.referral?.pct ?? ""),
+  ].join("|");
+
   return (
-    <ToncastProvider client={client}>
-      <I18nProvider>{children}</I18nProvider>
-    </ToncastProvider>
+    <StandaloneClientLayer key={clientKey} desc={desc} config={config}>
+      {children}
+    </StandaloneClientLayer>
   );
 }
 

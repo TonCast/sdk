@@ -100,6 +100,17 @@ export function buildIndexHtml(config: ConstructorConfig): string {
 
   const css = buildStyleCss(config);
 
+  const isSystem = config.theme.colorScheme === "system";
+  const isDark = config.theme.colorScheme === "dark";
+  const bodyBgLight = "#f8fafc";
+  const bodyBgDark = "#0f172a";
+  // Default body background — for "system" we start with light and override in a media query below.
+  const bodyBackground = isDark ? bodyBgDark : bodyBgLight;
+  // Separate @media rule for "system" — must not be nested inside another rule.
+  const systemDarkCss = isSystem
+    ? `\n      @media (prefers-color-scheme: dark) {\n        body { background: ${bodyBgDark}; }\n      }`
+    : "";
+
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -115,8 +126,8 @@ export function buildIndexHtml(config: ConstructorConfig): string {
         align-items: center;
         justify-content: center;
         padding: 16px;
-        background: ${config.theme.colorScheme === "dark" ? "#0f172a" : "#f8fafc"};
-      }
+        background: ${bodyBackground};
+      }${systemDarkCss}
       #toncast-widget {
         width: 100%;
         max-width: 480px;

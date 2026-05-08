@@ -27,7 +27,7 @@ export function App() {
   return (
     <div className="flex h-full overflow-hidden bg-slate-950 text-slate-200">
       {/* ── Left: settings panel ── */}
-      <aside className="w-72 flex-shrink-0 flex flex-col border-r border-slate-800 bg-slate-950">
+      <aside className="w-72 shrink-0 flex flex-col border-r border-slate-800 bg-slate-950">
         {/* Header */}
         <div className="px-4 py-3 border-b border-slate-800">
           <div className="text-sm font-bold text-slate-100 leading-tight">
@@ -37,11 +37,15 @@ export function App() {
         </div>
 
         {/* Tab bar */}
-        <div className="flex border-b border-slate-800 bg-slate-900/50">
+        <div role="tablist" className="flex border-b border-slate-800 bg-slate-900/50">
           {TABS.map((t) => (
             <button
               key={t.id}
+              id={`tab-${t.id}`}
+              role="tab"
               type="button"
+              aria-selected={tab === t.id}
+              aria-controls={`panel-${t.id}`}
               onClick={() => setTab(t.id)}
               className={`flex-1 py-2.5 text-xs font-semibold transition-all ${
                 tab === t.id
@@ -56,7 +60,12 @@ export function App() {
 
         {/* Tab content — scrollable */}
         <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
+          <div
+            role="tabpanel"
+            id={`panel-${tab}`}
+            aria-labelledby={`tab-${tab}`}
+            className="p-4"
+          >
             {tab === "theme" && (
               <ThemeTab
                 theme={config.theme}

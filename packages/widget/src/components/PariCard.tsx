@@ -68,8 +68,8 @@ export function PariCard({ pari }: { pari: Pari }) {
     yesOdds % 2 === 0;
   const yesDecimal = oddsOk ? yesOddsToDecimalOdds(yesOdds, true).toFixed(2) : null;
   const noDecimal = oddsOk ? yesOddsToDecimalOdds(yesOdds, false).toFixed(2) : null;
-  const timeLeft = formatTimeLeft(pari.endTime);
-  const ended = timeLeft === "ended";
+  const timeLeft = formatTimeLeft(pari.endTime, t as Parameters<typeof formatTimeLeft>[1]);
+  const ended = pari.endTime - Date.now() / 1000 <= 0;
 
   const goDetail = () => navigate({ name: "detail", pariId: pari.id });
 

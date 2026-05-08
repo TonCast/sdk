@@ -41,7 +41,9 @@ export function LivePreview({ config, deviceMode }: LivePreviewProps) {
       ...(config.referralAddress && config.referralPct > 0
         ? { referral: { address: config.referralAddress, pct: config.referralPct } }
         : {}),
-      // languages: [] means show all; otherwise pass the selected subset
+      // In the constructor, empty languages = "All" (no filter applied) = omit the prop,
+      // which makes the widget show all languages. To hide the picker entirely pass [].
+      // The constructor currently has no "hide picker" option — that is a product gap.
       ...(config.languages.length > 0
         ? { languages: config.languages as SupportedLanguage[] }
         : {}),

@@ -17,18 +17,26 @@ export function ThemeTab({ theme, onChange }: Props) {
           Color scheme
         </p>
         <div className="flex gap-2">
-          {(["light", "dark", "system"] as const).map((s) => (
+          {(
+            [
+              { value: "light", label: "Light", emoji: "☀️" },
+              { value: "dark", label: "Dark", emoji: "🌙" },
+              { value: "system", label: "System", emoji: "🖥️" },
+            ] as const
+          ).map(({ value, label, emoji }) => (
             <button
-              key={s}
+              key={value}
               type="button"
-              onClick={() => set("colorScheme", s)}
+              aria-label={label}
+              aria-pressed={theme.colorScheme === value}
+              onClick={() => set("colorScheme", value)}
               className={`flex-1 py-2 rounded-lg border text-xs font-semibold transition-all ${
-                theme.colorScheme === s
+                theme.colorScheme === value
                   ? "bg-sky-500/20 text-sky-300 border-sky-500/50"
                   : "bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-500"
               }`}
             >
-              {s === "light" ? "☀️ Light" : s === "dark" ? "🌙 Dark" : "🖥️ System"}
+              {emoji} {label}
             </button>
           ))}
         </div>

@@ -3,6 +3,9 @@ import type { SupportedLanguage } from "@toncast/sdk";
 const en = {
   "nav.list": "Markets",
   "nav.bets": "My Bets",
+  "nav.ariaLabel": "Widget navigation",
+
+  "header.language": "Language",
 
   "page.paris.title": "Markets",
   "page.paris.empty": "No markets in this category.",
@@ -12,6 +15,7 @@ const en = {
   "page.paris.detail.failed": "Failed: {error}",
 
   "category.all": "All",
+  "category.loadFailed": "Categories unavailable",
 
   "pari.result.title": "Final outcome",
   "pari.result.yes": "YES won",
@@ -84,6 +88,17 @@ const en = {
   "common.showLess": "Show less",
   "wallet.connect": "Connect Wallet",
   "wallet.disconnect": "Disconnect",
+
+  "time.ended": "ended",
+  "time.daysHours": "{d}d {h}h",
+  "time.hoursMinutes": "{h}h {m}m",
+  "time.minutes": "{m}m",
+
+  "bet.ticketsCount": "{n} tickets",
+
+  "pari.status.active": "active",
+  "pari.status.inactive": "inactive",
+  "pari.status.settled": "settled",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -93,6 +108,9 @@ type Catalog = Partial<Record<TranslationKey, string>>;
 const ru: Catalog = {
   "nav.list": "Рынки",
   "nav.bets": "Мои ставки",
+  "nav.ariaLabel": "Навигация виджета",
+
+  "header.language": "Язык",
 
   "page.paris.title": "Рынки",
   "page.paris.empty": "В этой категории нет рынков.",
@@ -102,6 +120,7 @@ const ru: Catalog = {
   "page.paris.detail.failed": "Ошибка: {error}",
 
   "category.all": "Все",
+  "category.loadFailed": "Категории недоступны",
 
   "pari.result.title": "Итог",
   "pari.result.yes": "ДА победил",
@@ -174,6 +193,17 @@ const ru: Catalog = {
   "common.showLess": "Свернуть",
   "wallet.connect": "Подключить кошелёк",
   "wallet.disconnect": "Отключить",
+
+  "time.ended": "завершён",
+  "time.daysHours": "{d}д {h}ч",
+  "time.hoursMinutes": "{h}ч {m}м",
+  "time.minutes": "{m}м",
+
+  "bet.ticketsCount": "{n} билетов",
+
+  "pari.status.active": "активен",
+  "pari.status.inactive": "неактивен",
+  "pari.status.settled": "завершён",
 };
 
 export const EN_CATALOG = en;

@@ -1,3 +1,5 @@
+import type { SupportedLanguage } from "@toncast/sdk";
+
 export type Device = "mobile" | "tablet" | "desktop";
 
 export interface ThemeConfig {
@@ -13,10 +15,10 @@ export interface ConstructorConfig {
   appName: string;
   /** Icon URL shown in tonconnect-manifest.json (square PNG ≥ 180×180) */
   iconUrl: string;
-  /** Default language for the widget */
-  language: string;
+  /** Default language for the widget. Empty string = auto-detect. */
+  language: SupportedLanguage | "";
   /** Languages available in the widget's in-app picker. Empty = show all. */
-  languages: string[];
+  languages: SupportedLanguage[];
   referralAddress: string;
   referralPct: number;
   theme: ThemeConfig;

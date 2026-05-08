@@ -1,6 +1,7 @@
+import type { SupportedLanguage } from "@toncast/sdk";
 import type { ConstructorConfig } from "../types";
 
-const LANGUAGES = [
+const LANGUAGES: { code: SupportedLanguage; label: string }[] = [
   { code: "en", label: "English" },
   { code: "ru", label: "Русский" },
   { code: "hi", label: "हिन्दी" },
@@ -27,7 +28,7 @@ export function ConfigTab({ config, onChange }: Props) {
   const set = <K extends keyof ConstructorConfig>(key: K, value: ConstructorConfig[K]) =>
     onChange({ ...config, [key]: value });
 
-  const toggleLang = (code: string) => {
+  const toggleLang = (code: SupportedLanguage) => {
     const current = config.languages;
     set(
       "languages",
@@ -149,7 +150,7 @@ export function ConfigTab({ config, onChange }: Props) {
         <select
           id="tc-language"
           value={config.language}
-          onChange={(e) => set("language", e.target.value)}
+          onChange={(e) => set("language", e.target.value as SupportedLanguage | "")}
           className="w-full h-9 px-3 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-xs focus:outline-none focus:border-sky-500/50"
         >
           <option value="">Auto-detect (navigator.language)</option>

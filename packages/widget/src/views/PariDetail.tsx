@@ -142,7 +142,7 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
             >
               <h2 className="tc-detail-title">{snap.pari.name}</h2>
               <span className="tc-badge tc-badge-default" style={{ flexShrink: 0 }}>
-                {snap.pari.status}
+                {t(`pari.status.${snap.pari.status}` as Parameters<typeof t>[0]) || snap.pari.status}
               </span>
             </div>
             <ExpandableDescription text={snap.pari.description} />
@@ -165,8 +165,12 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
 
       {snap?.pari ? <OutcomeBanner pari={snap.pari} /> : null}
 
-      {/* Bet card */}
-      {snap?.pari && isSettledOutcome(snap.pari) ? (
+      {/* Bet card — wait for pari data before mounting to avoid empty interactions */}
+      {!snap?.pari ? (
+        <div className="tc-card">
+          <Skeleton style={{ height: 180, borderRadius: "var(--tc-radius)" }} />
+        </div>
+      ) : isSettledOutcome(snap.pari) ? (
         <div className="tc-notice tc-notice-muted">{t("pari.bettingClosed")}</div>
       ) : (
         <div className="tc-card">

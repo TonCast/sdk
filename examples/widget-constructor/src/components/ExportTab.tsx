@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ConstructorConfig } from "../types";
 import {
   buildJsSnippet,
@@ -10,18 +10,26 @@ import {
 
 function CopyButton({ text }: { text: string }) {
   const [state, setState] = useState<"idle" | "copied" | "error">("idle");
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) clearTimeout(timerRef.current);
+    };
+  }, []);
+
   return (
     <button
       type="button"
       onClick={async () => {
+        if (timerRef.current !== null) clearTimeout(timerRef.current);
         try {
           await navigator.clipboard.writeText(text);
           setState("copied");
-          setTimeout(() => setState("idle"), 2000);
         } catch {
           setState("error");
-          setTimeout(() => setState("idle"), 2000);
         }
+        timerRef.current = setTimeout(() => setState("idle"), 2000);
       }}
       className="text-xs px-2.5 py-1 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors font-medium"
     >

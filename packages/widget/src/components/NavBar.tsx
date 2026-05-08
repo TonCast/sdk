@@ -43,7 +43,7 @@ export function NavBar() {
   const { view, navigate } = useNav();
 
   return (
-    <nav className="tc-nav" aria-label="Toncast widget navigation">
+    <nav className="tc-nav" aria-label={t("nav.ariaLabel")}>
       <button
         type="button"
         className={`tc-nav-btn${isActive(view, "list") ? " tc-active" : ""}`}

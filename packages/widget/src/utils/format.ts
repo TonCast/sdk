@@ -28,13 +28,40 @@ export function shortAddr(addr: string, head = 6, tail = 4): string {
   return `${addr.slice(0, head)}…${addr.slice(-tail)}`;
 }
 
-export function formatTimeLeft(endTime: number, now: number = Date.now()): string {
+export type TimeLeftTranslate = (
+  key: "time.ended" | "time.daysHours" | "time.hoursMinutes" | "time.minutes",
+  vars?: Record<string, number>,
+) => string;
+
+/** English prose fallback used when no translator is provided. */
+function englishTimeLeft(
+  key: "time.ended" | "time.daysHours" | "time.hoursMinutes" | "time.minutes",
+  vars?: Record<string, number>,
+): string {
+  switch (key) {
+    case "time.ended": return "Ended";
+    case "time.daysHours": return `${vars?.d ?? 0}d ${vars?.h ?? 0}h`;
+    case "time.hoursMinutes": return `${vars?.h ?? 0}h ${vars?.m ?? 0}m`;
+    case "time.minutes": return `${vars?.m ?? 0}m`;
+  }
+}
+
+/**
+ * Returns a human-readable time remaining string.
+ * Pass a `t` translator to get localised output; omit for English fallback.
+ */
+export function formatTimeLeft(
+  endTime: number,
+  t?: TimeLeftTranslate,
+  now: number = Date.now(),
+): string {
+  const translate = t ?? englishTimeLeft;
   const remaining = Math.floor(endTime - now / 1000);
-  if (remaining <= 0) return "ended";
+  if (remaining <= 0) return translate("time.ended");
   const d = Math.floor(remaining / 86_400);
   const h = Math.floor((remaining % 86_400) / 3600);
   const m = Math.floor((remaining % 3600) / 60);
-  if (d > 0) return `${d}d ${h}h`;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
+  if (d > 0) return translate("time.daysHours", { d, h });
+  if (h > 0) return translate("time.hoursMinutes", { h, m });
+  return translate("time.minutes", { m });
 }

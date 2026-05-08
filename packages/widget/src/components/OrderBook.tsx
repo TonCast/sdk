@@ -34,8 +34,8 @@ export function OrderBook({ oddsState }: { oddsState: OddsState | null }) {
         <div style={{ textAlign: "center" }}>{t("orderBook.price")}</div>
         <div className="tc-ob-no-label">{t("orderBook.buyNo")}</div>
       </div>
-      {visible.map((r) => (
-        <Row key={r.yesOdds} bucket={r} yesMax={yesMax} noMax={noMax} />
+      {visible.map((r, i) => (
+        <Row key={`${r.yesOdds}-${i}`} bucket={r} yesMax={yesMax} noMax={noMax} />
       ))}
     </div>
   );

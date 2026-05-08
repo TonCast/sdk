@@ -20,7 +20,7 @@ export const Slider = forwardRef<ElementRef<typeof SliderPrimitive.Root>, Slider
             <SliderPrimitive.Range className="tc-slider-range" style={{ width: `${pct * 100}%` }} />
           )}
         </SliderPrimitive.Track>
-        <SliderPrimitive.Thumb className="tc-slider-thumb" style={{ left: `${pct * 100}%` }} />
+        <SliderPrimitive.Thumb className="tc-slider-thumb" />
       </SliderPrimitive.Root>
     );
   },

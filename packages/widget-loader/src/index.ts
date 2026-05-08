@@ -32,6 +32,11 @@
  * ```
  */
 
+/**
+ * Re-declared here because `widget-loader` is a CDN-only package with no dependency
+ * on `@toncast/sdk`. Keep this union in sync with `SupportedLanguage` in that package
+ * whenever a new language is added.
+ */
 export type SupportedLanguage = "en" | "ru" | "hi" | "es" | "zh" | "fr" | "de" | "pt" | "fa" | "ar";
 
 export type ToncastWidgetConstructor = new (config: ToncastWidgetConfig) => ToncastWidgetInstance;
@@ -78,7 +83,19 @@ export interface ToncastWidgetConfig<
         instance: TonConnectInstance;
       };
   client?:
-    | { type: "standalone" }
+    | {
+        type: "standalone";
+        /**
+         * Custom RPC endpoint for the TON client.
+         * Defaults to `https://toncenter.com/api/v2/jsonRPC`.
+         * **Production note**: supply your own endpoint + apiKey to avoid rate limits.
+         */
+        endpoint?: string;
+        /** API key for the endpoint (e.g. toncenter `X-API-Key`). */
+        apiKey?: string;
+        /** "mainnet" | "testnet". Defaults to "mainnet". */
+        network?: "mainnet" | "testnet";
+      }
     | {
         type: "integrated";
         /** Existing ToncastClient instance from your app. */
@@ -108,6 +125,14 @@ export interface ToncastWidgetConfig<
 export interface ToncastWidgetInstance {
   mount(container: Element): void;
   unmount(): void;
+  /**
+   * Re-render the widget with an updated config without unmounting.
+   * Changes to `endpoint`, `apiKey`, `network`, `language`, or `referral` will
+   * create a fresh ToncastClient — a brief loading state will appear.
+   * Purely visual changes (theme, cssVars, …) are applied instantly.
+   * Safe to call before `mount()`.
+   */
+  update(config: ToncastWidgetConfig): void;
   on(event: "mount", listener: (payload: { container: Element }) => void): this;
   on(event: "unmount", listener: () => void): this;
   on(event: "error", listener: (err: unknown) => void): this;

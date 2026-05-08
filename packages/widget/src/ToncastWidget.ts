@@ -13,7 +13,13 @@ const STYLE_VERSION = "0.0.1";
 let mountedCount = 0;
 
 function injectStyles(): void {
-  if (document.getElementById(STYLE_ID)) return;
+  const existing = document.getElementById(STYLE_ID);
+  if (existing) {
+    // Same version already injected — nothing to do.
+    if (existing.getAttribute("data-version") === STYLE_VERSION) return;
+    // Outdated version present — replace so the current CSS wins.
+    existing.remove();
+  }
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.setAttribute("data-version", STYLE_VERSION);
@@ -28,7 +34,7 @@ function removeStyles(): void {
 type EventListener<T> = T extends void ? () => void : (payload: T) => void;
 
 export class ToncastWidget {
-  private readonly config: ToncastWidgetConfig;
+  private config: ToncastWidgetConfig;
   private root: Root | null = null;
   protected readonly listeners: Partial<{
     [K in keyof ToncastWidgetEventMap]: Array<EventListener<ToncastWidgetEventMap[K]>>;
@@ -36,6 +42,19 @@ export class ToncastWidget {
 
   constructor(config: ToncastWidgetConfig) {
     this.config = config;
+  }
+
+  /**
+   * Merges current config with an `onBet` bridge.
+   * Composes with user-supplied `onBet` if present — both receive every event.
+   */
+  private buildConfig(): ToncastWidgetConfig {
+    const userOnBet = this.config.widget?.onBet;
+    const onBet = (pariId: string, amount: bigint, side: "yes" | "no") => {
+      this.emit("bet", { pariId, amount, side });
+      userOnBet?.(pariId, amount, side);
+    };
+    return { ...this.config, widget: { ...this.config.widget, onBet } };
   }
 
   mount(container: Element): void {
@@ -47,18 +66,23 @@ export class ToncastWidget {
     injectStyles();
     mountedCount++;
     this.root = createRoot(container);
-
-    const onBet = (pariId: string, amount: bigint, side: "yes" | "no") => {
-      this.emit("bet", { pariId, amount, side });
-    };
-
-    const configWithBet: ToncastWidgetConfig = {
-      ...this.config,
-      widget: { ...this.config.widget, onBet },
-    };
-
-    this.root.render(createElement(Widget, { config: configWithBet }));
+    this.root.render(createElement(Widget, { config: this.buildConfig() }));
     this.emit("mount", { container } as ToncastWidgetEventMap["mount"]);
+  }
+
+  /**
+   * Re-render the widget with an updated config without unmounting.
+   * Changes to `endpoint`, `apiKey`, `network`, `language`, or `referral` will
+   * create a fresh ToncastClient and reset the TanStack Query cache — a brief
+   * loading state will appear. Purely visual changes (theme, cssVars, …) are
+   * applied instantly without a data reload.
+   *
+   * Safe to call before `mount()` — the new config will be used on the next mount.
+   */
+  update(config: ToncastWidgetConfig): void {
+    this.config = config;
+    if (!this.root) return;
+    this.root.render(createElement(Widget, { config: this.buildConfig() }));
   }
 
   unmount(): void {

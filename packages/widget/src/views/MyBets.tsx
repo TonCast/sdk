@@ -79,7 +79,7 @@ function BetRow({ bet }: { bet: Bet }) {
               </div>
             )}
             <div className="tc-bet-row-meta">
-              {bet.ticketsCount} ticket{bet.ticketsCount !== 1 ? "s" : ""} · {amountTon} TON ·{" "}
+              {t("bet.ticketsCount", { n: bet.ticketsCount })} · {amountTon} TON ·{" "}
               {date}
             </div>
           </div>
@@ -99,6 +99,10 @@ export function MyBetsView() {
   const [nextCursor, setNextCursor] = useState<Cursor | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const appendedRef = useRef(new Set<string>());
+  // Ref keeps latest `all` accessible in the pagination effect without being a dep,
+  // preventing an effect re-run (and potential double-append) on every state update.
+  const allRef = useRef<Bet[]>([]);
+  allRef.current = all;
 
   const query = useBets(cursor !== null ? { cursor } : {}, {
     enabled: Boolean(address),
@@ -109,12 +113,12 @@ export function MyBetsView() {
     const key = cursorKey(cursor);
     if (appendedRef.current.has(key)) return;
     appendedRef.current.add(key);
-    setNextCursor(query.data.nextCursor);
-    const items = query.data.items;
-    const next = appendBetsPage(all, items, { reset: cursor === null });
+    const { nextCursor: nc, items, hasMore: more } = query.data;
+    const next = appendBetsPage(allRef.current, items, { reset: cursor === null });
+    setNextCursor(nc);
     setAll(next);
-    setHasMore(query.data.hasMore && next.length < MAX_RENDERED_BETS);
-  }, [query.data, cursor, all]);
+    setHasMore(more && next.length < MAX_RENDERED_BETS);
+  }, [query.data, cursor]);
 
   const prevAddrRef = useRef(address);
   useEffect(() => {
@@ -180,6 +184,13 @@ export function MyBetsView() {
               {Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={String(i)} style={{ height: 80 }} />
               ))}
+            </div>
+          )}
+          {query.isError && all.length > 0 && (
+            <div className="tc-error" style={{ fontSize: 12 }}>
+              {t("page.bets.loadFailed", {
+                error: query.error instanceof Error ? query.error.message : String(query.error),
+              })}
             </div>
           )}
           {hasMore && !isLoadingMore && (

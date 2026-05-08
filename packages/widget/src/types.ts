@@ -19,6 +19,16 @@ export type TonConnectDescriptor = TcStandaloneDescriptor | TcIntegratedDescript
 
 export type ClientStandaloneDescriptor = {
   type: "standalone";
+  /**
+   * Custom RPC endpoint for the TON client.
+   * Defaults to `https://toncenter.com/api/v2/jsonRPC`.
+   * **Production note**: supply your own endpoint + apiKey to avoid rate limits.
+   */
+  endpoint?: string;
+  /** API key for the endpoint (e.g. toncenter `X-API-Key`). */
+  apiKey?: string;
+  /** "mainnet" | "testnet". Defaults to "mainnet". */
+  network?: "mainnet" | "testnet";
 };
 
 export type ClientIntegratedDescriptor = {
