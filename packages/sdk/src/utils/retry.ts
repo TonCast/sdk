@@ -28,6 +28,9 @@ export async function withRetry<T>(fn: () => Promise<T>, opts: RetryOptions = {}
       return await fn();
     } catch (err) {
       lastErr = err;
+      // AbortError means the caller cancelled the request intentionally (e.g. component
+      // unmount). Retrying would fire more requests that also get aborted — bail immediately.
+      if (err instanceof Error && err.name === "AbortError") break;
       if (attempt === maxAttempts - 1) break;
 
       const baseDelay = delayMs * 2 ** attempt;

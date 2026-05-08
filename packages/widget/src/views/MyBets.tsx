@@ -104,9 +104,12 @@ export function MyBetsView() {
   const allRef = useRef<Bet[]>([]);
   allRef.current = all;
 
-  const query = useBets(cursor !== null ? { cursor } : {}, {
-    enabled: Boolean(address),
-  });
+  // userAddress must be part of the params so it is included in the TanStack Query
+  // cache key — prevents stale data from a previous user flashing when a new wallet connects.
+  const query = useBets(
+    cursor !== null ? { cursor, userAddress: address } : { userAddress: address },
+    { enabled: Boolean(address) },
+  );
 
   useEffect(() => {
     if (!query.data) return;

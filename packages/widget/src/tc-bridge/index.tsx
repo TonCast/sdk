@@ -72,15 +72,14 @@ export function IntegratedProvider({
   const [restored, setRestored] = useState(false);
 
   useEffect(() => {
-    // Subscribe to wallet status changes via the public API
+    // Re-sync in case the wallet connected/restored between initial render and this effect.
+    setAddress(instance.account?.address ?? "");
     const unsubscribe = instance.onStatusChange((wallet) => {
       setAddress(wallet?.account?.address ?? "");
     });
-    // Mark as restored immediately — TonConnectUI restores from localStorage synchronously
+    // Mark as restored immediately — TonConnectUI restores from localStorage synchronously.
     setRestored(true);
-    return () => {
-      unsubscribe();
-    };
+    return unsubscribe;
   }, [instance]);
 
   const state: TcState = {

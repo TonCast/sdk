@@ -1,4 +1,4 @@
-import type { ConstructorConfig } from "../types";
+import { DEFAULT_ACCENT, type ConstructorConfig, type ThemeColorSet } from "../types";
 
 const WIDGET_CDN_URL = "https://widget.toncast.app/v0/index.iife.js";
 
@@ -39,41 +39,141 @@ export function buildManifestJson(config: ConstructorConfig): string {
   );
 }
 
-/** Builds optional host CSS overrides for the widget container. */
-export function buildStyleCss(config: ConstructorConfig): string | null {
-  const { theme } = config;
-  const accent = safeHexColor(theme.accent);
-  const bg = theme.bg ? safeHexColor(theme.bg) : null;
-  const radius = Number.isFinite(theme.radius) ? Math.max(0, Math.min(64, theme.radius)) : 12;
-  const hasOverrides = (accent !== null && accent !== "#0098ea") || bg !== null || radius !== 12;
-  if (!hasOverrides) return null;
-
-  const lines: string[] = ["#toncast-widget {"];
-  if (accent !== null && accent !== "#0098ea") {
-    lines.push(`  --tc-accent: ${accent};`);
-    lines.push(`  --tc-accent-hover: ${accent};`);
-  }
-  if (bg !== null) lines.push(`  --tc-bg: ${bg};`);
-  if (radius !== 12) lines.push(`  --tc-radius: ${radius}px;`);
-  lines.push("}");
-
-  return lines.join("\n");
-}
-
-/** Builds the widget.cssVars object for JS/React configs. */
-function buildCssVarsConfig(config: ConstructorConfig): Record<string, string> | undefined {
-  const { theme } = config;
-  const accent = safeHexColor(theme.accent);
-  const bg = theme.bg ? safeHexColor(theme.bg) : null;
-  const radius = Number.isFinite(theme.radius) ? Math.max(0, Math.min(64, theme.radius)) : 12;
+/** Returns a CSS vars sub-object for a given color set, or null if no overrides. */
+function colorSetVars(
+  colors: ThemeColorSet,
+  defaultAccent = DEFAULT_ACCENT,
+): Record<string, string> | null {
   const vars: Record<string, string> = {};
-  if (accent !== null && accent !== "#0098ea") {
+  const accent = safeHexColor(colors.accent);
+  const bg = colors.bg ? safeHexColor(colors.bg) : null;
+  if (accent !== null && accent !== defaultAccent) {
     vars.accent = accent;
     vars.accentHover = accent;
   }
   if (bg !== null) vars.bg = bg;
+  return Object.keys(vars).length > 0 ? vars : null;
+}
+
+/** Returns gridCols CSS value for the selected column count (null = auto/default). */
+function gridColsValue(columns: number): string | null {
+  if (!columns || columns < 1) return null;
+  return `repeat(${columns}, 1fr)`;
+}
+
+/**
+ * Builds the widget.cssVars object for JS/React configs.
+ * Exported so LivePreview can reuse without duplicating the logic.
+ */
+export function buildCssVarsConfig(
+  config: ConstructorConfig,
+): Record<string, unknown> | undefined {
+  const { theme } = config;
+  const radius = Number.isFinite(theme.radius) ? Math.max(0, Math.min(64, theme.radius)) : 12;
+  const gridCols = gridColsValue(theme.columns);
+
+  const vars: Record<string, unknown> = {};
+
+  // Base radius (applies to both themes)
   if (radius !== 12) vars.radius = `${radius}px`;
+
+  // Grid columns (applies globally)
+  if (gridCols) vars.gridCols = gridCols;
+
+  // Per-theme color overrides
+  const lightVars = colorSetVars(theme.light);
+  const darkVars = colorSetVars(theme.dark);
+
+  if (theme.colorScheme === "light") {
+    // Only light mode active — put vars at base level (simpler output)
+    if (lightVars) Object.assign(vars, lightVars);
+  } else if (theme.colorScheme === "dark") {
+    // Only dark mode active — put vars at base level
+    if (darkVars) Object.assign(vars, darkVars);
+  } else {
+    // System: emit per-theme sub-objects so each mode gets its own palette
+    if (lightVars) vars.light = lightVars;
+    if (darkVars) vars.dark = darkVars;
+  }
+
   return Object.keys(vars).length > 0 ? vars : undefined;
+}
+
+/** Builds optional host CSS overrides for the widget container (for CSS snippet export). */
+export function buildStyleCss(config: ConstructorConfig): string | null {
+  const { theme } = config;
+  const radius = Number.isFinite(theme.radius) ? Math.max(0, Math.min(64, theme.radius)) : 12;
+  const gridCols = gridColsValue(theme.columns);
+
+  const lightAccent = safeHexColor(theme.light.accent);
+  const lightBg = theme.light.bg ? safeHexColor(theme.light.bg) : null;
+  const darkAccent = safeHexColor(theme.dark.accent);
+  const darkBg = theme.dark.bg ? safeHexColor(theme.dark.bg) : null;
+
+  const baseLines: string[] = [];
+  if (radius !== 12) baseLines.push(`  --tc-radius: ${radius}px;`);
+  if (gridCols) baseLines.push(`  --tc-grid-cols: ${gridCols};`);
+
+  const lightLines: string[] = [];
+  if (
+    theme.colorScheme !== "dark" &&
+    lightAccent !== null &&
+    lightAccent !== DEFAULT_ACCENT
+  ) {
+    lightLines.push(`  --tc-accent: ${lightAccent};`);
+    lightLines.push(`  --tc-accent-hover: ${lightAccent};`);
+  }
+  if (theme.colorScheme !== "dark" && lightBg !== null) {
+    lightLines.push(`  --tc-bg: ${lightBg};`);
+  }
+
+  const darkLines: string[] = [];
+  if (
+    theme.colorScheme !== "light" &&
+    darkAccent !== null &&
+    darkAccent !== DEFAULT_ACCENT
+  ) {
+    darkLines.push(`  --tc-accent: ${darkAccent};`);
+    darkLines.push(`  --tc-accent-hover: ${darkAccent};`);
+  }
+  if (theme.colorScheme !== "light" && darkBg !== null) {
+    darkLines.push(`  --tc-bg: ${darkBg};`);
+  }
+
+  const hasOverrides =
+    baseLines.length > 0 || lightLines.length > 0 || darkLines.length > 0;
+  if (!hasOverrides) return null;
+
+  const out: string[] = [];
+
+  if (theme.colorScheme === "system") {
+    // Light vars go in the base block; dark vars in a media query override
+    const allBaseLines = [...baseLines, ...lightLines];
+    if (allBaseLines.length > 0) {
+      out.push("#toncast-widget {", ...allBaseLines, "}");
+    }
+    if (darkLines.length > 0) {
+      out.push(
+        "@media (prefers-color-scheme: dark) {",
+        "  #toncast-widget {",
+        ...darkLines.map((l) => `  ${l}`),
+        "  }",
+        "}",
+      );
+    }
+  } else if (theme.colorScheme === "dark") {
+    const allLines = [...baseLines, ...darkLines];
+    if (allLines.length > 0) {
+      out.push("#toncast-widget {", ...allLines, "}");
+    }
+  } else {
+    const allLines = [...baseLines, ...lightLines];
+    if (allLines.length > 0) {
+      out.push("#toncast-widget {", ...allLines, "}");
+    }
+  }
+
+  return out.length > 0 ? out.join("\n") : null;
 }
 
 /** Shared helper — builds the widget options object from constructor config. */
@@ -104,9 +204,7 @@ export function buildIndexHtml(config: ConstructorConfig): string {
   const isDark = config.theme.colorScheme === "dark";
   const bodyBgLight = "#f8fafc";
   const bodyBgDark = "#0f172a";
-  // Default body background — for "system" we start with light and override in a media query below.
   const bodyBackground = isDark ? bodyBgDark : bodyBgLight;
-  // Separate @media rule for "system" — must not be nested inside another rule.
   const systemDarkCss = isSystem
     ? `\n      @media (prefers-color-scheme: dark) {\n        body { background: ${bodyBgDark}; }\n      }`
     : "";
@@ -217,6 +315,5 @@ export async function downloadZip(config: ConstructorConfig): Promise<void> {
   a.href = url;
   a.download = "toncast-widget.zip";
   a.click();
-  // Delay revocation to let the browser start the download before the URL is invalidated.
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

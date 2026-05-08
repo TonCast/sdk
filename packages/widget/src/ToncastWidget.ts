@@ -7,7 +7,19 @@ import type { ToncastWidgetConfig, ToncastWidgetEventMap } from "./types";
 import { Widget } from "./Widget";
 
 const STYLE_ID = "toncast-widget-styles";
-const STYLE_VERSION = "0.0.1";
+
+/**
+ * Derive a version tag from the CSS content so the injected <style> tag is
+ * automatically replaced whenever widget.css changes — no manual bump needed.
+ */
+function cssHash(css: string): string {
+  let h = 0;
+  for (let i = 0; i < css.length; i++) {
+    h = (Math.imul(31, h) + css.charCodeAt(i)) | 0;
+  }
+  return (h >>> 0).toString(36);
+}
+const STYLE_VERSION = cssHash(widgetCss as unknown as string);
 
 /** Tracks how many ToncastWidget instances are currently mounted. */
 let mountedCount = 0;

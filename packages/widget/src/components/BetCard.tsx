@@ -10,13 +10,34 @@ import { Skeleton } from "./ui/Skeleton";
 import { Slider } from "./ui/Slider";
 import { TonDiamond } from "./ui/TonDiamond";
 
-interface WalletSyncProps {
-  address: string;
-}
-
-function WalletSync({ address }: WalletSyncProps) {
+/** Keeps ToncastClient.userAddress in sync with the active wallet. */
+function WalletSync({ address }: { address: string }) {
   useTonConnectClient(address || null);
   return null;
+}
+
+/** Prompt shown when the wallet is not yet connected. */
+function BetConnectPrompt({ onConnect }: { onConnect: () => void }) {
+  const t = useT();
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 12,
+        padding: "12px 0",
+      }}
+    >
+      <p className="tc-text-sm tc-text-muted" style={{ textAlign: "center" }}>
+        {t("bet.connectPrompt")}
+      </p>
+      <button type="button" className="tc-connect-btn" onClick={onConnect}>
+        <TonDiamond />
+        {t("wallet.connect")}
+      </button>
+    </div>
+  );
 }
 
 export interface BetCardProps {
@@ -131,23 +152,7 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
             <Skeleton style={{ height: 56 }} />
           </>
         ) : !connected ? (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 12,
-              padding: "12px 0",
-            }}
-          >
-            <p className="tc-text-sm tc-text-muted" style={{ textAlign: "center" }}>
-              {t("bet.connectPrompt")}
-            </p>
-            <button type="button" className="tc-connect-btn" onClick={connect}>
-              <TonDiamond />
-              {t("wallet.connect")}
-            </button>
-          </div>
+          <BetConnectPrompt onConnect={connect} />
         ) : (
           <>
             {/* Mode tabs */}

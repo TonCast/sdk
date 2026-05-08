@@ -14,7 +14,7 @@ let minuteTickInterval: ReturnType<typeof setInterval> | null = null;
 
 function subscribeMinuteTick(cb: () => void): () => void {
   minuteTickListeners.add(cb);
-  if (!minuteTickInterval) {
+  if (!minuteTickInterval && typeof setInterval !== "undefined") {
     minuteTickInterval = setInterval(() => {
       for (const listener of minuteTickListeners) listener();
     }, 60_000);

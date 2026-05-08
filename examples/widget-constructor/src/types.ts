@@ -2,11 +2,20 @@ import type { SupportedLanguage } from "@toncast/sdk";
 
 export type Device = "mobile" | "tablet" | "desktop";
 
-export interface ThemeConfig {
-  colorScheme: "light" | "dark" | "system";
+export interface ThemeColorSet {
   accent: string;
   bg: string;
+}
+
+export interface ThemeConfig {
+  colorScheme: "light" | "dark" | "system";
   radius: number;
+  /** Grid columns: 0 = auto (responsive), 1–4 = fixed count */
+  columns: number;
+  /** Colors applied in light mode */
+  light: ThemeColorSet;
+  /** Colors applied in dark mode */
+  dark: ThemeColorSet;
 }
 
 export interface ConstructorConfig {
@@ -24,6 +33,8 @@ export interface ConstructorConfig {
   theme: ThemeConfig;
 }
 
+export const DEFAULT_ACCENT = "#0098ea";
+
 export const DEFAULT_CONFIG: ConstructorConfig = {
   domain: "",
   appName: "",
@@ -34,8 +45,9 @@ export const DEFAULT_CONFIG: ConstructorConfig = {
   referralPct: 0,
   theme: {
     colorScheme: "light",
-    accent: "#0098ea",
-    bg: "",
     radius: 12,
+    columns: 0,
+    light: { accent: DEFAULT_ACCENT, bg: "" },
+    dark: { accent: DEFAULT_ACCENT, bg: "" },
   },
 };

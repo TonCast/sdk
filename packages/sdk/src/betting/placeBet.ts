@@ -303,20 +303,25 @@ export class BettingResource {
       // Diagnostic callback wires into a globally-toggleable flag so the
       // browser can opt in (`window.__TONCAST_DEBUG_SIMULATE = true`)
       // without rebuilding the SDK; otherwise zero overhead.
-      this.cachedApi = new CachedStonApiClient(undefined, undefined, (event) => {
-        // biome-ignore lint/suspicious/noExplicitAny: opt-in dev hook
-        const g = globalThis as any;
-        if (g.__TONCAST_DEBUG_SIMULATE) {
-          // `console.log` (not .debug) — Chrome hides .debug by default.
-          // eslint-disable-next-line no-console
-          console.log(
-            `[toncast cached-ston-api] ${event.action}`,
-            event.key,
-            `units=${event.requestedUnits}`,
-            event.anchorUnits != null ? `anchor=${event.anchorUnits}` : "",
-          );
-        }
-      });
+      // The entire branch is stripped by esbuild/rollup in production builds.
+      this.cachedApi = new CachedStonApiClient(undefined, undefined,
+        process.env.NODE_ENV !== "production"
+          ? (event) => {
+              // biome-ignore lint/suspicious/noExplicitAny: opt-in dev hook
+              const g = globalThis as any;
+              if (g.__TONCAST_DEBUG_SIMULATE) {
+                // `console.log` (not .debug) — Chrome hides .debug by default.
+                // eslint-disable-next-line no-console
+                console.log(
+                  `[toncast cached-ston-api] ${event.action}`,
+                  event.key,
+                  `units=${event.requestedUnits}`,
+                  event.anchorUnits != null ? `anchor=${event.anchorUnits}` : "",
+                );
+              }
+            }
+          : undefined,
+      );
       this.txSdk = new ToncastTxSdk({
         tonClient: this.deps.tonClient,
         apiClient: this.cachedApi,

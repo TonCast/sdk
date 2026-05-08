@@ -31,12 +31,13 @@ export class HttpClient {
 
   async request<T>(req: RequestOptions<T>): Promise<T> {
     const url = this.buildUrl(req.path, req.query);
+    const hasBody = req.body !== undefined;
     const init: RequestInit = {
       method: req.method ?? "GET",
-      headers: this.buildHeaders(),
+      headers: this.buildHeaders(hasBody),
       signal: req.signal,
     };
-    if (req.body !== undefined) {
+    if (hasBody) {
       init.body = JSON.stringify(req.body);
     }
 
@@ -90,11 +91,14 @@ export class HttpClient {
   // All Toncast endpoints are currently public — no auth header is sent.
   // If/when auth is introduced, add it here (likely via a `getAuthHeader`
   // option to keep the SDK transport-agnostic).
-  private buildHeaders(): Record<string, string> {
-    return {
-      "content-type": "application/json",
+  private buildHeaders(hasBody: boolean): Record<string, string> {
+    const headers: Record<string, string> = {
       accept: "application/json",
       "accept-language": this.opts.getLanguage(),
     };
+    // content-type is only meaningful on requests that carry a body.
+    // Sending it on GET/DELETE confuses some proxies and CDNs.
+    if (hasBody) headers["content-type"] = "application/json";
+    return headers;
   }
 }

@@ -59,6 +59,13 @@ export interface ToncastWidgetCssVarsBase {
   border?: string;
   /** Border-radius for cards and buttons. Default: 12px */
   radius?: string;
+  /**
+   * Overrides the pari grid column layout.
+   * Accepts any valid CSS `grid-template-columns` value.
+   * Example: `"repeat(2, 1fr)"` forces 2 columns, `"repeat(auto-fill, minmax(140px, 1fr))"` for a denser grid.
+   * Omit to use the default responsive auto-fill layout.
+   */
+  gridCols?: string;
 }
 
 /** CSS custom property overrides applied inline on the widget root element. */

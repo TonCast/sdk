@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ConfigTab } from "./components/ConfigTab";
 import { ExportTab } from "./components/ExportTab";
 import { LivePreview } from "./components/LivePreview";
@@ -19,10 +19,52 @@ const DEVICES: { id: Device; label: string; width: string; icon: string }[] = [
   { id: "desktop", label: "100%", width: "100%", icon: "🖥" },
 ];
 
+const STORAGE_KEY = "tc-constructor-config-v2";
+
+/** Loads config from localStorage, falling back to DEFAULT_CONFIG. */
+function loadConfig(): ConstructorConfig {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<ConstructorConfig>;
+      // Deep-merge theme including nested light/dark color sets so any new
+      // sub-fields added in future versions inherit their defaults correctly.
+      return {
+        ...DEFAULT_CONFIG,
+        ...parsed,
+        theme: {
+          ...DEFAULT_CONFIG.theme,
+          ...parsed.theme,
+          light: { ...DEFAULT_CONFIG.theme.light, ...(parsed.theme?.light ?? {}) },
+          dark: { ...DEFAULT_CONFIG.theme.dark, ...(parsed.theme?.dark ?? {}) },
+        },
+      };
+    }
+  } catch {
+    // Corrupted storage — reset silently.
+  }
+  return DEFAULT_CONFIG;
+}
+
 export function App() {
-  const [config, setConfig] = useState<ConstructorConfig>(DEFAULT_CONFIG);
+  const [config, setConfig] = useState<ConstructorConfig>(loadConfig);
   const [tab, setTab] = useState<Tab>("theme");
   const [device, setDevice] = useState<Device>("mobile");
+
+  // Persist config changes to localStorage.
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+    } catch {
+      // QuotaExceeded / private mode — skip silently.
+    }
+  }, [config]);
+
+  const handleReset = () => {
+    if (window.confirm("Reset all settings to defaults?")) {
+      setConfig(DEFAULT_CONFIG);
+    }
+  };
 
   return (
     <div className="flex h-full overflow-hidden bg-slate-950 text-slate-200">
@@ -79,15 +121,15 @@ export function App() {
 
         {/* Footer nav */}
         <div className="px-4 py-3 border-t border-slate-800 flex items-center justify-between">
-          <a
-            href="https://docs.toncast.app/widget"
-            target="_blank"
-            rel="noreferrer"
-            className="text-xs text-slate-500 hover:text-sky-400 transition-colors"
+          <button
+            type="button"
+            onClick={handleReset}
+            className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
+            title="Reset all settings to defaults"
           >
-            Docs →
-          </a>
-          {tab !== "export" && (
+            Reset
+          </button>
+          {tab !== "export" ? (
             <button
               type="button"
               onClick={() => {
@@ -99,6 +141,15 @@ export function App() {
             >
               Next: {TABS[TABS.findIndex((t) => t.id === tab) + 1]?.label} →
             </button>
+          ) : (
+            <a
+              href="https://docs.toncast.app/widget"
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs text-slate-500 hover:text-sky-400 transition-colors"
+            >
+              Docs →
+            </a>
           )}
         </div>
       </aside>

@@ -8,6 +8,7 @@ import { Widget } from "@toncast/widget/react";
 // Widget CSS — imported directly from source; Vite processes it as a stylesheet.
 import "@toncast/widget/styles/widget.css";
 import type { ConstructorConfig, Device } from "../types";
+import { buildCssVarsConfig } from "../utils/generateZip";
 
 // Dev manifest from the Toncast main domain — works in any environment.
 const DEV_DOMAIN = "https://toncast.me";
@@ -17,17 +18,9 @@ interface LivePreviewProps {
   deviceMode: Device;
 }
 
-const DEFAULT_ACCENT = "#0098ea";
-const DEFAULT_RADIUS = 12;
-
 export function LivePreview({ config, deviceMode }: LivePreviewProps) {
   const domain = config.domain || DEV_DOMAIN;
-
-  const cssVars = {
-    ...(config.theme.accent !== DEFAULT_ACCENT ? { accent: config.theme.accent } : {}),
-    ...(config.theme.bg ? { bg: config.theme.bg } : {}),
-    ...(config.theme.radius !== DEFAULT_RADIUS ? { radius: `${config.theme.radius}px` } : {}),
-  };
+  const cssVars = buildCssVarsConfig(config);
 
   const widgetConfig = {
     tonconnect: {
@@ -36,14 +29,11 @@ export function LivePreview({ config, deviceMode }: LivePreviewProps) {
     },
     widget: {
       theme: config.theme.colorScheme as "light" | "dark" | "system",
-      ...(Object.keys(cssVars).length > 0 ? { cssVars } : {}),
+      ...(cssVars ? { cssVars } : {}),
       ...(config.language ? { language: config.language as SupportedLanguage } : {}),
       ...(config.referralAddress && config.referralPct > 0
         ? { referral: { address: config.referralAddress, pct: config.referralPct } }
         : {}),
-      // In the constructor, empty languages = "All" (no filter applied) = omit the prop,
-      // which makes the widget show all languages. To hide the picker entirely pass [].
-      // The constructor currently has no "hide picker" option — that is a product gap.
       ...(config.languages.length > 0
         ? { languages: config.languages as SupportedLanguage[] }
         : {}),

@@ -45,7 +45,7 @@ const LANG_LABELS: Partial<Record<SupportedLanguage, string>> = {
 export function WidgetHeader() {
   const { lang, setLang } = useI18n();
   const t = useT();
-  const { address, connect, disconnect } = useTcState();
+  const { address, connect, disconnect, restored } = useTcState();
   const config = useWidgetConfig();
   const connected = Boolean(address);
 
@@ -111,11 +111,13 @@ export function WidgetHeader() {
         <div />
       )}
 
-      {/* Wallet connect */}
+      {/* Wallet connect — disabled while TonConnect restores session from localStorage */}
       <button
         type="button"
         onClick={connected ? disconnect : connect}
         className={`tc-header-connect${connected ? " tc-header-connected" : ""}`}
+        disabled={!restored}
+        aria-busy={!restored}
       >
         {!connected && <TonDiamond size={16} />}
         <span>{connected ? shortAddr(address) : t("wallet.connect")}</span>

@@ -1,13 +1,14 @@
 import { createTonClient, ToncastClient } from "@toncast/sdk";
-import { ToncastProvider } from "@toncast/sdk-react";
-import type { CSSProperties } from "react";
+import { ToncastProvider, useTonConnectClient } from "@toncast/sdk-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Component, type ErrorInfo, type ReactNode, type CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
 import type { ClientStandaloneDescriptor } from "./types";
 import { NavBar } from "./components/NavBar";
 import { WidgetHeader } from "./components/WidgetHeader";
 import { ConfigProvider, NavProvider, useNav } from "./context";
 import { I18nProvider } from "./i18n/I18nProvider";
-import { IntegratedProvider, StandaloneProvider } from "./tc-bridge";
+import { IntegratedProvider, StandaloneProvider, useTcState } from "./tc-bridge";
 import type { ToncastWidgetConfig, ToncastWidgetCssVars, ToncastWidgetCssVarsBase } from "./types";
 import { cn } from "./utils/cn";
 import { MyBetsView } from "./views/MyBets";
@@ -47,6 +48,7 @@ function applyVarsBase(vars: ToncastWidgetCssVarsBase, style: Record<string, str
   if (vars.fgMuted) style["--tc-fg-muted"] = vars.fgMuted;
   if (vars.border) style["--tc-border"] = vars.border;
   if (vars.radius) style["--tc-radius"] = vars.radius;
+  if (vars.gridCols) style["--tc-grid-cols"] = vars.gridCols;
 }
 
 /**
@@ -68,9 +70,57 @@ function buildCssVarStyle(
   return Object.keys(style).length ? (style as CSSProperties) : undefined;
 }
 
-// Internal router — renders the active view
+/**
+ * Catches render errors from the widget tree and shows an inline retry card
+ * instead of letting the error propagate to the host page's error boundary.
+ */
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("[ToncastWidget] Uncaught render error:", error, info.componentStack);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="tc-error" style={{ padding: 16, textAlign: "center" }}>
+          <p style={{ marginBottom: 10 }}>Something went wrong.</p>
+          <button
+            type="button"
+            className="tc-btn tc-btn-secondary"
+            onClick={() => this.setState({ error: null })}
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+/** Internal router — syncs wallet state and renders the active view. */
 function WidgetShell() {
   const { view } = useNav();
+  const { address } = useTcState();
+  const queryClient = useQueryClient();
+
+  // delegate address→client sync to the canonical SDK hook (avoids duplication).
+  useTonConnectClient(address || null);
+
+  // flush all cached queries when the wallet address changes so no stale
+  // data from a previous user leaks into the next user's session.
+  const prevAddrRef = useRef(address);
+  useEffect(() => {
+    if (prevAddrRef.current === address) return;
+    prevAddrRef.current = address;
+    queryClient.invalidateQueries({ queryKey: ["toncast"] });
+  }, [address, queryClient]);
 
   return (
     <div className="tc-shell">
@@ -189,7 +239,9 @@ export function Widget({ config, className, style }: WidgetProps) {
             className={cn(themeClass, className)}
             style={cssVarStyle || style ? { ...cssVarStyle, ...style } : undefined}
           >
-            <WidgetShell />
+            <ErrorBoundary>
+              <WidgetShell />
+            </ErrorBoundary>
           </div>
         </NavProvider>
       </ConfigProvider>
