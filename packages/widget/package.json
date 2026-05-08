@@ -33,6 +33,7 @@
     "dist",
     "README.md"
   ],
+  "sideEffects": true,
   "engines": {
     "node": ">=20"
   },
@@ -63,6 +64,7 @@
     "@toncast/sdk": "*",
     "@toncast/sdk-react": "*",
     "@tonconnect/ui-react": "^2.0.0",
+    "buffer": "^6.0.3",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

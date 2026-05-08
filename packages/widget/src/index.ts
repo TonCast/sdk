@@ -1,3 +1,5 @@
+import "./browser-globals";
+
 export type { SupportedLanguage } from "@toncast/sdk";
 export { ToncastWidget } from "./ToncastWidget";
 export type { DensitySpacingPick } from "./theme/densityPresets";

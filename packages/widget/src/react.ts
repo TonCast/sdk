@@ -1,8 +1,5 @@
-/**
- * React component entry point — safe to import in Vite/webpack builds.
- * Does NOT include ToncastWidget class (which embeds CSS as text string
- * via esbuild loader and is only safe in IIFE/CDN builds).
- */
+/** Entry without `ToncastWidget` class / embedded CSS (use `index` for CDN script). */
+import "./browser-globals";
 
 export type {
   ClientDescriptor,
