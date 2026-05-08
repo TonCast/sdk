@@ -8,7 +8,6 @@
 
 import { formatBetQuoteReason, parseUnits, TON_ADDRESS } from "@toncast/sdk";
 import { type BetMode, useBet } from "@toncast/sdk-react";
-import { useT } from "@/lib/i18n/useT";
 import { useIsConnectionRestored, useTonAddress, useTonConnectUI } from "@tonconnect/ui-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -24,6 +23,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { formatRaw, ton } from "@/lib/format";
+import { useT } from "@/lib/i18n/useT";
 import { ConnectButton } from "./ConnectButton";
 
 export interface BetCardProps {
@@ -57,7 +57,6 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
   useEffect(() => {
     if (bet.mode !== "market" || !bet.source) return;
     setAmountDraft(formatRaw(bet.sourceAmount, sourceDecimals, 4));
-  // biome-ignore lint/correctness/useExhaustiveDependencies: derived display only
   }, [bet.mode, bet.source, bet.sourceAmount, sourceDecimals]);
 
   // Draft for the tickets input in fixed/limit mode — same pattern as amountDraft.
@@ -67,7 +66,6 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
   useEffect(() => {
     if (bet.mode === "market") return;
     setTicketsDraft(bet.tickets > 0 ? String(bet.tickets) : "");
-  // biome-ignore lint/correctness/useExhaustiveDependencies: derived display only
   }, [bet.mode, bet.tickets]);
 
   const handleConfirm = async () => {
@@ -122,8 +120,18 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
         <h3 className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">
           {t("bet.title")}
         </h3>
-        <SidePill active={isYes} kind="yes" label={t("side.yes")} onClick={() => bet.setSide("yes")} />
-        <SidePill active={!isYes} kind="no" label={t("side.no")} onClick={() => bet.setSide("no")} />
+        <SidePill
+          active={isYes}
+          kind="yes"
+          label={t("side.yes")}
+          onClick={() => bet.setSide("yes")}
+        />
+        <SidePill
+          active={!isYes}
+          kind="no"
+          label={t("side.no")}
+          onClick={() => bet.setSide("no")}
+        />
       </div>
 
       {/* Mode selector */}
@@ -155,55 +163,59 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
           {!bet.summary.data ? (
             <Skeleton className="h-10 w-full" />
           ) : (
-          <Select value={bet.source ?? ""} onValueChange={(v) => bet.setSource(v)}>
-            <SelectTrigger id="coin">
-              <SelectValue placeholder={t("bet.sourceCoin.placeholder")} />
-            </SelectTrigger>
-            <SelectContent>
-              {bet.coins.map((cap) => {
-                const isTon = cap.source.address === TON_ADDRESS;
-                const sym = cap.source.symbol ?? (isTon ? "TON" : "?");
-                const decimals = cap.source.decimals ?? 9;
-                const native = `${formatRaw(cap.source.amount, decimals, 4)} ${sym}`;
-                // Phase-1 jetton — wallet balance known but STON.fi pricing still loading.
-                // Show the symbol + native balance, replace the "≈ X TON" with a small loader.
-                const isPricing = cap.reason === "pricing_in_progress";
-                const tonEquiv =
-                  !isTon && cap.feasible && cap.source.tonEquivalent !== undefined
-                    ? `≈ ${formatRaw(cap.source.tonEquivalent, 9, 4)} TON`
-                    : null;
-                const label = isPricing
-                  ? native
-                  : !cap.feasible
-                    ? (cap.reason ?? t("bet.notViable"))
-                    : native;
-                return (
-                  <SelectItem
-                    key={cap.source.address}
-                    value={cap.source.address}
-                    // Pricing-in-progress jettons are non-selectable until phase 2 lands,
-                    // but visible so the user knows their balance exists.
-                    disabled={!cap.feasible}
-                  >
-                    <div className="flex w-full items-center justify-between gap-3">
-                      <span>{sym}</span>
-                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        {label}
-                        {isPricing ? (
-                          <span className="ml-1 inline-flex items-center gap-1 text-primary">
-                            <span className="inline-block size-3 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
-                            <span className="opacity-80">{t("bet.loadingPrice")}</span>
-                          </span>
-                        ) : tonEquiv ? (
-                          <span className="opacity-60">{tonEquiv}</span>
-                        ) : null}
-                      </span>
-                    </div>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+            <Select value={bet.source ?? ""} onValueChange={(v) => bet.setSource(v)}>
+              <SelectTrigger id="coin">
+                <SelectValue placeholder={t("bet.sourceCoin.placeholder")} />
+              </SelectTrigger>
+              <SelectContent>
+                {bet.coins.map((cap) => {
+                  const isTon = cap.source.address === TON_ADDRESS;
+                  const sym = cap.source.symbol ?? (isTon ? "TON" : "?");
+                  const decimals = cap.source.decimals ?? 9;
+                  const native = `${formatRaw(cap.source.amount, decimals, 4)} ${sym}`;
+                  // Phase-1 jetton — wallet balance known but STON.fi pricing still loading.
+                  // Show the symbol + native balance, replace the "≈ X TON" with a small loader.
+                  const isPricing = cap.reason === "pricing_in_progress";
+                  const priced = bet.summary.data?.pricedCoins.find(
+                    (p) => p.address === cap.source.address,
+                  );
+                  const tonNano = priced?.tonEquivalent;
+                  const tonEquiv =
+                    !isTon && cap.feasible && tonNano !== undefined
+                      ? `≈ ${formatRaw(tonNano, 9, 4)} TON`
+                      : null;
+                  const label = isPricing
+                    ? native
+                    : !cap.feasible
+                      ? (cap.reason ?? t("bet.notViable"))
+                      : native;
+                  return (
+                    <SelectItem
+                      key={cap.source.address}
+                      value={cap.source.address}
+                      // Pricing-in-progress jettons are non-selectable until phase 2 lands,
+                      // but visible so the user knows their balance exists.
+                      disabled={!cap.feasible}
+                    >
+                      <div className="flex w-full items-center justify-between gap-3">
+                        <span>{sym}</span>
+                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          {label}
+                          {isPricing ? (
+                            <span className="ml-1 inline-flex items-center gap-1 text-primary">
+                              <span className="inline-block size-3 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+                              <span className="opacity-80">{t("bet.loadingPrice")}</span>
+                            </span>
+                          ) : tonEquiv ? (
+                            <span className="opacity-60">{tonEquiv}</span>
+                          ) : null}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
           )}
         </div>
 
@@ -212,15 +224,29 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
           <div className="space-y-2">
             <div className="text-xs text-muted-foreground">{t("bet.coefficient")}</div>
             <div className="flex items-center gap-2">
-              <Button type="button" variant="secondary" size="icon" className="size-10 shrink-0"
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                className="size-10 shrink-0"
                 disabled={!bet.oddsStepper.canDecrement}
-                onClick={bet.oddsStepper.decrement}>−</Button>
+                onClick={bet.oddsStepper.decrement}
+              >
+                −
+              </Button>
               <div className="h-10 min-w-0 flex-1 rounded-xl border border-border/60 bg-[rgb(var(--glass-bg)/calc(var(--glass-bg-alpha)*0.5))] flex items-center justify-center font-mono text-base text-foreground">
                 ×{bet.quote.decimalOdds.toFixed(2)}
               </div>
-              <Button type="button" variant="secondary" size="icon" className="size-10 shrink-0"
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                className="size-10 shrink-0"
                 disabled={!bet.oddsStepper.canIncrement}
-                onClick={bet.oddsStepper.increment}>+</Button>
+                onClick={bet.oddsStepper.increment}
+              >
+                +
+              </Button>
             </div>
             <CoefficientSlider bet={bet} />
           </div>
@@ -231,9 +257,16 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
           <div className="space-y-2">
             <div className="text-xs text-muted-foreground">{t("bet.tickets")}</div>
             <div className="flex items-center gap-2">
-              <Button type="button" variant="secondary" size="icon" className="size-10 shrink-0"
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                className="size-10 shrink-0"
                 disabled={!bet.ticketsStepper.canDecrement}
-                onClick={bet.ticketsStepper.decrement}>−</Button>
+                onClick={bet.ticketsStepper.decrement}
+              >
+                −
+              </Button>
               <input
                 type="text"
                 inputMode="numeric"
@@ -255,23 +288,41 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
                   bet.setTickets(final);
                   setTicketsDraft(String(final));
                 }}
-                onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                }}
                 className="h-10 min-w-0 flex-1 rounded-xl border border-border/60 bg-[rgb(var(--glass-bg)/calc(var(--glass-bg-alpha)*0.5))] px-3 text-center font-mono text-base text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-background [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
-              <Button type="button" variant="secondary" size="icon" className="size-10 shrink-0"
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                className="size-10 shrink-0"
                 disabled={!bet.ticketsStepper.canIncrement}
-                onClick={bet.ticketsStepper.increment}>+</Button>
+                onClick={bet.ticketsStepper.increment}
+              >
+                +
+              </Button>
             </div>
           </div>
         )}
 
         {bet.selectedCoin && bet.mode === "market" && bet.maxTickets > 0 && (
           <div className="space-y-2">
-            <div className="text-xs text-muted-foreground">{t("bet.amount", { sym: sourceSym })}</div>
+            <div className="text-xs text-muted-foreground">
+              {t("bet.amount", { sym: sourceSym })}
+            </div>
             <div className="flex items-center gap-2">
-              <Button type="button" variant="secondary" size="icon" className="size-10 shrink-0"
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                className="size-10 shrink-0"
                 disabled={!bet.ticketsStepper.canDecrement}
-                onClick={bet.ticketsStepper.decrement}>−</Button>
+                onClick={bet.ticketsStepper.decrement}
+              >
+                −
+              </Button>
               <input
                 type="text"
                 inputMode="decimal"
@@ -280,25 +331,36 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
                 onChange={(e) => setAmountDraft(e.target.value)}
                 onBlur={() => {
                   let typed: bigint;
-                  try { typed = parseUnits(amountDraft, sourceDecimals); }
-                  catch { return; }
+                  try {
+                    typed = parseUnits(amountDraft, sourceDecimals);
+                  } catch {
+                    return;
+                  }
                   bet.setTickets(Math.max(1, bet.ticketsForSourceAmount(typed)));
                 }}
-                onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                }}
                 className="h-10 min-w-0 flex-1 rounded-xl border border-border/60 bg-[rgb(var(--glass-bg)/calc(var(--glass-bg-alpha)*0.5))] px-3 text-center font-mono text-base text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-background [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
-              <Button type="button" variant="secondary" size="icon" className="size-10 shrink-0"
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                className="size-10 shrink-0"
                 disabled={!bet.ticketsStepper.canIncrement}
-                onClick={bet.ticketsStepper.increment}>+</Button>
+                onClick={bet.ticketsStepper.increment}
+              >
+                +
+              </Button>
             </div>
-            <Slider {...bet.ticketsSliderProps} />
+            <Slider {...bet.ticketsSliderProps} aria-label={t("bet.amount", { sym: sourceSym })} />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{t("bet.oneTicket")}</span>
               <span>{t("bet.maxOf", { current: bet.tickets, max: bet.maxTickets })}</span>
             </div>
           </div>
         )}
-
 
         {/* Insufficient balance in limit/fixed mode */}
         {bet.selectedCoin && bet.maxTickets <= 0 && bet.mode !== "market" && (
@@ -389,7 +451,11 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
               <Row label={t("bet.total")} value={`${ton(bet.quote.totalCost)} TON`} accent />
               {bet.quote.walletReserve > 0n ? (
                 <>
-                  <Row label={t("bet.walletReserve")} value={`${ton(bet.quote.walletReserve)} TON`} dim />
+                  <Row
+                    label={t("bet.walletReserve")}
+                    value={`${ton(bet.quote.walletReserve)} TON`}
+                    dim
+                  />
                   <Row
                     label={t("bet.required")}
                     value={`${ton(bet.quote.required)} TON`}
@@ -416,12 +482,15 @@ interface CoefficientSliderProps {
 }
 
 function CoefficientSlider({ bet }: CoefficientSliderProps) {
+  const t = useT();
   const fillLeftPct = useMemo(() => {
     if (bet.mode !== "limit") return 0;
     const sliderPos = bet.oddsSliderProps.value[0];
-    return ((sliderPos - bet.oddsSliderProps.min) /
-      (bet.oddsSliderProps.max - bet.oddsSliderProps.min)) *
-      100;
+    return (
+      ((sliderPos - bet.oddsSliderProps.min) /
+        (bet.oddsSliderProps.max - bet.oddsSliderProps.min)) *
+      100
+    );
   }, [bet.mode, bet.oddsSliderProps]);
 
   return (
@@ -447,7 +516,12 @@ function CoefficientSlider({ bet }: CoefficientSliderProps) {
           />
         ))}
       </div>
-      <Slider {...bet.oddsSliderProps} hideRange className="relative z-10" />
+      <Slider
+        {...bet.oddsSliderProps}
+        hideRange
+        className="relative z-10"
+        aria-label={t("bet.coefficient")}
+      />
     </div>
   );
 }

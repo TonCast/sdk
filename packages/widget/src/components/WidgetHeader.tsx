@@ -10,8 +10,7 @@ import { TonDiamond } from "./ui/TonDiamond";
 function GlobeIcon() {
   return (
     <svg
-      width="13"
-      height="13"
+      className="tc-lang-globe-icon"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -27,7 +26,6 @@ function GlobeIcon() {
     </svg>
   );
 }
-
 
 const LANG_LABELS: Partial<Record<SupportedLanguage, string>> = {
   en: "EN",
@@ -54,10 +52,7 @@ export function WidgetHeader() {
   // widget.languages === undefined → show all.
   const configuredLangs = config.widget?.languages;
   const availableLangs: SupportedLanguage[] = useMemo(
-    () =>
-      configuredLangs !== undefined
-        ? configuredLangs
-        : [...SUPPORTED_LANGUAGES],
+    () => (configuredLangs !== undefined ? configuredLangs : [...SUPPORTED_LANGUAGES]),
     [configuredLangs],
   );
 
@@ -85,7 +80,6 @@ export function WidgetHeader() {
               if (availableLangs.includes(value)) setLang(value);
             }}
             aria-label={t("header.language")}
-            style={{ paddingLeft: 22 }}
           >
             {availableLangs.map((l) => (
               <option key={l} value={l}>

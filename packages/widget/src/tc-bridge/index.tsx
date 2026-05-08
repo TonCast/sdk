@@ -13,7 +13,7 @@ import {
   useTonConnectUI,
 } from "@tonconnect/ui-react";
 import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
-import { toTonConnectManifestUrl } from "./domain";
+import { tryTonConnectManifestUrl } from "./domain";
 
 interface TcState {
   address: string;
@@ -25,6 +25,13 @@ interface TcState {
 }
 
 const TcBridgeCtx = createContext<TcState | null>(null);
+
+/** `false` only when standalone TonConnect manifest URL could not be built (invalid `domain`). Integrated mode leaves default `true`. */
+const StandaloneManifestOkCtx = createContext(true);
+
+export function useStandaloneManifestOk(): boolean {
+  return useContext(StandaloneManifestOkCtx);
+}
 
 export function useTcState(): TcState {
   const ctx = useContext(TcBridgeCtx);
@@ -50,12 +57,33 @@ function StandaloneBridge({ children }: { children: ReactNode }) {
   return <TcBridgeCtx.Provider value={state}>{children}</TcBridgeCtx.Provider>;
 }
 
+/** TonConnect unavailable — wallet UI is inert until the host fixes `domain`. */
+function BrokenStandaloneBridge({ children }: { children: ReactNode }) {
+  const state: TcState = {
+    address: "",
+    restored: true,
+    connect: () => {},
+    disconnect: () => {},
+    instance: null,
+  };
+  return <TcBridgeCtx.Provider value={state}>{children}</TcBridgeCtx.Provider>;
+}
+
 export function StandaloneProvider({ domain, children }: { domain: string; children: ReactNode }) {
-  const manifestUrl = toTonConnectManifestUrl(domain);
+  const manifestUrl = tryTonConnectManifestUrl(domain);
+  if (!manifestUrl) {
+    return (
+      <StandaloneManifestOkCtx.Provider value={false}>
+        <BrokenStandaloneBridge>{children}</BrokenStandaloneBridge>
+      </StandaloneManifestOkCtx.Provider>
+    );
+  }
   return (
-    <TonConnectUIProvider manifestUrl={manifestUrl} analytics={{ mode: "off" }}>
-      <StandaloneBridge>{children}</StandaloneBridge>
-    </TonConnectUIProvider>
+    <StandaloneManifestOkCtx.Provider value={true}>
+      <TonConnectUIProvider manifestUrl={manifestUrl} analytics={{ mode: "off" }}>
+        <StandaloneBridge>{children}</StandaloneBridge>
+      </TonConnectUIProvider>
+    </StandaloneManifestOkCtx.Provider>
   );
 }
 

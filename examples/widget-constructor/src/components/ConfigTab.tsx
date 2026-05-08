@@ -30,10 +30,15 @@ export function ConfigTab({ config, onChange }: Props) {
 
   const toggleLang = (code: SupportedLanguage) => {
     const current = config.languages;
-    set(
-      "languages",
-      current.includes(code) ? current.filter((l) => l !== code) : [...current, code],
-    );
+    const next = current.includes(code) ? current.filter((l) => l !== code) : [...current, code];
+    // If the current default language is no longer in the allowed set, clear it
+    // so the <select> doesn't become uncontrolled (unmatched controlled value).
+    const defaultStillValid = !config.language || next.length === 0 || next.includes(config.language);
+    onChange({
+      ...config,
+      languages: next,
+      language: defaultStillValid ? config.language : "",
+    });
   };
 
   const allSelected = config.languages.length === 0;
@@ -115,6 +120,11 @@ export function ConfigTab({ config, onChange }: Props) {
         <p className={labelCls}>Available languages</p>
         <p className="text-[10px] text-slate-600 mb-2">
           Select which languages appear in the widget picker. All = show all.
+          {config.languages.length === 1 ? (
+            <span className="block mt-1 text-amber-500/90">
+              One language hides the in-widget picker — add more to show the selector again.
+            </span>
+          ) : null}
         </p>
         <div className="flex flex-wrap gap-1.5">
           {/* "All" toggle */}

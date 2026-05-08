@@ -23,7 +23,13 @@ export function ParisListView() {
   const { data, isLoading, isError, error } = useStreamList(current.param);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "var(--tc-form-gap, 12px)",
+      }}
+    >
       <h2 className="tc-page-title">{t("page.paris.title")}</h2>
 
       {/* Category filter */}

@@ -1,6 +1,6 @@
+import { resolve } from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { resolve } from "node:path";
 import { defineConfig } from "vite";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 
@@ -16,6 +16,15 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
+      // Subpath before package root — `@toncast/widget` alone maps to `src/index.ts` via folder.
+      "@toncast/widget/density-presets": resolve(
+        __dirname,
+        "../../packages/widget/src/theme/densityPresets.ts",
+      ),
+      "@toncast/widget/color-math": resolve(
+        __dirname,
+        "../../packages/widget/src/theme/colorMath.ts",
+      ),
       // Resolve workspace packages from source so Vite always uses fresh code.
       "@toncast/widget": resolve(__dirname, "../../packages/widget/src"),
       "@toncast/sdk-react": resolve(__dirname, "../../packages/sdk-react/src"),

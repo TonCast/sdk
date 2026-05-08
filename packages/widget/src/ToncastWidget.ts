@@ -109,6 +109,14 @@ export class ToncastWidget {
     this.emit("unmount", undefined);
   }
 
+  /**
+   * Subscribe to lifecycle and bridge events from this host instance.
+   *
+   * - `mount` / `unmount` — widget attached to or removed from the DOM.
+   * - `bet` — user placed a bet (fires alongside `widget.onBet` in config).
+   * - `error` — emitted only when **another listener** you registered on this
+   *   instance throws (for example your `bet` handler). Not all SDK/UI failures.
+   */
   on<K extends keyof ToncastWidgetEventMap>(
     event: K,
     listener: EventListener<ToncastWidgetEventMap[K]>,

@@ -4,6 +4,8 @@
  * Lightweight npm package that downloads the Toncast widget CDN bundle at
  * runtime and returns the `ToncastWidget` constructor.
  *
+ * Types are re-exported from `@toncast/widget` so they stay aligned with the npm/CDN bundle.
+ *
  * Usage (React + integrated TonConnect):
  * ```tsx
  * import ToncastWidgetLoader, { type ToncastWidgetInstance } from '@toncast/widget-loader';
@@ -32,101 +34,21 @@
  * ```
  */
 
-/**
- * Re-declared here because `widget-loader` is a CDN-only package with no dependency
- * on `@toncast/sdk`. Keep this union in sync with `SupportedLanguage` in that package
- * whenever a new language is added.
- */
-export type SupportedLanguage = "en" | "ru" | "hi" | "es" | "zh" | "fr" | "de" | "pt" | "fa" | "ar";
+import type { ToncastWidgetConfig, ToncastWidgetEventMap } from "@toncast/widget";
+
+export type {
+  SupportedLanguage,
+  ToncastWidgetConfig,
+  ToncastWidgetCssVars,
+  ToncastWidgetCssVarsBase,
+  ToncastWidgetDensity,
+  ToncastWidgetDerivedCssVarsOptions,
+  ToncastWidgetEventMap,
+} from "@toncast/widget";
 
 export type ToncastWidgetConstructor = new (config: ToncastWidgetConfig) => ToncastWidgetInstance;
 
-/** Base CSS custom property overrides (applied regardless of theme). */
-export interface ToncastWidgetCssVarsBase {
-  /** Primary accent color — buttons, links, highlights. Default: #0098ea */
-  accent?: string;
-  /** Hover/darker variant of accent. Defaults to accent when accent is set. */
-  accentHover?: string;
-  /** Widget root background. Default: #ffffff (light) / #0f172a (dark) */
-  bg?: string;
-  /** Card/panel background. Default: #f8fafc (light) / #1e293b (dark) */
-  bgCard?: string;
-  /** Muted/subtle background. Default: #f1f5f9 (light) / #1e293b (dark) */
-  bgMuted?: string;
-  /** Primary text color. Default: #1e293b (light) / #f1f5f9 (dark) */
-  fg?: string;
-  /** Muted text color. Default: #64748b (light) / #94a3b8 (dark) */
-  fgMuted?: string;
-  /** Border color. Default: #e2e8f0 (light) / #334155 (dark) */
-  border?: string;
-  /** Border-radius for cards and buttons. Default: 12px */
-  radius?: string;
-  /**
-   * Overrides the pari grid column layout. Accepts any valid CSS `grid-template-columns` value.
-   * Example: `"repeat(2, 1fr)"` — forces 2 columns.
-   * Omit to use the default responsive auto-fill layout.
-   */
-  gridCols?: string;
-}
-
-/** CSS custom property overrides for per-instance theming. */
-export interface ToncastWidgetCssVars extends ToncastWidgetCssVarsBase {
-  /** Overrides applied only in light mode (takes precedence over base vars). */
-  light?: ToncastWidgetCssVarsBase;
-  /** Overrides applied only in dark mode (takes precedence over base vars). */
-  dark?: ToncastWidgetCssVarsBase;
-}
-
-export interface ToncastWidgetConfig<
-  TonConnectInstance = unknown,
-  ToncastClientInstance = unknown,
-> {
-  tonconnect:
-    | { type: "standalone"; options: { domain: string } }
-    | {
-        type: "integrated";
-        /** Existing TonConnectUI instance from your app. */
-        instance: TonConnectInstance;
-      };
-  client?:
-    | {
-        type: "standalone";
-        /**
-         * Custom RPC endpoint for the TON client.
-         * Defaults to `https://toncenter.com/api/v2/jsonRPC`.
-         * **Production note**: supply your own endpoint + apiKey to avoid rate limits.
-         */
-        endpoint?: string;
-        /** API key for the endpoint (e.g. toncenter `X-API-Key`). */
-        apiKey?: string;
-        /** "mainnet" | "testnet". Defaults to "mainnet". */
-        network?: "mainnet" | "testnet";
-      }
-    | {
-        type: "integrated";
-        /** Existing ToncastClient instance from your app. */
-        instance: ToncastClientInstance;
-      };
-  widget?: {
-    language?: SupportedLanguage;
-    /**
-     * "light" / "dark" — locked palette. "system" — follows OS prefers-color-scheme.
-     * Defaults to "light" when omitted.
-     */
-    theme?: "light" | "dark" | "system";
-    /** Override CSS custom properties for per-instance theming. */
-    cssVars?: ToncastWidgetCssVars;
-    referral?: { address: string; pct: number };
-    /**
-     * Languages shown in the in-widget language picker.
-     * Omit to show all supported languages.
-     * Pass [] to hide the picker entirely.
-     */
-    languages?: SupportedLanguage[];
-    /** Called when the user successfully sends a bet transaction. */
-    onBet?: (pariId: string, amount: bigint, side: "yes" | "no") => void;
-  };
-}
+type WidgetEventListener<T> = T extends void ? () => void : (payload: T) => void;
 
 export interface ToncastWidgetInstance {
   mount(container: Element): void;
@@ -146,7 +68,10 @@ export interface ToncastWidgetInstance {
     event: "bet",
     listener: (payload: { pariId: string; amount: bigint; side: "yes" | "no" }) => void,
   ): this;
-  off(event: string, listener: (...args: unknown[]) => void): this;
+  off<K extends keyof ToncastWidgetEventMap>(
+    event: K,
+    listener: WidgetEventListener<ToncastWidgetEventMap[K]>,
+  ): this;
 }
 
 export interface ToncastWidgetLoaderOptions {
@@ -164,51 +89,146 @@ export interface ToncastWidgetLoaderOptions {
 /** CDN URL template — major-versioned for non-breaking auto-updates. */
 const CDN_URL = "https://widget.toncast.app/v0/index.iife.js";
 
-let cachedConstructor: ToncastWidgetConstructor | null = null;
-let pendingPromise: Promise<ToncastWidgetConstructor> | null = null;
+/** Attribute storing the loader cache key so duplicate URLs with different SRI/nonce do not reuse the wrong script. */
+const LOADER_KEY_ATTR = "data-tc-widget-loader-key";
+
+function normalizeCrossOrigin(v: ToncastWidgetLoaderOptions["crossOrigin"]): string {
+  return v === undefined ? "" : v;
+}
+
+function makeLoaderCacheKey(cdnUrl: string, options: ToncastWidgetLoaderOptions): string {
+  const integrity = options.integrity ?? "";
+  const crossOrigin = normalizeCrossOrigin(options.crossOrigin);
+  const nonce = options.nonce ?? "";
+  return `${cdnUrl}\n${integrity}\n${crossOrigin}\n${nonce}`;
+}
+
+function effectiveScriptKey(el: HTMLScriptElement, src: string): string {
+  if (el.hasAttribute(LOADER_KEY_ATTR)) {
+    return el.getAttribute(LOADER_KEY_ATTR) ?? "";
+  }
+  return makeLoaderCacheKey(src, {});
+}
+
+function removeConflictingLoaderScripts(src: string, cacheKey: string): void {
+  for (const el of Array.from(document.scripts)) {
+    if (el.getAttribute("data-tc-widget-loader") !== src) continue;
+    if (effectiveScriptKey(el, src) !== cacheKey) el.remove();
+  }
+}
+
+function findLoaderScript(src: string, cacheKey: string): HTMLScriptElement | null {
+  for (const el of Array.from(document.scripts)) {
+    if (el.getAttribute("data-tc-widget-loader") !== src) continue;
+    if (effectiveScriptKey(el, src) === cacheKey) return el;
+  }
+  return null;
+}
 
 /**
  * Download and cache the Toncast widget bundle from CDN.
- * Subsequent calls return the cached constructor without re-fetching.
+ *
+ * Cache key includes `cdnUrl`, `integrity`, `crossOrigin`, and `nonce`. Changing SRI or CSP nonce
+ * therefore yields a separate cached constructor and replaces any older `<script>` tag for the same URL.
+ * Legacy tags created before `data-tc-widget-loader-key` existed are treated as the default-empty-options key.
+ *
+ * Loads are serialized so `window.ToncastWidget` reads match the script that just finished when mixing URLs/options on one page.
  */
+const ctorCache = new Map<string, ToncastWidgetConstructor>();
+/** In-flight promise per cache key — dedupes concurrent `load(url, opts)` calls. */
+const inflightByKey = new Map<string, Promise<ToncastWidgetConstructor>>();
+/** Serializes script injection across different `cdnUrl`s without deferring the first `injectScript` (matches prior sync-until-await behavior). */
+let serializeLocked = false;
+const serializeWaiters: Array<() => void> = [];
+
+/** Returns a promise only when another URL load is in progress; otherwise acquires the lock synchronously. */
+function enterSerialization(): Promise<void> | undefined {
+  if (!serializeLocked) {
+    serializeLocked = true;
+    return undefined;
+  }
+  return new Promise<void>((resolve) => {
+    serializeWaiters.push(resolve);
+  });
+}
+
+function leaveSerialization(): void {
+  const next = serializeWaiters.shift();
+  if (next) next();
+  else serializeLocked = false;
+}
+
+async function loadUncached(
+  cdnUrl: string,
+  options: ToncastWidgetLoaderOptions,
+  cacheKey: string,
+): Promise<ToncastWidgetConstructor> {
+  const hit = ctorCache.get(cacheKey);
+  if (hit) return hit;
+
+  await injectScript(cdnUrl, options, cacheKey);
+
+  // The IIFE sets window.ToncastWidget = { ToncastWidget: [class] }
+  // biome-ignore lint/suspicious/noExplicitAny: global set by CDN bundle
+  const g = globalThis as any;
+  const ctor: ToncastWidgetConstructor = g.ToncastWidget?.ToncastWidget ?? g.ToncastWidget;
+
+  if (typeof ctor !== "function") {
+    throw new Error(
+      "[ToncastWidgetLoader] CDN bundle loaded but window.ToncastWidget is not a constructor. " +
+        "Check the CDN URL or bundle version.",
+    );
+  }
+
+  ctorCache.set(cacheKey, ctor);
+  return ctor;
+}
+
 async function load(
   cdnUrl: string = CDN_URL,
   options: ToncastWidgetLoaderOptions = {},
 ): Promise<ToncastWidgetConstructor> {
-  if (cachedConstructor) return cachedConstructor;
-  if (pendingPromise) return pendingPromise;
+  const cacheKey = makeLoaderCacheKey(cdnUrl, options);
+  const cached = ctorCache.get(cacheKey);
+  if (cached) return cached;
 
-  pendingPromise = (async () => {
-    await injectScript(cdnUrl, options);
-
-    // The IIFE sets window.ToncastWidget = { ToncastWidget: [class] }
-    // biome-ignore lint/suspicious/noExplicitAny: global set by CDN bundle
-    const g = globalThis as any;
-    const ctor: ToncastWidgetConstructor = g.ToncastWidget?.ToncastWidget ?? g.ToncastWidget;
-
-    if (typeof ctor !== "function") {
-      throw new Error(
-        "[ToncastWidgetLoader] CDN bundle loaded but window.ToncastWidget is not a constructor. " +
-          "Check the CDN URL or bundle version.",
-      );
-    }
-
-    cachedConstructor = ctor;
-    return ctor;
-  })().catch((err) => {
-    pendingPromise = null;
-    throw err;
-  });
-
-  return pendingPromise;
+  let pending = inflightByKey.get(cacheKey);
+  if (!pending) {
+    const maybeWait = enterSerialization();
+    pending = (async () => {
+      if (maybeWait) await maybeWait;
+      try {
+        try {
+          return await loadUncached(cdnUrl, options, cacheKey);
+        } finally {
+          leaveSerialization();
+        }
+      } finally {
+        inflightByKey.delete(cacheKey);
+      }
+    })();
+    inflightByKey.set(cacheKey, pending);
+  }
+  return pending;
 }
 
-function injectScript(src: string, options: ToncastWidgetLoaderOptions): Promise<void> {
+function injectScript(
+  src: string,
+  options: ToncastWidgetLoaderOptions,
+  cacheKey: string,
+): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (findLoaderScript(src)) {
+    removeConflictingLoaderScripts(src, cacheKey);
+    if (findLoaderScript(src, cacheKey)) {
       resolve();
       return;
     }
+    let settled = false;
+    const finish = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      fn();
+    };
     const el = document.createElement("script");
     el.src = src;
     el.async = true;
@@ -220,20 +240,14 @@ function injectScript(src: string, options: ToncastWidgetLoaderOptions): Promise
     }
     if (options.nonce) el.nonce = options.nonce;
     el.setAttribute("data-tc-widget-loader", src);
-    el.onload = () => resolve();
+    el.setAttribute(LOADER_KEY_ATTR, cacheKey);
+    el.onload = () => finish(() => resolve());
     el.onerror = () => {
       el.remove();
-      reject(new Error(`[ToncastWidgetLoader] Failed to load bundle from ${src}`));
+      finish(() => reject(new Error(`[ToncastWidgetLoader] Failed to load bundle from ${src}`)));
     };
     document.head.appendChild(el);
   });
-}
-
-function findLoaderScript(src: string): HTMLScriptElement | null {
-  for (const el of Array.from(document.scripts)) {
-    if (el.getAttribute("data-tc-widget-loader") === src) return el;
-  }
-  return null;
 }
 
 const ToncastWidgetLoader = { load };

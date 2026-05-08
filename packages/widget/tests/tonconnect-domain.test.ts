@@ -1,5 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { toTonConnectManifestUrl } from "../src/tc-bridge/domain";
+import { toTonConnectManifestUrl, tryTonConnectManifestUrl } from "../src/tc-bridge/domain";
+
+describe("tryTonConnectManifestUrl", () => {
+  it("returns the same URL as toTonConnectManifestUrl for valid domains", () => {
+    expect(tryTonConnectManifestUrl("https://app.example/")).toBe(
+      "https://app.example/tonconnect-manifest.json",
+    );
+  });
+
+  it("returns null for invalid or non-http(s) input", () => {
+    expect(tryTonConnectManifestUrl("")).toBeNull();
+    expect(tryTonConnectManifestUrl("   ")).toBeNull();
+    expect(tryTonConnectManifestUrl("example.com")).toBeNull();
+    expect(tryTonConnectManifestUrl("javascript:alert(1)")).toBeNull();
+    expect(tryTonConnectManifestUrl("data:text/html,<h1>x</h1>")).toBeNull();
+  });
+});
 
 describe("toTonConnectManifestUrl", () => {
   it("builds manifest URLs from absolute http and https domains", () => {

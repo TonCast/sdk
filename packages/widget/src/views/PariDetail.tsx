@@ -13,6 +13,8 @@ function isSettledOutcome(pari: Pari): boolean {
   return r === "yes" || r === "no" || r === "draw";
 }
 
+const descId = "tc-detail-desc-body";
+
 function ExpandableDescription({ text }: { text: string }) {
   const t = useT();
   const PREVIEW = 160;
@@ -21,22 +23,16 @@ function ExpandableDescription({ text }: { text: string }) {
 
   return (
     <div>
-      <p className="tc-detail-desc">
+      <p id={descId} className="tc-detail-desc">
         {needsTruncation && !expanded ? `${text.slice(0, PREVIEW).trimEnd()}…` : text}
       </p>
       {needsTruncation && (
         <button
           type="button"
+          className="tc-detail-desc-toggle"
+          aria-expanded={expanded}
+          aria-controls={descId}
           onClick={() => setExpanded((v) => !v)}
-          style={{
-            marginTop: 4,
-            fontSize: 12,
-            color: "var(--tc-accent)",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: 0,
-          }}
         >
           {expanded ? t("common.showLess") : t("common.showMore")}
         </button>
@@ -112,7 +108,7 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
     : null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--tc-form-gap, 12px)" }}>
       <button type="button" className="tc-back-btn" onClick={back}>
         {t("page.paris.detail.back")}
       </button>
@@ -142,7 +138,8 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
             >
               <h2 className="tc-detail-title">{snap.pari.name}</h2>
               <span className="tc-badge tc-badge-default" style={{ flexShrink: 0 }}>
-                {t(`pari.status.${snap.pari.status}` as Parameters<typeof t>[0]) || snap.pari.status}
+                {t(`pari.status.${snap.pari.status}` as Parameters<typeof t>[0]) ||
+                  snap.pari.status}
               </span>
             </div>
             <ExpandableDescription text={snap.pari.description} />

@@ -1,4 +1,4 @@
-import { formatBetQuoteReason, parseUnits, TON_ADDRESS } from "@toncast/sdk";
+import { formatBetQuoteReason, parseUnits, TON_ADDRESS, ToncastError } from "@toncast/sdk";
 import { type BetMode, useBet, useTonConnectClient } from "@toncast/sdk-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "../i18n/useT";
@@ -9,6 +9,30 @@ import { NativeSelect } from "./ui/Select";
 import { Skeleton } from "./ui/Skeleton";
 import { Slider } from "./ui/Slider";
 import { TonDiamond } from "./ui/TonDiamond";
+
+/** User-visible send/confirm failure — includes Toncast `code` when available. */
+function formatBetSendError(err: unknown): string {
+  if (err instanceof ToncastError) {
+    return `${err.code}: ${err.message}`;
+  }
+  if (err instanceof Error) {
+    const code = (err as Error & { code?: unknown }).code;
+    if (typeof code === "string" && code.length > 0) {
+      return `${code}: ${err.message}`;
+    }
+    return err.message;
+  }
+  if (err !== null && typeof err === "object") {
+    const o = err as Record<string, unknown>;
+    const msg = o.message;
+    const code = o.code;
+    if (typeof msg === "string" && msg.length > 0) {
+      if (typeof code === "string" && code.length > 0) return `${code}: ${msg}`;
+      return msg;
+    }
+  }
+  return String(err);
+}
 
 /**
  * Keeps ToncastClient.userAddress in sync with the active wallet.
@@ -110,7 +134,7 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
       if (refreshTimerRef.current !== null) clearTimeout(refreshTimerRef.current);
       refreshTimerRef.current = setTimeout(() => void bet.refresh(), 8_000);
     } catch (err) {
-      setSendError(err instanceof Error ? err.message : String(err));
+      setSendError(formatBetSendError(err));
     } finally {
       setSending(false);
     }
@@ -137,7 +161,7 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
       {/* Sync wallet address into ToncastClient */}
       <WalletSync address={address} />
 
-      <div className="tc-bet-card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div className="tc-bet-card">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ flex: 1, fontWeight: 600, fontSize: 14, color: "var(--tc-fg)" }}>
             {t("bet.title")}
@@ -326,7 +350,11 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
                     +
                   </Button>
                 </div>
-                <Slider {...bet.ticketsSliderProps} hideRange={false} />
+                <Slider
+                  {...bet.ticketsSliderProps}
+                  hideRange={false}
+                  aria-label={t("bet.amount", { sym: sourceSym })}
+                />
                 <div
                   style={{ display: "flex", justifyContent: "space-between" }}
                   className="tc-text-xs tc-text-muted"
@@ -368,6 +396,7 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
 }
 
 function CoefficientSlider({ bet }: { bet: ReturnType<typeof useBet> }) {
+  const t = useT();
   const fillLeftPct = useMemo(() => {
     if (bet.mode !== "limit") return 0;
     const { min, max, value } = bet.oddsSliderProps;
@@ -393,9 +422,9 @@ function CoefficientSlider({ bet }: { bet: ReturnType<typeof useBet> }) {
             }}
           />
         )}
-        {bet.liquidityMarkers.map((d, i) => (
+        {bet.liquidityMarkers.map((d) => (
           <span
-            key={`liq-${d.yesOdds}-${i}`}
+            key={`liq-${d.yesOdds}-${d.leftPct}`}
             style={{
               position: "absolute",
               top: "50%",
@@ -409,7 +438,12 @@ function CoefficientSlider({ bet }: { bet: ReturnType<typeof useBet> }) {
           />
         ))}
       </div>
-      <Slider {...bet.oddsSliderProps} hideRange style={{ position: "relative", zIndex: 1 }} />
+      <Slider
+        {...bet.oddsSliderProps}
+        hideRange
+        aria-label={t("bet.coefficient")}
+        style={{ position: "relative", zIndex: 1 }}
+      />
     </div>
   );
 }
@@ -443,8 +477,12 @@ function QuoteBox({ bet, sourceSym }: { bet: ReturnType<typeof useBet>; sourceSy
                 <span>{t("bet.matched", { n: bet.quote.totals.matchedTickets })}</span>
                 <span className="tc-font-mono">{ton(bet.quote.totals.matchedTicketCost)} TON</span>
               </div>
-              {bet.quote.matched.map((m, i) => (
-                <div key={`m-${m.yesOdds}-${i}`} className="tc-quote-row" style={{ paddingLeft: 8 }}>
+              {bet.quote.matched.map((m) => (
+                <div
+                  key={`m-${m.yesOdds}-${m.tickets}-${m.stake.toString()}`}
+                  className="tc-quote-row"
+                  style={{ paddingLeft: 8 }}
+                >
                   <span className="tc-quote-row-label tc-text-xs">
                     • {m.tickets} @ {m.yesOdds}% (×{m.decimalOdds.toFixed(2)})
                   </span>
@@ -455,7 +493,7 @@ function QuoteBox({ bet, sourceSym }: { bet: ReturnType<typeof useBet>; sourceSy
           )}
           {bet.quote.placed && (
             <div style={{ paddingTop: 4 }}>
-              <div className="tc-quote-row" style={{ color: "var(--tc-warn)", fontWeight: 600 }}>
+              <div className="tc-quote-row" style={{ color: "var(--tc-warn-fg)", fontWeight: 600 }}>
                 <span>{t("bet.placed", { n: bet.quote.placed.tickets })}</span>
                 <span className="tc-font-mono">{ton(bet.quote.placed.cost)} TON</span>
               </div>
@@ -512,17 +550,16 @@ function QuoteRow({
     <div className="tc-quote-row">
       <span
         className={`tc-quote-row-label${muted ? " tc-text-muted" : warn ? "" : ""}`}
-        style={warn ? { color: "var(--tc-warn)" } : {}}
+        style={warn ? { color: "var(--tc-warn-fg)" } : {}}
       >
         {label}
       </span>
       <span
         className={`tc-font-mono${accent ? " tc-quote-row-accent" : ""}`}
-        style={warn ? { color: "var(--tc-warn)" } : {}}
+        style={warn ? { color: "var(--tc-warn-fg)" } : {}}
       >
         {value}
       </span>
     </div>
   );
 }
-

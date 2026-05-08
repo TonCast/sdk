@@ -1,11 +1,74 @@
+import { Address } from "@ton/core";
 import { useEffect, useState } from "react";
 import { ConfigTab } from "./components/ConfigTab";
 import { ExportTab } from "./components/ExportTab";
 import { LivePreview } from "./components/LivePreview";
 import { ThemeTab } from "./components/ThemeTab";
-import { DEFAULT_CONFIG, type ConstructorConfig, type Device } from "./types";
+import { type ConstructorConfig, DEFAULT_CONFIG, type Device, type ThemeConfig } from "./types";
 
 type Tab = "theme" | "config" | "export";
+
+const VALID_DENSITIES: ThemeConfig["density"][] = ["compact", "default", "comfortable"];
+const VALID_SCHEMES: ThemeConfig["colorScheme"][] = ["light", "dark", "system"];
+
+/** Normalizes constructor domain: trim, require absolute http(s) URL or empty. */
+function normalizeDomain(raw: unknown): string {
+  if (typeof raw !== "string") return DEFAULT_CONFIG.domain;
+  const s = raw.trim();
+  if (!s) return "";
+  try {
+    const u = new URL(s);
+    return u.protocol === "http:" || u.protocol === "https:" ? s : "";
+  } catch {
+    return "";
+  }
+}
+
+/** Trim; valid addresses only; normalize to **non-bounceable** user-facing form (typically `UQ…`). */
+function normalizeReferralAddress(raw: unknown): string {
+  if (typeof raw !== "string") return "";
+  const s = raw.trim();
+  if (!s) return "";
+  try {
+    return Address.parse(s).toString({ bounceable: false, urlSafe: true });
+  } catch {
+    return "";
+  }
+}
+
+/** Coerces a persisted config into a well-typed, bounded ConstructorConfig. */
+function normalizeConfig(parsed: Partial<ConstructorConfig>): ConstructorConfig {
+  const t = parsed.theme;
+  return {
+    ...DEFAULT_CONFIG,
+    ...parsed,
+    // Ensure array fields are actually arrays (null/undefined from corrupt storage crashes .length)
+    languages: Array.isArray(parsed.languages) ? parsed.languages : DEFAULT_CONFIG.languages,
+    referralPct: Number.isFinite(Number(parsed.referralPct))
+      ? Math.min(7, Math.max(0, Number(parsed.referralPct)))
+      : DEFAULT_CONFIG.referralPct,
+    domain: normalizeDomain(parsed.domain),
+    referralAddress: normalizeReferralAddress(parsed.referralAddress),
+    theme: {
+      ...DEFAULT_CONFIG.theme,
+      ...t,
+      colorScheme: VALID_SCHEMES.includes(t?.colorScheme as ThemeConfig["colorScheme"])
+        ? (t?.colorScheme as ThemeConfig["colorScheme"])
+        : DEFAULT_CONFIG.theme.colorScheme,
+      density: VALID_DENSITIES.includes(t?.density as ThemeConfig["density"])
+        ? (t?.density as ThemeConfig["density"])
+        : DEFAULT_CONFIG.theme.density,
+      radius: Number.isFinite(Number(t?.radius))
+        ? Math.min(64, Math.max(0, Number(t?.radius)))
+        : DEFAULT_CONFIG.theme.radius,
+      columns: Number.isFinite(Number(t?.columns))
+        ? Math.min(4, Math.max(0, Math.round(Number(t?.columns))))
+        : DEFAULT_CONFIG.theme.columns,
+      light: { ...DEFAULT_CONFIG.theme.light, ...(t?.light ?? {}) },
+      dark: { ...DEFAULT_CONFIG.theme.dark, ...(t?.dark ?? {}) },
+    },
+  };
+}
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "theme", label: "Theme" },
@@ -13,32 +76,33 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "export", label: "Export" },
 ];
 
-const DEVICES: { id: Device; label: string; width: string; icon: string }[] = [
-  { id: "mobile", label: "370px", width: "370px", icon: "📱" },
-  { id: "tablet", label: "768px", width: "768px", icon: "📟" },
-  { id: "desktop", label: "100%", width: "100%", icon: "🖥" },
-];
+const DEVICES: { id: Device; label: string; width: string; icon: string; previewLabel: string }[] =
+  [
+    {
+      id: "mobile",
+      label: "370px",
+      width: "370px",
+      icon: "📱",
+      previewLabel: "Mobile, 370 pixels wide",
+    },
+    {
+      id: "tablet",
+      label: "768px",
+      width: "768px",
+      icon: "📟",
+      previewLabel: "Tablet, 768 pixels wide",
+    },
+    { id: "desktop", label: "100%", width: "100%", icon: "🖥", previewLabel: "Desktop, full width" },
+  ];
 
 const STORAGE_KEY = "tc-constructor-config-v2";
 
-/** Loads config from localStorage, falling back to DEFAULT_CONFIG. */
+/** Loads config from localStorage, normalizing types to prevent runtime crashes. */
 function loadConfig(): ConstructorConfig {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw) as Partial<ConstructorConfig>;
-      // Deep-merge theme including nested light/dark color sets so any new
-      // sub-fields added in future versions inherit their defaults correctly.
-      return {
-        ...DEFAULT_CONFIG,
-        ...parsed,
-        theme: {
-          ...DEFAULT_CONFIG.theme,
-          ...parsed.theme,
-          light: { ...DEFAULT_CONFIG.theme.light, ...(parsed.theme?.light ?? {}) },
-          dark: { ...DEFAULT_CONFIG.theme.dark, ...(parsed.theme?.dark ?? {}) },
-        },
-      };
+      return normalizeConfig(JSON.parse(raw) as Partial<ConstructorConfig>);
     }
   } catch {
     // Corrupted storage — reset silently.
@@ -65,6 +129,9 @@ export function App() {
       setConfig(DEFAULT_CONFIG);
     }
   };
+
+  const tabIndex = TABS.findIndex((t) => t.id === tab);
+  const nextTab = TABS[tabIndex + 1];
 
   return (
     <div className="flex h-full overflow-hidden bg-slate-950 text-slate-200">
@@ -102,12 +169,7 @@ export function App() {
 
         {/* Tab content — scrollable */}
         <div className="flex-1 overflow-y-auto">
-          <div
-            role="tabpanel"
-            id={`panel-${tab}`}
-            aria-labelledby={`tab-${tab}`}
-            className="p-4"
-          >
+          <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="p-4">
             {tab === "theme" && (
               <ThemeTab
                 theme={config.theme}
@@ -139,7 +201,7 @@ export function App() {
               }}
               className="text-xs text-sky-400 hover:text-sky-300 transition-colors font-medium"
             >
-              Next: {TABS[TABS.findIndex((t) => t.id === tab) + 1]?.label} →
+              Next: {nextTab?.label ?? ""} →
             </button>
           ) : (
             <a
@@ -166,6 +228,7 @@ export function App() {
               <button
                 key={d.id}
                 type="button"
+                aria-label={d.previewLabel}
                 onClick={() => setDevice(d.id)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                   device === d.id
@@ -174,7 +237,7 @@ export function App() {
                 }`}
                 title={d.label}
               >
-                <span>{d.icon}</span>
+                <span aria-hidden="true">{d.icon}</span>
                 <span>{d.label}</span>
               </button>
             ))}

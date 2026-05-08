@@ -2,7 +2,12 @@ import { defineConfig } from "tsup";
 
 // ESM + CJS build (for npm / widget-loader integration)
 export default defineConfig({
-  entry: { index: "src/index.ts", react: "src/react.ts" },
+  entry: {
+    index: "src/index.ts",
+    react: "src/react.ts",
+    "density-presets": "src/theme/densityPresets.ts",
+    "color-math": "src/theme/colorMath.ts",
+  },
   format: ["esm", "cjs"],
   dts: true,
   sourcemap: true,

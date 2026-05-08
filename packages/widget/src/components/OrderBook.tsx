@@ -34,8 +34,9 @@ export function OrderBook({ oddsState }: { oddsState: OddsState | null }) {
         <div style={{ textAlign: "center" }}>{t("orderBook.price")}</div>
         <div className="tc-ob-no-label">{t("orderBook.buyNo")}</div>
       </div>
-      {visible.map((r, i) => (
-        <Row key={`${r.yesOdds}-${i}`} bucket={r} yesMax={yesMax} noMax={noMax} />
+      {/* One ladder row per `yesOdds` — stable unique key without index. */}
+      {visible.map((r) => (
+        <Row key={`ob-${r.yesOdds}`} bucket={r} yesMax={yesMax} noMax={noMax} />
       ))}
     </div>
   );
