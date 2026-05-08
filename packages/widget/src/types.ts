@@ -15,7 +15,9 @@ export type TcIntegratedDescriptor = {
   instance: TonConnectUI;
 };
 
-export type TonConnectDescriptor = TcStandaloneDescriptor | TcIntegratedDescriptor;
+export type TonConnectDescriptor =
+  | TcStandaloneDescriptor
+  | TcIntegratedDescriptor;
 
 export type ClientStandaloneDescriptor = {
   type: "standalone";
@@ -37,7 +39,9 @@ export type ClientIntegratedDescriptor = {
   instance: ToncastClient;
 };
 
-export type ClientDescriptor = ClientStandaloneDescriptor | ClientIntegratedDescriptor;
+export type ClientDescriptor =
+  | ClientStandaloneDescriptor
+  | ClientIntegratedDescriptor;
 
 export type ToncastWidgetDensity = "compact" | "default" | "comfortable";
 

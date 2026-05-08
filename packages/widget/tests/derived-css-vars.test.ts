@@ -140,28 +140,38 @@ describe("buildCssVarStyle", () => {
   });
 
   it("applies darker semantic alpha for success in dark effective theme", () => {
-    const dark = buildCssVarStyle({ success: "#10b981" }, "dark", undefined) as Record<string, string>;
-    const light = buildCssVarStyle({ success: "#10b981" }, "light", undefined) as Record<string, string>;
+    const dark = buildCssVarStyle(
+      { success: "#10b981" },
+      "dark",
+      undefined,
+    ) as Record<string, string>;
+    const light = buildCssVarStyle(
+      { success: "#10b981" },
+      "light",
+      undefined,
+    ) as Record<string, string>;
 
     expect(dark["--tc-success-bg"]).toMatch(/0\.16\)/);
     expect(light["--tc-success-bg"]).toMatch(/0\.1\)/);
   });
 
   it("does not set hex-derived accent tokens when accent is non-hex", () => {
-    const style = buildCssVarStyle({ accent: "rgb(255, 0, 0)" }, "light", undefined) as Record<
-      string,
-      string
-    >;
+    const style = buildCssVarStyle(
+      { accent: "rgb(255, 0, 0)" },
+      "light",
+      undefined,
+    ) as Record<string, string>;
 
     expect(style["--tc-accent"]).toBe("rgb(255, 0, 0)");
     expect(style["--tc-accent-bg"]).toBeUndefined();
   });
 
   it("maps gridCols to --tc-grid-cols", () => {
-    const style = buildCssVarStyle({ gridCols: "repeat(2, 1fr)" }, "light", undefined) as Record<
-      string,
-      string
-    >;
+    const style = buildCssVarStyle(
+      { gridCols: "repeat(2, 1fr)" },
+      "light",
+      undefined,
+    ) as Record<string, string>;
 
     expect(style["--tc-grid-cols"]).toBe("repeat(2, 1fr)");
   });

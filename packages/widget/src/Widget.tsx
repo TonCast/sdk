@@ -34,13 +34,16 @@ import { ParisListView } from "./views/ParisList";
 function useSystemTheme(): "light" | "dark" {
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window === "undefined") return "light";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = (e: MediaQueryListEvent) => setTheme(e.matches ? "dark" : "light");
+    const handler = (e: MediaQueryListEvent) =>
+      setTheme(e.matches ? "dark" : "light");
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
   }, []);
@@ -64,7 +67,11 @@ class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("[ToncastWidget] Uncaught render error:", error, info.componentStack);
+    console.error(
+      "[ToncastWidget] Uncaught render error:",
+      error,
+      info.componentStack,
+    );
   }
 
   render() {
@@ -90,7 +97,10 @@ class ErrorBoundary extends Component<
 function WidgetErrorBoundary({ children }: { children: ReactNode }) {
   const t = useT();
   return (
-    <ErrorBoundary errorText={t("error.somethingWentWrong")} retryText={t("error.retry")}>
+    <ErrorBoundary
+      errorText={t("error.somethingWentWrong")}
+      retryText={t("error.retry")}
+    >
       {children}
     </ErrorBoundary>
   );
@@ -256,7 +266,11 @@ export function Widget({ config, className, style }: WidgetProps) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: deps use stableJsonStringify(...) so inline cssVars object identity does not force rebuild every render; see utils/stableJsonStringify.ts
   const cssVarStyle = useMemo(
     () => buildCssVarStyle(cssVarsInput, effectiveTheme, deriveCssVarsInput),
-    [stableJsonStringify(cssVarsInput), effectiveTheme, stableJsonStringify(deriveCssVarsInput)],
+    [
+      stableJsonStringify(cssVarsInput),
+      effectiveTheme,
+      stableJsonStringify(deriveCssVarsInput),
+    ],
   );
 
   // Inject effectiveTheme into config so child components (e.g. WidgetHeader) can read it.
@@ -271,7 +285,9 @@ export function Widget({ config, className, style }: WidgetProps) {
         <NavProvider>
           <div
             className={cn(themeClass, className)}
-            style={cssVarStyle || style ? { ...cssVarStyle, ...style } : undefined}
+            style={
+              cssVarStyle || style ? { ...cssVarStyle, ...style } : undefined
+            }
           >
             <WidgetErrorBoundary>
               <WidgetShell />
@@ -283,8 +299,16 @@ export function Widget({ config, className, style }: WidgetProps) {
   );
 
   if (config.tonconnect.type === "integrated") {
-    return <IntegratedProvider instance={config.tonconnect.instance}>{inner}</IntegratedProvider>;
+    return (
+      <IntegratedProvider instance={config.tonconnect.instance}>
+        {inner}
+      </IntegratedProvider>
+    );
   }
 
-  return <StandaloneProvider domain={config.tonconnect.options.domain}>{inner}</StandaloneProvider>;
+  return (
+    <StandaloneProvider domain={config.tonconnect.options.domain}>
+      {inner}
+    </StandaloneProvider>
+  );
 }

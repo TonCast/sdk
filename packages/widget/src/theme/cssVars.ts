@@ -5,13 +5,24 @@ import type {
   ToncastWidgetCssVarsBase,
   ToncastWidgetDerivedCssVarsOptions,
 } from "../types";
-import { isLightColor, mix, parseHexColor, readableFg, rgba } from "./colorMath";
+import {
+  isLightColor,
+  mix,
+  parseHexColor,
+  readableFg,
+  rgba,
+} from "./colorMath";
 import { WIDGET_DENSITY_PRESETS } from "./densityPresets";
 
 type StyleVars = Record<string, string>;
-type DeriveOptions = NonNullable<ToncastWidgetConfig["widget"]>["deriveCssVars"];
+type DeriveOptions = NonNullable<
+  ToncastWidgetConfig["widget"]
+>["deriveCssVars"];
 
-function deriveEnabled(options: DeriveOptions, key: keyof ToncastWidgetDerivedCssVarsOptions) {
+function deriveEnabled(
+  options: DeriveOptions,
+  key: keyof ToncastWidgetDerivedCssVarsOptions,
+) {
   if (options === false) return false;
   if (options === true || options === undefined) return true;
   return options[key] !== false;
@@ -21,8 +32,17 @@ function put(style: StyleVars, name: string, value: string | undefined): void {
   if (value !== undefined && value !== "") style[name] = value;
 }
 
-function putIfMissing(style: StyleVars, name: string, value: string | null | undefined): void {
-  if (style[name] === undefined && value !== undefined && value !== null && value !== "") {
+function putIfMissing(
+  style: StyleVars,
+  name: string,
+  value: string | null | undefined,
+): void {
+  if (
+    style[name] === undefined &&
+    value !== undefined &&
+    value !== null &&
+    value !== ""
+  ) {
     style[name] = value;
   }
 }
@@ -44,29 +64,51 @@ function deriveColorFamily(
 ): void {
   if (!source) return;
 
-  const textMixTarget: [number, number, number] = theme === "dark" ? [255, 255, 255] : [0, 0, 0];
+  const textMixTarget: [number, number, number] =
+    theme === "dark" ? [255, 255, 255] : [0, 0, 0];
   const textWeight = theme === "dark" ? 0.18 : 0.2;
   const shadowColor = rgba(source, 0.35);
 
   putIfMissing(style, vars.fg, mix(source, textMixTarget, textWeight));
   putIfMissing(style, vars.bg, rgba(source, theme === "dark" ? 0.16 : 0.1));
-  if (vars.border) putIfMissing(style, vars.border, rgba(source, theme === "dark" ? 0.34 : 0.25));
+  if (vars.border)
+    putIfMissing(
+      style,
+      vars.border,
+      rgba(source, theme === "dark" ? 0.34 : 0.25),
+    );
   if (vars.hoverBg) {
-    putIfMissing(style, vars.hoverBg, rgba(source, theme === "dark" ? 0.24 : 0.18));
+    putIfMissing(
+      style,
+      vars.hoverBg,
+      rgba(source, theme === "dark" ? 0.24 : 0.18),
+    );
   }
   if (vars.activeBg) {
-    putIfMissing(style, vars.activeBg, rgba(source, theme === "dark" ? 0.3 : 0.22));
+    putIfMissing(
+      style,
+      vars.activeBg,
+      rgba(source, theme === "dark" ? 0.3 : 0.22),
+    );
   }
-  if (vars.activeBorder) putIfMissing(style, vars.activeBorder, rgba(source, 0.4));
+  if (vars.activeBorder)
+    putIfMissing(style, vars.activeBorder, rgba(source, 0.4));
   if (vars.activeShadow && shadowColor) {
     putIfMissing(style, vars.activeShadow, `0 4px 12px -4px ${shadowColor}`);
   }
   if (vars.fillBg) {
-    putIfMissing(style, vars.fillBg, rgba(source, theme === "dark" ? 0.44 : 0.35));
+    putIfMissing(
+      style,
+      vars.fillBg,
+      rgba(source, theme === "dark" ? 0.44 : 0.35),
+    );
   }
 }
 
-function applyDirectVars(vars: ToncastWidgetCssVarsBase, style: StyleVars): void {
+function applyDirectVars(
+  vars: ToncastWidgetCssVarsBase,
+  style: StyleVars,
+): void {
   put(style, "--tc-accent", vars.accent);
   put(style, "--tc-accent-fg", vars.accentFg);
   put(style, "--tc-accent-bg", vars.accentBg);
@@ -135,24 +177,46 @@ function applyDerivedVars(
       // Mix toward white in dark mode so hover is lighter, not darker.
       const accentHoverTarget: [number, number, number] =
         effectiveTheme === "dark" ? [255, 255, 255] : [0, 0, 0];
-      putIfMissing(style, "--tc-accent-hover", mix(vars.accent, accentHoverTarget, 0.1));
+      putIfMissing(
+        style,
+        "--tc-accent-hover",
+        mix(vars.accent, accentHoverTarget, 0.1),
+      );
       const accentShadow = rgba(vars.accent, 0.55);
       if (accentShadow)
-        putIfMissing(style, "--tc-accent-shadow", `0 8px 24px -8px ${accentShadow}`);
+        putIfMissing(
+          style,
+          "--tc-accent-shadow",
+          `0 8px 24px -8px ${accentShadow}`,
+        );
     }
     if (vars.bg) {
       const fg = readableFg(vars.bg);
       if (fg) {
         const darkBg = !isLightColor(vars.bg);
-        const surfaceTarget: [number, number, number] = darkBg ? [255, 255, 255] : [15, 23, 42];
+        const surfaceTarget: [number, number, number] = darkBg
+          ? [255, 255, 255]
+          : [15, 23, 42];
         putIfMissing(style, "--tc-fg", fg);
         // Only derive fgMuted when bg is parseable — mixing toward black when bg
         // is non-hex would produce an arbitrary (potentially unreadable) result.
         const bgRgb = parseHexColor(vars.bg);
         if (bgRgb) putIfMissing(style, "--tc-fg-muted", mix(fg, bgRgb, 0.38));
-        putIfMissing(style, "--tc-bg-chrome", mix(vars.bg, surfaceTarget, darkBg ? 0.1 : 0.04));
-        putIfMissing(style, "--tc-bg-card", mix(vars.bg, surfaceTarget, darkBg ? 0.08 : 0.025));
-        putIfMissing(style, "--tc-bg-muted", mix(vars.bg, surfaceTarget, darkBg ? 0.12 : 0.06));
+        putIfMissing(
+          style,
+          "--tc-bg-chrome",
+          mix(vars.bg, surfaceTarget, darkBg ? 0.1 : 0.04),
+        );
+        putIfMissing(
+          style,
+          "--tc-bg-card",
+          mix(vars.bg, surfaceTarget, darkBg ? 0.08 : 0.025),
+        );
+        putIfMissing(
+          style,
+          "--tc-bg-muted",
+          mix(vars.bg, surfaceTarget, darkBg ? 0.12 : 0.06),
+        );
         putIfMissing(style, "--tc-border", rgba(fg, darkBg ? 0.16 : 0.12));
         putIfMissing(style, "--tc-bg-hover", rgba(fg, darkBg ? 0.08 : 0.04));
       }
