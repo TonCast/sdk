@@ -326,7 +326,11 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
                     +
                   </Button>
                 </div>
-                <Slider {...bet.ticketsSliderProps} hideRange={false} />
+                <Slider
+                  {...bet.ticketsSliderProps}
+                  hideRange={false}
+                  aria-label={t("bet.amount", { sym: sourceSym })}
+                />
                 <div
                   style={{ display: "flex", justifyContent: "space-between" }}
                   className="tc-text-xs tc-text-muted"
@@ -368,6 +372,7 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
 }
 
 function CoefficientSlider({ bet }: { bet: ReturnType<typeof useBet> }) {
+  const t = useT();
   const fillLeftPct = useMemo(() => {
     if (bet.mode !== "limit") return 0;
     const { min, max, value } = bet.oddsSliderProps;
@@ -409,7 +414,12 @@ function CoefficientSlider({ bet }: { bet: ReturnType<typeof useBet> }) {
           />
         ))}
       </div>
-      <Slider {...bet.oddsSliderProps} hideRange style={{ position: "relative", zIndex: 1 }} />
+      <Slider
+        {...bet.oddsSliderProps}
+        hideRange
+        aria-label={t("bet.coefficient")}
+        style={{ position: "relative", zIndex: 1 }}
+      />
     </div>
   );
 }

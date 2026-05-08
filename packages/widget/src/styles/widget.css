@@ -42,6 +42,8 @@
   --tc-warn-fg: #d97706;
   --tc-warn-bg: rgba(217, 119, 6, 0.1);
   --tc-warn-border: rgba(217, 119, 6, 0.25);
+  /* Density (`cssVars.density`): these seven tokens adjust shell spacing. Many inner
+     layouts (pari cards, dialogs, steppers) still use fixed px — see components. */
   --tc-content-padding: 12px;
   --tc-card-padding: 14px;
   --tc-card-gap: 10px;
@@ -127,13 +129,31 @@
   cursor: pointer;
   appearance: none;
 }
-.tc-lang-select:focus { outline: none; border-color: var(--tc-accent); }
+
+.tc-lang-select:focus {
+  outline: none;
+  border-color: var(--tc-accent);
+}
+
+.tc-lang-wrapper .tc-lang-select {
+  /* Extra left inset so label text clears the inline globe icon */
+  padding-left: 22px;
+}
 
 .tc-lang-wrapper {
   position: relative;
   display: flex;
   align-items: center;
   gap: 4px;
+  /* Match `.tc-lang-select` so inline icons scale with header density / font-size */
+  font-size: 12px;
+}
+
+.tc-lang-globe-icon {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  display: block;
 }
 .tc-lang-icon {
   position: absolute;
@@ -358,6 +378,7 @@
   transform: translateX(-50%);
 }
 .tc-slider-thumb:hover, .tc-slider-thumb:active { transform: translateX(-50%) scale(1.15); cursor: grabbing; }
+.tc-slider-thumb:focus-visible { outline: 2px solid var(--tc-accent); outline-offset: 2px; }
 
 /* ===== INPUT ===== */
 .tc-input {

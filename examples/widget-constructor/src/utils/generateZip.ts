@@ -1,4 +1,8 @@
 import {
+  densityPresetToCssCustomProperties,
+  WIDGET_DENSITY_PRESETS,
+} from "@toncast/widget/density-presets";
+import {
   type ConstructorConfig,
   DEFAULT_DARK_COLORS,
   DEFAULT_LIGHT_COLORS,
@@ -25,9 +29,10 @@ function stringifyForScript(value: unknown, space: number): string {
     .replace(/\u2029/g, "\\u2029");
 }
 
+/** Accepts only 3- or 6-digit hex (#rgb / #rrggbb) — same set parseHexColor handles. */
 function safeHexColor(value: string): string | null {
   const trimmed = value.trim();
-  return /^#[\da-fA-F]{3,8}$/.test(trimmed) ? trimmed : null;
+  return /^#([\da-fA-F]{3}|[\da-fA-F]{6})$/.test(trimmed) ? trimmed : null;
 }
 
 function parseHexColor(value: string): [number, number, number] | null {
@@ -241,6 +246,12 @@ export function buildStyleCss(config: ConstructorConfig): string | null {
   const baseLines: string[] = [];
   if (radius !== 12) baseLines.push(`  --tc-radius: ${radius}px;`);
   if (gridCols) baseLines.push(`  --tc-grid-cols: ${gridCols};`);
+  // Emit density spacing tokens (same presets as @toncast/widget WIDGET_DENSITY_PRESETS).
+  if (theme.density !== "default") {
+    const preset = WIDGET_DENSITY_PRESETS[theme.density];
+    const densityVars = densityPresetToCssCustomProperties(preset);
+    for (const [k, v] of Object.entries(densityVars)) baseLines.push(`  ${k}: ${v};`);
+  }
 
   const lightLines: string[] = [];
   if (theme.colorScheme !== "dark") {
@@ -302,7 +313,8 @@ function buildWidgetOptions(config: ConstructorConfig): Record<string, unknown> 
 }
 
 export function buildIndexHtml(config: ConstructorConfig): string {
-  const domain = config.domain.replace(/\/$/, "");
+  // Match buildJsSnippet: empty domain would break TonConnect (invalid manifest URL).
+  const domain = (config.domain || "https://your-domain.com").replace(/\/$/, "");
   const widgetOptions = buildWidgetOptions(config);
   const widgetConfig: Record<string, unknown> = {
     tonconnect: { type: "standalone", options: { domain } },

@@ -16,6 +16,11 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
+      // Subpath before package root — `@toncast/widget` alone maps to `src/index.ts` via folder.
+      "@toncast/widget/density-presets": resolve(
+        __dirname,
+        "../../packages/widget/src/theme/densityPresets.ts",
+      ),
       // Resolve workspace packages from source so Vite always uses fresh code.
       "@toncast/widget": resolve(__dirname, "../../packages/widget/src"),
       "@toncast/sdk-react": resolve(__dirname, "../../packages/sdk-react/src"),

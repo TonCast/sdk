@@ -291,7 +291,7 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
                 disabled={!bet.ticketsStepper.canIncrement}
                 onClick={bet.ticketsStepper.increment}>+</Button>
             </div>
-            <Slider {...bet.ticketsSliderProps} />
+            <Slider {...bet.ticketsSliderProps} aria-label={t("bet.amount", { sym: sourceSym })} />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{t("bet.oneTicket")}</span>
               <span>{t("bet.maxOf", { current: bet.tickets, max: bet.maxTickets })}</span>
@@ -416,6 +416,7 @@ interface CoefficientSliderProps {
 }
 
 function CoefficientSlider({ bet }: CoefficientSliderProps) {
+  const t = useT();
   const fillLeftPct = useMemo(() => {
     if (bet.mode !== "limit") return 0;
     const sliderPos = bet.oddsSliderProps.value[0];
@@ -447,7 +448,12 @@ function CoefficientSlider({ bet }: CoefficientSliderProps) {
           />
         ))}
       </div>
-      <Slider {...bet.oddsSliderProps} hideRange className="relative z-10" />
+      <Slider
+        {...bet.oddsSliderProps}
+        hideRange
+        className="relative z-10"
+        aria-label={t("bet.coefficient")}
+      />
     </div>
   );
 }

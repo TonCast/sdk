@@ -46,6 +46,7 @@ function ColorField({
           value={current}
           onChange={(e) => onChange(colorKey, e.target.value)}
           placeholder={defaultValue}
+          aria-label={`${label} hex color`}
           className="flex-1 h-8 px-2.5 rounded-md border border-slate-700 bg-slate-800 text-slate-200 text-xs font-mono focus:outline-none focus:border-sky-500/50"
         />
         {current !== defaultValue && current !== "" && (
@@ -109,6 +110,7 @@ function ColorSetEditor({
             value={value.bg}
             onChange={(e) => set("bg", e.target.value)}
             placeholder={defaultBg}
+            aria-label={`${label} background hex color`}
             className="flex-1 h-8 px-2.5 rounded-md border border-slate-700 bg-slate-800 text-slate-200 text-xs font-mono focus:outline-none focus:border-sky-500/50"
           />
           {value.bg && (
@@ -180,7 +182,7 @@ export function ThemeTab({ theme, onChange }: Props) {
                   : "bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-500"
               }`}
             >
-              {emoji} {label}
+              <span aria-hidden="true">{emoji}</span> {label}
             </button>
           ))}
         </div>
@@ -233,6 +235,8 @@ export function ThemeTab({ theme, onChange }: Props) {
             <button
               key={v}
               type="button"
+              aria-label={`Border radius ${label} pixels`}
+              aria-pressed={theme.radius === v}
               onClick={() => set("radius", v)}
               className={`flex-1 py-1.5 text-xs rounded border font-mono font-medium transition-all ${
                 theme.radius === v
@@ -248,11 +252,12 @@ export function ThemeTab({ theme, onChange }: Props) {
           id="tc-radius-range"
           type="range"
           min={0}
-          max={24}
+          max={64}
           value={theme.radius}
           onChange={(e) => set("radius", Number(e.target.value))}
           className="w-full accent-sky-500"
         />
+        <p className="mt-1.5 text-[10px] text-slate-600">0–64 px (matches export clamp).</p>
       </div>
 
       {/* Grid columns */}
@@ -274,6 +279,8 @@ export function ThemeTab({ theme, onChange }: Props) {
             <button
               key={v}
               type="button"
+              aria-label={v === 0 ? "Grid columns automatic" : `Grid columns ${v}`}
+              aria-pressed={theme.columns === v}
               onClick={() => set("columns", v)}
               className={`flex-1 py-1.5 text-xs rounded border font-medium transition-all ${
                 theme.columns === v
@@ -307,6 +314,8 @@ export function ThemeTab({ theme, onChange }: Props) {
             <button
               key={item.value}
               type="button"
+              aria-pressed={theme.density === item.value}
+              aria-label={`Density ${item.label}`}
               onClick={() => set("density", item.value)}
               className={`flex-1 py-1.5 text-xs rounded border font-medium transition-all ${
                 theme.density === item.value

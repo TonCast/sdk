@@ -7,6 +7,7 @@ import {
   type ErrorInfo,
   type ReactNode,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -19,6 +20,7 @@ import { IntegratedProvider, StandaloneProvider, useTcState } from "./tc-bridge"
 import { buildCssVarStyle } from "./theme/cssVars";
 import type { ClientStandaloneDescriptor, ToncastWidgetConfig } from "./types";
 import { cn } from "./utils/cn";
+import { stableJsonStringify } from "./utils/stableJsonStringify";
 import { MyBetsView } from "./views/MyBets";
 import { PariDetailView } from "./views/PariDetail";
 import { ParisListView } from "./views/ParisList";
@@ -223,10 +225,12 @@ export function Widget({ config, className, style }: WidgetProps) {
     configTheme === "system" ? systemTheme : (configTheme ?? "light");
 
   const themeClass = effectiveTheme === "dark" ? "tc-w tc-dark" : "tc-w";
-  const cssVarStyle = buildCssVarStyle(
-    config.widget?.cssVars,
-    effectiveTheme,
-    config.widget?.deriveCssVars,
+  const cssVarsInput = config.widget?.cssVars;
+  const deriveCssVarsInput = config.widget?.deriveCssVars;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: deps use stableJsonStringify(...) so inline cssVars object identity does not force rebuild every render; see utils/stableJsonStringify.ts
+  const cssVarStyle = useMemo(
+    () => buildCssVarStyle(cssVarsInput, effectiveTheme, deriveCssVarsInput),
+    [stableJsonStringify(cssVarsInput), effectiveTheme, stableJsonStringify(deriveCssVarsInput)],
   );
 
   // Inject effectiveTheme into config so child components (e.g. WidgetHeader) can read it.

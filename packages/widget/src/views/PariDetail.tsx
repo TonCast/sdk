@@ -13,6 +13,8 @@ function isSettledOutcome(pari: Pari): boolean {
   return r === "yes" || r === "no" || r === "draw";
 }
 
+const descId = "tc-detail-desc-body";
+
 function ExpandableDescription({ text }: { text: string }) {
   const t = useT();
   const PREVIEW = 160;
@@ -21,12 +23,14 @@ function ExpandableDescription({ text }: { text: string }) {
 
   return (
     <div>
-      <p className="tc-detail-desc">
+      <p id={descId} className="tc-detail-desc">
         {needsTruncation && !expanded ? `${text.slice(0, PREVIEW).trimEnd()}…` : text}
       </p>
       {needsTruncation && (
         <button
           type="button"
+          aria-expanded={expanded}
+          aria-controls={descId}
           onClick={() => setExpanded((v) => !v)}
           style={{
             marginTop: 4,
@@ -112,7 +116,7 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
     : null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--tc-form-gap, 12px)" }}>
       <button type="button" className="tc-back-btn" onClick={back}>
         {t("page.paris.detail.back")}
       </button>

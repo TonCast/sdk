@@ -48,9 +48,17 @@ export interface ToncastWidgetDerivedCssVarsOptions {
   density?: boolean;
 }
 
-/** Base CSS custom property overrides (applied regardless of theme). */
+/**
+ * Base CSS custom property overrides (applied regardless of theme).
+ *
+ * **Color format note:** semantic derivation (fg, bg, border, hover, shadow, etc.)
+ * only works for 3- or 6-digit hex strings (`#rgb` / `#rrggbb`). Non-hex values
+ * (`rgb()`, `hsl()`, `var(--host-color)`) are applied directly to the primary token
+ * (`--tc-accent`, `--tc-bg`, …) but derived companion tokens are left unset and
+ * fall back to the widget stylesheet defaults.
+ */
 export interface ToncastWidgetCssVarsBase {
-  /** Primary accent color — buttons, links, highlights. Default: #0098ea */
+  /** Primary accent color — buttons, links, highlights. Default: #0098ea. Hex only for derivation. */
   accent?: string;
   /** Text color rendered on accent-filled controls. Derived from accent when omitted. */
   accentFg?: string;
@@ -60,7 +68,7 @@ export interface ToncastWidgetCssVarsBase {
   accentHover?: string;
   /** Accent-colored shadow for primary controls. Derived from accent when omitted. */
   accentShadow?: string;
-  /** Widget root background. Default: #ffffff (light) / #0f172a (dark) */
+  /** Widget root background. Default: #ffffff (light) / #0f172a (dark). Hex only for derivation. */
   bg?: string;
   /** Header/nav chrome background. Derived from bg when omitted. */
   bgChrome?: string;
@@ -78,6 +86,8 @@ export interface ToncastWidgetCssVarsBase {
   border?: string;
   /** Border-radius for cards and buttons. Default: 12px */
   radius?: string;
+  /** Box-shadow for card hover states. Matches the `--tc-shadow` CSS variable. */
+  shadow?: string;
   /**
    * Overrides the pari grid column layout.
    * Accepts any valid CSS `grid-template-columns` value.
@@ -121,7 +131,10 @@ export interface ToncastWidgetCssVarsBase {
   dangerActiveShadow?: string;
   /** Negative order-book fill background. Derived from danger when omitted. */
   dangerFillBg?: string;
-  /** Semantic warning color used by warnings, pending states, and preview-only notices. */
+  /**
+   * Semantic warning color used by warnings, pending states, and preview-only notices.
+   * Unlike success/danger, there is no extended hover/active/fill token family for warnings by design.
+   */
   warn?: string;
   /** Warning text color. Derived from warn when omitted. */
   warnFg?: string;
@@ -202,6 +215,10 @@ export interface ToncastWidgetConfig {
 export type ToncastWidgetEventMap = {
   mount: { container: Element };
   unmount: undefined;
+  /**
+   * Payload is the thrown value when a **user-registered** listener for `mount`,
+   * `unmount`, or `bet` throws. This is not a general channel for React/SDK/UI errors.
+   */
   error: unknown;
   bet: { pariId: string; amount: bigint; side: "yes" | "no" };
 };

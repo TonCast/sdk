@@ -3,54 +3,12 @@ import type {
   ToncastWidgetConfig,
   ToncastWidgetCssVars,
   ToncastWidgetCssVarsBase,
-  ToncastWidgetDensity,
   ToncastWidgetDerivedCssVarsOptions,
 } from "../types";
+import { WIDGET_DENSITY_PRESETS } from "./densityPresets";
 
 type StyleVars = Record<string, string>;
 type DeriveOptions = NonNullable<ToncastWidgetConfig["widget"]>["deriveCssVars"];
-
-const DENSITY_PRESETS: Record<
-  ToncastWidgetDensity,
-  Pick<
-    ToncastWidgetCssVarsBase,
-    | "contentPadding"
-    | "cardPadding"
-    | "cardGap"
-    | "formGap"
-    | "headerPaddingY"
-    | "headerPaddingX"
-    | "navPaddingY"
-  >
-> = {
-  compact: {
-    contentPadding: "10px",
-    cardPadding: "10px",
-    cardGap: "8px",
-    formGap: "10px",
-    headerPaddingY: "6px",
-    headerPaddingX: "10px",
-    navPaddingY: "7px",
-  },
-  default: {
-    contentPadding: "12px",
-    cardPadding: "14px",
-    cardGap: "10px",
-    formGap: "12px",
-    headerPaddingY: "8px",
-    headerPaddingX: "12px",
-    navPaddingY: "10px",
-  },
-  comfortable: {
-    contentPadding: "16px",
-    cardPadding: "18px",
-    cardGap: "14px",
-    formGap: "16px",
-    headerPaddingY: "10px",
-    headerPaddingX: "16px",
-    navPaddingY: "12px",
-  },
-};
 
 function deriveEnabled(options: DeriveOptions, key: keyof ToncastWidgetDerivedCssVarsOptions) {
   if (options === false) return false;
@@ -92,6 +50,11 @@ function relativeLuminance([r, g, b]: [number, number, number]): number {
   return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
 }
 
+/**
+ * Whether `value` reads as a light surface (luminance > 0.55).
+ * **Hex-only:** returns `false` when the string is not `#rgb` / `#rrggbb` — do not use the
+ * result to classify `rgb()`, `hsl()`, or CSS variables.
+ */
 function isLightColor(value: string): boolean {
   const rgb = parseHexColor(value);
   if (!rgb) return false;
@@ -178,6 +141,7 @@ function applyDirectVars(vars: ToncastWidgetCssVarsBase, style: StyleVars): void
   put(style, "--tc-fg-muted", vars.fgMuted);
   put(style, "--tc-border", vars.border);
   put(style, "--tc-radius", vars.radius);
+  put(style, "--tc-shadow", vars.shadow);
   put(style, "--tc-grid-cols", vars.gridCols);
 
   put(style, "--tc-success", vars.success);
@@ -228,7 +192,10 @@ function applyDerivedVars(
         "--tc-accent-bg",
         rgba(vars.accent, effectiveTheme === "dark" ? 0.18 : 0.1),
       );
-      putIfMissing(style, "--tc-accent-hover", mix(vars.accent, [0, 0, 0], 0.1));
+      // Mix toward white in dark mode so hover is lighter, not darker.
+      const accentHoverTarget: [number, number, number] =
+        effectiveTheme === "dark" ? [255, 255, 255] : [0, 0, 0];
+      putIfMissing(style, "--tc-accent-hover", mix(vars.accent, accentHoverTarget, 0.1));
       const accentShadow = rgba(vars.accent, 0.55);
       if (accentShadow)
         putIfMissing(style, "--tc-accent-shadow", `0 8px 24px -8px ${accentShadow}`);
@@ -239,7 +206,10 @@ function applyDerivedVars(
         const darkBg = !isLightColor(vars.bg);
         const surfaceTarget: [number, number, number] = darkBg ? [255, 255, 255] : [15, 23, 42];
         putIfMissing(style, "--tc-fg", fg);
-        putIfMissing(style, "--tc-fg-muted", mix(fg, parseHexColor(vars.bg) ?? [0, 0, 0], 0.38));
+        // Only derive fgMuted when bg is parseable — mixing toward black when bg
+        // is non-hex would produce an arbitrary (potentially unreadable) result.
+        const bgRgb = parseHexColor(vars.bg);
+        if (bgRgb) putIfMissing(style, "--tc-fg-muted", mix(fg, bgRgb, 0.38));
         putIfMissing(style, "--tc-bg-chrome", mix(vars.bg, surfaceTarget, darkBg ? 0.1 : 0.04));
         putIfMissing(style, "--tc-bg-card", mix(vars.bg, surfaceTarget, darkBg ? 0.08 : 0.025));
         putIfMissing(style, "--tc-bg-muted", mix(vars.bg, surfaceTarget, darkBg ? 0.12 : 0.06));
@@ -290,7 +260,10 @@ function applyDerivedVars(
   }
 
   if (deriveEnabled(deriveCssVars, "density") && vars.density) {
-    applyDirectVars(DENSITY_PRESETS[vars.density], style);
+    // Guard against invalid values (e.g. stale localStorage) that would make
+    // DENSITY_PRESETS return undefined and crash applyDirectVars.
+    const preset = WIDGET_DENSITY_PRESETS[vars.density];
+    if (preset) applyDirectVars(preset, style);
   }
 }
 
@@ -311,11 +284,17 @@ export function buildCssVarStyle(
 ): CSSProperties | undefined {
   if (!vars) return undefined;
 
-  const style: StyleVars = {};
-  applyVarsBase(vars, style, effectiveTheme, deriveCssVars);
+  // Merge base vars with active-theme overrides into one effective set BEFORE
+  // derivation. Strip `light` / `dark` from the spread so `effective` is a flat
+  // ToncastWidgetCssVarsBase (no stray nested objects on the merged object).
+  const { light, dark, ...rest } = vars;
+  const themeOverrides = effectiveTheme === "dark" ? dark : light;
+  const effective: ToncastWidgetCssVarsBase = themeOverrides
+    ? { ...rest, ...themeOverrides }
+    : rest;
 
-  const themeOverrides = effectiveTheme === "dark" ? vars.dark : vars.light;
-  if (themeOverrides) applyVarsBase(themeOverrides, style, effectiveTheme, deriveCssVars);
+  const style: StyleVars = {};
+  applyVarsBase(effective, style, effectiveTheme, deriveCssVars);
 
   return Object.keys(style).length ? (style as CSSProperties) : undefined;
 }

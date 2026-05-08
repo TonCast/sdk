@@ -38,7 +38,9 @@ export function LivePreview({ config, deviceMode }: LivePreviewProps) {
       options: { domain },
     },
     widget: {
-      theme: config.theme.colorScheme as "light" | "dark" | "system",
+      ...(config.theme.colorScheme !== "light"
+        ? { theme: config.theme.colorScheme as "light" | "dark" | "system" }
+        : {}),
       ...(cssVars ? { cssVars } : {}),
       ...(config.language ? { language: config.language as SupportedLanguage } : {}),
       ...(config.referralAddress && config.referralPct > 0
