@@ -13,13 +13,23 @@ import { buildCssVarsConfig } from "../utils/generateZip";
 // Dev manifest from the Toncast main domain — works in any environment.
 const DEV_DOMAIN = "https://toncast.me";
 
+/** Returns the domain if it's a valid absolute http(s) URL, otherwise DEV_DOMAIN. */
+function resolvePreviewDomain(raw: string): string {
+  try {
+    const url = new URL(raw);
+    return url.protocol === "https:" || url.protocol === "http:" ? raw : DEV_DOMAIN;
+  } catch {
+    return DEV_DOMAIN;
+  }
+}
+
 interface LivePreviewProps {
   config: ConstructorConfig;
   deviceMode: Device;
 }
 
 export function LivePreview({ config, deviceMode }: LivePreviewProps) {
-  const domain = config.domain || DEV_DOMAIN;
+  const domain = resolvePreviewDomain(config.domain || "");
   const cssVars = buildCssVarsConfig(config);
 
   const widgetConfig = {

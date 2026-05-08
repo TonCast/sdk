@@ -209,12 +209,16 @@ export function buildIndexHtml(config: ConstructorConfig): string {
     ? `\n      @media (prefers-color-scheme: dark) {\n        body { background: ${bodyBgDark}; }\n      }`
     : "";
 
+  // style.css (when non-empty) is written as a separate file in the ZIP and
+  // referenced via <link> so integrators can locate and edit it in one place.
+  const cssLink = css ? `\n    <link rel="stylesheet" href="style.css" />` : "";
+
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${escapeHtml(config.appName || "Toncast Widget")}</title>
+    <title>${escapeHtml(config.appName || "Toncast Widget")}</title>${cssLink}
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
@@ -229,7 +233,7 @@ export function buildIndexHtml(config: ConstructorConfig): string {
       #toncast-widget {
         width: 100%;
         max-width: 480px;
-      }${css ? `\n      ${css.replace(/\n/g, "\n      ")}` : ""}
+      }
     </style>
   </head>
   <body>
@@ -272,24 +276,28 @@ export function buildReactSnippet(config: ConstructorConfig): string {
       ? `,\n        widget: ${stringifyForScript(widgetOptions, 8).replace(/\n/g, "\n        ")}`
       : "";
 
-  return `import { useEffect, useRef } from 'react';
+  return `// NOTE: ToncastBettingWidget must be rendered inside a TonConnectUIProvider.
+// See https://docs.ton.org/develop/dapps/ton-connect/web for setup instructions.
+import { useEffect, useRef } from 'react';
 import { useTonConnectUI } from '@tonconnect/ui-react';
 import ToncastWidgetLoader from '@toncast/widget-loader';
 
 function ToncastBettingWidget() {
   const [tonconnect] = useTonConnectUI();
-  const ref = useRef(null);
-  const widgetRef = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const widgetRef = useRef<InstanceType<Awaited<ReturnType<typeof ToncastWidgetLoader.load>>> | null>(null);
 
   useEffect(() => {
     let active = true;
-    ToncastWidgetLoader.load().then((Widget) => {
-      if (!active || !ref.current) return;
-      widgetRef.current = new Widget({
-        tonconnect: { type: 'integrated', instance: tonconnect }${widgetPart},
-      });
-      widgetRef.current.mount(ref.current);
-    });
+    ToncastWidgetLoader.load()
+      .then((Widget) => {
+        if (!active || !ref.current) return;
+        widgetRef.current = new Widget({
+          tonconnect: { type: 'integrated', instance: tonconnect }${widgetPart},
+        });
+        widgetRef.current.mount(ref.current);
+      })
+      .catch((err) => console.error('[ToncastWidget] load failed:', err));
     return () => { active = false; widgetRef.current?.unmount(); };
   }, [tonconnect]);
 

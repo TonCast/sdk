@@ -1,6 +1,8 @@
-import { createContext, type ReactNode, useCallback, useContext, useState } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
+
 import type { ToncastWidgetConfig } from "./types";
 
+const NAV_MAX_DEPTH = 20;
 // ─── Navigation ───
 
 export type WidgetView =
@@ -43,7 +45,8 @@ export function NavProvider({ children }: { children: ReactNode }) {
         current.initialSide === to.initialSide
       )
         return h;
-      return [...h, to];
+      // Keep at most NAV_MAX_DEPTH entries to prevent unbounded memory growth.
+      return [...h, to].slice(-NAV_MAX_DEPTH);
     });
   }, []);
 
@@ -53,8 +56,15 @@ export function NavProvider({ children }: { children: ReactNode }) {
 
   const canGoBack = history.length > 1;
 
+  // Stabilize the context object so consumers don't re-render on unrelated
+  // NavProvider renders. navigate and back are already stable (useCallback).
+  const value = useMemo(
+    () => ({ view, navigate, back, canGoBack }),
+    [view, navigate, back, canGoBack],
+  );
+
   return (
-    <NavContext.Provider value={{ view, navigate, back, canGoBack }}>
+    <NavContext.Provider value={value}>
       {children}
     </NavContext.Provider>
   );

@@ -11,8 +11,10 @@ const en = {
   "page.paris.empty": "No markets in this category.",
   "page.paris.loadFailed": "Failed to load: {error}",
   "page.paris.detail.back": "← Back",
-  "page.paris.detail.notFound": "Market not found",
   "page.paris.detail.failed": "Failed: {error}",
+
+  "error.somethingWentWrong": "Something went wrong.",
+  "error.retry": "Retry",
 
   "category.all": "All",
   "category.loadFailed": "Categories unavailable",
@@ -93,6 +95,7 @@ const en = {
   "time.daysHours": "{d}d {h}h",
   "time.hoursMinutes": "{h}h {m}m",
   "time.minutes": "{m}m",
+  "time.lessThanMinute": "< 1m",
 
   "bet.ticketsCount": "{n} tickets",
 
@@ -116,8 +119,10 @@ const ru: Catalog = {
   "page.paris.empty": "В этой категории нет рынков.",
   "page.paris.loadFailed": "Ошибка загрузки: {error}",
   "page.paris.detail.back": "← Назад",
-  "page.paris.detail.notFound": "Рынок не найден",
   "page.paris.detail.failed": "Ошибка: {error}",
+
+  "error.somethingWentWrong": "Что-то пошло не так.",
+  "error.retry": "Повторить",
 
   "category.all": "Все",
   "category.loadFailed": "Категории недоступны",
@@ -198,6 +203,7 @@ const ru: Catalog = {
   "time.daysHours": "{d}д {h}ч",
   "time.hoursMinutes": "{h}ч {m}м",
   "time.minutes": "{m}м",
+  "time.lessThanMinute": "< 1м",
 
   "bet.ticketsCount": "{n} билетов",
 

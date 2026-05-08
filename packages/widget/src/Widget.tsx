@@ -1,13 +1,21 @@
 import { createTonClient, ToncastClient } from "@toncast/sdk";
 import { ToncastProvider, useTonConnectClient } from "@toncast/sdk-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Component, type ErrorInfo, type ReactNode, type CSSProperties } from "react";
-import { useEffect, useRef, useState } from "react";
+import {
+  Component,
+  type CSSProperties,
+  type ErrorInfo,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import type { ClientStandaloneDescriptor } from "./types";
 import { NavBar } from "./components/NavBar";
 import { WidgetHeader } from "./components/WidgetHeader";
 import { ConfigProvider, NavProvider, useNav } from "./context";
 import { I18nProvider } from "./i18n/I18nProvider";
+import { useT } from "./i18n/useT";
 import { IntegratedProvider, StandaloneProvider, useTcState } from "./tc-bridge";
 import type { ToncastWidgetConfig, ToncastWidgetCssVars, ToncastWidgetCssVarsBase } from "./types";
 import { cn } from "./utils/cn";
@@ -71,10 +79,14 @@ function buildCssVarStyle(
 }
 
 /**
- * Catches render errors from the widget tree and shows an inline retry card
- * instead of letting the error propagate to the host page's error boundary.
+ * Catches render errors and shows an inline retry card.
+ * Text props allow the parent functional wrapper to inject translated strings
+ * since class components cannot call hooks directly.
  */
-class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+class ErrorBoundary extends Component<
+  { children: ReactNode; errorText: string; retryText: string },
+  { error: Error | null }
+> {
   state = { error: null };
 
   static getDerivedStateFromError(error: Error) {
@@ -89,19 +101,29 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
     if (this.state.error) {
       return (
         <div className="tc-error" style={{ padding: 16, textAlign: "center" }}>
-          <p style={{ marginBottom: 10 }}>Something went wrong.</p>
+          <p style={{ marginBottom: 10 }}>{this.props.errorText}</p>
           <button
             type="button"
             className="tc-btn tc-btn-secondary"
             onClick={() => this.setState({ error: null })}
           >
-            Retry
+            {this.props.retryText}
           </button>
         </div>
       );
     }
     return this.props.children;
   }
+}
+
+/** Functional wrapper that supplies translated strings to the class ErrorBoundary. */
+function WidgetErrorBoundary({ children }: { children: ReactNode }) {
+  const t = useT();
+  return (
+    <ErrorBoundary errorText={t("error.somethingWentWrong")} retryText={t("error.retry")}>
+      {children}
+    </ErrorBoundary>
+  );
 }
 
 /** Internal router — syncs wallet state and renders the active view. */
@@ -113,13 +135,17 @@ function WidgetShell() {
   // delegate address→client sync to the canonical SDK hook (avoids duplication).
   useTonConnectClient(address || null);
 
-  // flush all cached queries when the wallet address changes so no stale
-  // data from a previous user leaks into the next user's session.
+  // Flush only user-scoped caches when the wallet changes. Public data
+  // (paris list, categories, pari details) is wallet-agnostic and should
+  // NOT be invalidated — doing so causes a visible blank-then-refetch cycle.
   const prevAddrRef = useRef(address);
   useEffect(() => {
     if (prevAddrRef.current === address) return;
     prevAddrRef.current = address;
-    queryClient.invalidateQueries({ queryKey: ["toncast"] });
+    void Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["toncast", "betting"] }),
+      queryClient.invalidateQueries({ queryKey: ["toncast", "coins"] }),
+    ]);
   }, [address, queryClient]);
 
   return (
@@ -163,6 +189,17 @@ function StandaloneClientLayer({
       language: config.widget?.language,
     });
   }
+
+  // Clean up when this layer unmounts (key change = new client-critical config).
+  // ToncastClient has no dispose() today, but clearing userAddress prevents the
+  // old instance from being called back into if a ref escapes. When dispose() is
+  // added to the SDK, replace this with clientRef.current.dispose().
+  useEffect(() => {
+    return () => {
+      clientRef.current?.clearUserAddress();
+      (clientRef.current as unknown as { dispose?: () => void })?.dispose?.();
+    };
+  }, []);
 
   return (
     <ToncastProvider client={clientRef.current}>
@@ -239,9 +276,9 @@ export function Widget({ config, className, style }: WidgetProps) {
             className={cn(themeClass, className)}
             style={cssVarStyle || style ? { ...cssVarStyle, ...style } : undefined}
           >
-            <ErrorBoundary>
+            <WidgetErrorBoundary>
               <WidgetShell />
-            </ErrorBoundary>
+            </WidgetErrorBoundary>
           </div>
         </NavProvider>
       </ConfigProvider>

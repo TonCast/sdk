@@ -1,6 +1,6 @@
 import { ALL_CATEGORY_FILTER, type Category } from "@toncast/sdk";
 import { useCategories, useStreamList } from "@toncast/sdk-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PariCard } from "../components/PariCard";
 import { Button } from "../components/ui/Button";
 import { Skeleton } from "../components/ui/Skeleton";
@@ -10,6 +10,15 @@ export function ParisListView() {
   const t = useT();
   const categories = useCategories();
   const [active, setActive] = useState<Category | null>(null);
+
+  // If categories are refetched and the selected category no longer exists
+  // (e.g. removed server-side), reset so the user isn't stuck on a ghost filter.
+  useEffect(() => {
+    if (!active || !categories.data) return;
+    const stillExists = categories.data.some((c) => c.param === active.param);
+    if (!stillExists) setActive(null);
+  }, [categories.data, active]);
+
   const current = active ?? categories.data?.[0] ?? ALL_CATEGORY_FILTER;
   const { data, isLoading, isError, error } = useStreamList(current.param);
 

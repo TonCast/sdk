@@ -10,7 +10,12 @@ import { Skeleton } from "./ui/Skeleton";
 import { Slider } from "./ui/Slider";
 import { TonDiamond } from "./ui/TonDiamond";
 
-/** Keeps ToncastClient.userAddress in sync with the active wallet. */
+/**
+ * Keeps ToncastClient.userAddress in sync with the active wallet.
+ * When BetCard is used inside the full widget tree, WidgetShell already calls
+ * useTonConnectClient — this component is therefore a no-op there (idempotent).
+ * It is necessary when BetCard is rendered standalone outside the widget tree.
+ */
 function WalletSync({ address }: { address: string }) {
   useTonConnectClient(address || null);
   return null;

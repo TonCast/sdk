@@ -54,11 +54,19 @@ export function ConfigTab({ config, onChange }: Props) {
           placeholder="https://your-app.com"
           className={inputCls}
         />
-        {config.domain && (
-          <div className="mt-1.5 text-[10px] text-slate-500 bg-slate-800/50 rounded px-2 py-1 font-mono break-all">
-            {config.domain.replace(/\/$/, "")}/tonconnect-manifest.json
-          </div>
-        )}
+        {config.domain && (() => {
+          let valid = false;
+          try { const u = new URL(config.domain); valid = u.protocol === "https:" || u.protocol === "http:"; } catch { /* invalid */ }
+          return valid ? (
+            <div className="mt-1.5 text-[10px] text-slate-500 bg-slate-800/50 rounded px-2 py-1 font-mono break-all">
+              {config.domain.replace(/\/$/, "")}/tonconnect-manifest.json
+            </div>
+          ) : (
+            <p className="mt-1 text-[10px] text-red-400">
+              Must be an absolute URL, e.g. <span className="font-mono">https://your-app.com</span>
+            </p>
+          );
+        })()}
         {!config.domain && (
           <p className="mt-1 text-[10px] text-slate-600">
             Leave empty — preview uses Toncast dev manifest.

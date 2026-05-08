@@ -29,20 +29,26 @@ export function shortAddr(addr: string, head = 6, tail = 4): string {
 }
 
 export type TimeLeftTranslate = (
-  key: "time.ended" | "time.daysHours" | "time.hoursMinutes" | "time.minutes",
+  key:
+    | "time.ended"
+    | "time.daysHours"
+    | "time.hoursMinutes"
+    | "time.minutes"
+    | "time.lessThanMinute",
   vars?: Record<string, number>,
 ) => string;
 
 /** English prose fallback used when no translator is provided. */
 function englishTimeLeft(
-  key: "time.ended" | "time.daysHours" | "time.hoursMinutes" | "time.minutes",
+  key: Parameters<TimeLeftTranslate>[0],
   vars?: Record<string, number>,
 ): string {
   switch (key) {
-    case "time.ended": return "Ended";
+    case "time.ended": return "ended";
     case "time.daysHours": return `${vars?.d ?? 0}d ${vars?.h ?? 0}h`;
     case "time.hoursMinutes": return `${vars?.h ?? 0}h ${vars?.m ?? 0}m`;
     case "time.minutes": return `${vars?.m ?? 0}m`;
+    case "time.lessThanMinute": return "< 1m";
   }
 }
 
@@ -63,5 +69,6 @@ export function formatTimeLeft(
   const m = Math.floor((remaining % 3600) / 60);
   if (d > 0) return translate("time.daysHours", { d, h });
   if (h > 0) return translate("time.hoursMinutes", { h, m });
-  return translate("time.minutes", { m });
+  if (m > 0) return translate("time.minutes", { m });
+  return translate("time.lessThanMinute");
 }

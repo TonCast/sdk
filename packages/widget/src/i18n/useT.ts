@@ -9,7 +9,9 @@ export function useT(): (key: TranslationKey, params?: TParams) => string {
   return useCallback(
     (key, params) => {
       const localised = TRANSLATIONS[lang]?.[key];
-      const template = localised ?? EN_CATALOG[key];
+      // Fall back to English, then to the raw key so a missing/future SDK enum
+      // value produces a readable string rather than a TypeError on .replace().
+      const template = localised ?? EN_CATALOG[key] ?? key;
       if (!params) return template;
       return template.replace(/\{(\w+)\}/g, (_, name: string) => {
         const v = params[name];
