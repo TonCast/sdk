@@ -5,6 +5,7 @@ type FakeScript = {
   attrs: Record<string, string>;
   crossOrigin?: string;
   getAttribute: (name: string) => string | null;
+  hasAttribute: (name: string) => boolean;
   integrity?: string;
   nonce?: string;
   onerror?: () => void;
@@ -27,6 +28,9 @@ function installFakeDocument() {
         },
         getAttribute(name) {
           return this.attrs[name] ?? null;
+        },
+        hasAttribute(name) {
+          return this.attrs[name] !== undefined;
         },
         setAttribute(name, value) {
           this.attrs[name] = value;
@@ -65,6 +69,9 @@ function installSelectorThrowingDocument() {
         },
         getAttribute(name) {
           return this.attrs[name] ?? null;
+        },
+        hasAttribute(name) {
+          return this.attrs[name] !== undefined;
         },
         setAttribute(name, value) {
           this.attrs[name] = value;
@@ -116,6 +123,9 @@ describe("ToncastWidgetLoader.load", () => {
     await expect(first).resolves.toBe(Widget);
     await expect(loader.load("https://cdn.example/widget.js")).resolves.toBe(Widget);
     expect(scripts).toHaveLength(1);
+    expect(scripts[0]?.getAttribute("data-tc-widget-loader-key")).toContain(
+      "https://cdn.example/widget.js",
+    );
   });
 
   it("allows retrying after a failed script load", async () => {
@@ -197,5 +207,29 @@ describe("ToncastWidgetLoader.load", () => {
 
     scripts[0]?.onload?.();
     await expect(loaded).resolves.toBe(Widget);
+  });
+
+  it("replaces the script tag when integrity changes for the same URL and keeps separate ctor caches", async () => {
+    const { scripts } = installFakeDocument();
+    const url = "https://cdn.example/widget.js";
+    class WidgetPlain {}
+    vi.stubGlobal("ToncastWidget", { ToncastWidget: WidgetPlain });
+    const loader = await importFreshLoader();
+
+    const plain = loader.load(url);
+    expect(scripts).toHaveLength(1);
+    scripts[0]?.onload?.();
+    await expect(plain).resolves.toBe(WidgetPlain);
+
+    class WidgetSri {}
+    vi.stubGlobal("ToncastWidget", { ToncastWidget: WidgetSri });
+    const sri = loader.load(url, { integrity: "sha384-abc" });
+    expect(scripts).toHaveLength(1);
+    expect(scripts[0]?.integrity).toBe("sha384-abc");
+    scripts[0]?.onload?.();
+    await expect(sri).resolves.toBe(WidgetSri);
+
+    await expect(loader.load(url)).resolves.toBe(WidgetPlain);
+    await expect(loader.load(url, { integrity: "sha384-abc" })).resolves.toBe(WidgetSri);
   });
 });

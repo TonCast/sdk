@@ -10,12 +10,6 @@ import { Skeleton } from "./ui/Skeleton";
 import { Slider } from "./ui/Slider";
 import { TonDiamond } from "./ui/TonDiamond";
 
-/**
- * Keeps ToncastClient.userAddress in sync with the active wallet.
- * When BetCard is used inside the full widget tree, WidgetShell already calls
- * useTonConnectClient — this component is therefore a no-op there (idempotent).
- * It is necessary when BetCard is rendered standalone outside the widget tree.
- */
 /** User-visible send/confirm failure — includes Toncast `code` when available. */
 function formatBetSendError(err: unknown): string {
   if (err instanceof ToncastError) {
@@ -28,9 +22,24 @@ function formatBetSendError(err: unknown): string {
     }
     return err.message;
   }
+  if (err !== null && typeof err === "object") {
+    const o = err as Record<string, unknown>;
+    const msg = o.message;
+    const code = o.code;
+    if (typeof msg === "string" && msg.length > 0) {
+      if (typeof code === "string" && code.length > 0) return `${code}: ${msg}`;
+      return msg;
+    }
+  }
   return String(err);
 }
 
+/**
+ * Keeps ToncastClient.userAddress in sync with the active wallet.
+ * When BetCard is used inside the full widget tree, WidgetShell already calls
+ * useTonConnectClient — this component is therefore a no-op there (idempotent).
+ * It is necessary when BetCard is rendered standalone outside the widget tree.
+ */
 function WalletSync({ address }: { address: string }) {
   useTonConnectClient(address || null);
   return null;

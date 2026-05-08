@@ -72,7 +72,9 @@ function appendPaletteCssVars(
     appendVar(lines, "--tc-accent", accent);
     appendVar(lines, "--tc-accent-fg", readableFg(accent));
     appendVar(lines, "--tc-accent-bg", rgba(accent, theme === "dark" ? 0.18 : 0.1));
-    appendVar(lines, "--tc-accent-hover", mix(accent, [0, 0, 0], 0.1) ?? accent);
+    const accentHoverTarget: [number, number, number] =
+      theme === "dark" ? [255, 255, 255] : [0, 0, 0];
+    appendVar(lines, "--tc-accent-hover", mix(accent, accentHoverTarget, 0.1) ?? accent);
     const shadow = rgba(accent, 0.55);
     if (shadow) lines.push(`  --tc-accent-shadow: 0 8px 24px -8px ${shadow};`);
   }

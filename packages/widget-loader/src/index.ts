@@ -89,15 +89,54 @@ export interface ToncastWidgetLoaderOptions {
 /** CDN URL template — major-versioned for non-breaking auto-updates. */
 const CDN_URL = "https://widget.toncast.app/v0/index.iife.js";
 
+/** Attribute storing the loader cache key so duplicate URLs with different SRI/nonce do not reuse the wrong script. */
+const LOADER_KEY_ATTR = "data-tc-widget-loader-key";
+
+function normalizeCrossOrigin(v: ToncastWidgetLoaderOptions["crossOrigin"]): string {
+  return v === undefined ? "" : v;
+}
+
+function makeLoaderCacheKey(cdnUrl: string, options: ToncastWidgetLoaderOptions): string {
+  const integrity = options.integrity ?? "";
+  const crossOrigin = normalizeCrossOrigin(options.crossOrigin);
+  const nonce = options.nonce ?? "";
+  return `${cdnUrl}\n${integrity}\n${crossOrigin}\n${nonce}`;
+}
+
+function effectiveScriptKey(el: HTMLScriptElement, src: string): string {
+  if (el.hasAttribute(LOADER_KEY_ATTR)) {
+    return el.getAttribute(LOADER_KEY_ATTR) ?? "";
+  }
+  return makeLoaderCacheKey(src, {});
+}
+
+function removeConflictingLoaderScripts(src: string, cacheKey: string): void {
+  for (const el of Array.from(document.scripts)) {
+    if (el.getAttribute("data-tc-widget-loader") !== src) continue;
+    if (effectiveScriptKey(el, src) !== cacheKey) el.remove();
+  }
+}
+
+function findLoaderScript(src: string, cacheKey: string): HTMLScriptElement | null {
+  for (const el of Array.from(document.scripts)) {
+    if (el.getAttribute("data-tc-widget-loader") !== src) continue;
+    if (effectiveScriptKey(el, src) === cacheKey) return el;
+  }
+  return null;
+}
+
 /**
  * Download and cache the Toncast widget bundle from CDN.
- * Subsequent calls with the **same** `cdnUrl` return the cached constructor without re-fetching.
- * Different URLs are cached separately. Loads are serialized so `window.ToncastWidget` reads match
- * the script that just finished (sequential use of multiple CDN URLs on one page).
+ *
+ * Cache key includes `cdnUrl`, `integrity`, `crossOrigin`, and `nonce`. Changing SRI or CSP nonce
+ * therefore yields a separate cached constructor and replaces any older `<script>` tag for the same URL.
+ * Legacy tags created before `data-tc-widget-loader-key` existed are treated as the default-empty-options key.
+ *
+ * Loads are serialized so `window.ToncastWidget` reads match the script that just finished when mixing URLs/options on one page.
  */
 const ctorCache = new Map<string, ToncastWidgetConstructor>();
-/** In-flight promise per URL — dedupes concurrent `load(url)` calls. */
-const inflightByUrl = new Map<string, Promise<ToncastWidgetConstructor>>();
+/** In-flight promise per cache key — dedupes concurrent `load(url, opts)` calls. */
+const inflightByKey = new Map<string, Promise<ToncastWidgetConstructor>>();
 /** Serializes script injection across different `cdnUrl`s without deferring the first `injectScript` (matches prior sync-until-await behavior). */
 let serializeLocked = false;
 const serializeWaiters: Array<() => void> = [];
@@ -122,11 +161,12 @@ function leaveSerialization(): void {
 async function loadUncached(
   cdnUrl: string,
   options: ToncastWidgetLoaderOptions,
+  cacheKey: string,
 ): Promise<ToncastWidgetConstructor> {
-  const hit = ctorCache.get(cdnUrl);
+  const hit = ctorCache.get(cacheKey);
   if (hit) return hit;
 
-  await injectScript(cdnUrl, options);
+  await injectScript(cdnUrl, options, cacheKey);
 
   // The IIFE sets window.ToncastWidget = { ToncastWidget: [class] }
   // biome-ignore lint/suspicious/noExplicitAny: global set by CDN bundle
@@ -140,7 +180,7 @@ async function loadUncached(
     );
   }
 
-  ctorCache.set(cdnUrl, ctor);
+  ctorCache.set(cacheKey, ctor);
   return ctor;
 }
 
@@ -148,32 +188,38 @@ async function load(
   cdnUrl: string = CDN_URL,
   options: ToncastWidgetLoaderOptions = {},
 ): Promise<ToncastWidgetConstructor> {
-  const cached = ctorCache.get(cdnUrl);
+  const cacheKey = makeLoaderCacheKey(cdnUrl, options);
+  const cached = ctorCache.get(cacheKey);
   if (cached) return cached;
 
-  let pending = inflightByUrl.get(cdnUrl);
+  let pending = inflightByKey.get(cacheKey);
   if (!pending) {
     const maybeWait = enterSerialization();
     pending = (async () => {
       if (maybeWait) await maybeWait;
       try {
         try {
-          return await loadUncached(cdnUrl, options);
+          return await loadUncached(cdnUrl, options, cacheKey);
         } finally {
           leaveSerialization();
         }
       } finally {
-        inflightByUrl.delete(cdnUrl);
+        inflightByKey.delete(cacheKey);
       }
     })();
-    inflightByUrl.set(cdnUrl, pending);
+    inflightByKey.set(cacheKey, pending);
   }
   return pending;
 }
 
-function injectScript(src: string, options: ToncastWidgetLoaderOptions): Promise<void> {
+function injectScript(
+  src: string,
+  options: ToncastWidgetLoaderOptions,
+  cacheKey: string,
+): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (findLoaderScript(src)) {
+    removeConflictingLoaderScripts(src, cacheKey);
+    if (findLoaderScript(src, cacheKey)) {
       resolve();
       return;
     }
@@ -194,6 +240,7 @@ function injectScript(src: string, options: ToncastWidgetLoaderOptions): Promise
     }
     if (options.nonce) el.nonce = options.nonce;
     el.setAttribute("data-tc-widget-loader", src);
+    el.setAttribute(LOADER_KEY_ATTR, cacheKey);
     el.onload = () => finish(() => resolve());
     el.onerror = () => {
       el.remove();
@@ -201,13 +248,6 @@ function injectScript(src: string, options: ToncastWidgetLoaderOptions): Promise
     };
     document.head.appendChild(el);
   });
-}
-
-function findLoaderScript(src: string): HTMLScriptElement | null {
-  for (const el of Array.from(document.scripts)) {
-    if (el.getAttribute("data-tc-widget-loader") === src) return el;
-  }
-  return null;
 }
 
 const ToncastWidgetLoader = { load };

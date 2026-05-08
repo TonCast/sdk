@@ -15,9 +15,7 @@ export type TcIntegratedDescriptor = {
   instance: TonConnectUI;
 };
 
-export type TonConnectDescriptor =
-  | TcStandaloneDescriptor
-  | TcIntegratedDescriptor;
+export type TonConnectDescriptor = TcStandaloneDescriptor | TcIntegratedDescriptor;
 
 export type ClientStandaloneDescriptor = {
   type: "standalone";
@@ -39,9 +37,7 @@ export type ClientIntegratedDescriptor = {
   instance: ToncastClient;
 };
 
-export type ClientDescriptor =
-  | ClientStandaloneDescriptor
-  | ClientIntegratedDescriptor;
+export type ClientDescriptor = ClientStandaloneDescriptor | ClientIntegratedDescriptor;
 
 export type ToncastWidgetDensity = "compact" | "default" | "comfortable";
 
@@ -200,7 +196,10 @@ export interface ToncastWidgetConfig {
      */
     deriveCssVars?: boolean | ToncastWidgetDerivedCssVarsOptions;
     referral?: {
-      /** TON wallet address receiving the referral share */
+      /**
+       * Beneficiary TON wallet in user-friendly form (`UQ…` / `EQ…`), as accepted by the SDK client.
+       * The widget passes this through to Toncast; invalid addresses may fail at quote or send time.
+       */
       address: string;
       /** Integer 1..7 — percent of winnings, validated on-chain as uint3 */
       pct: number;
