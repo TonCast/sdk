@@ -29,18 +29,10 @@ function ExpandableDescription({ text }: { text: string }) {
       {needsTruncation && (
         <button
           type="button"
+          className="tc-detail-desc-toggle"
           aria-expanded={expanded}
           aria-controls={descId}
           onClick={() => setExpanded((v) => !v)}
-          style={{
-            marginTop: 4,
-            fontSize: 12,
-            color: "var(--tc-accent)",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: 0,
-          }}
         >
           {expanded ? t("common.showLess") : t("common.showMore")}
         </button>
@@ -146,7 +138,8 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
             >
               <h2 className="tc-detail-title">{snap.pari.name}</h2>
               <span className="tc-badge tc-badge-default" style={{ flexShrink: 0 }}>
-                {t(`pari.status.${snap.pari.status}` as Parameters<typeof t>[0]) || snap.pari.status}
+                {t(`pari.status.${snap.pari.status}` as Parameters<typeof t>[0]) ||
+                  snap.pari.status}
               </span>
             </div>
             <ExpandableDescription text={snap.pari.description} />

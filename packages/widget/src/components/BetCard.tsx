@@ -1,4 +1,4 @@
-import { formatBetQuoteReason, parseUnits, TON_ADDRESS } from "@toncast/sdk";
+import { formatBetQuoteReason, parseUnits, TON_ADDRESS, ToncastError } from "@toncast/sdk";
 import { type BetMode, useBet, useTonConnectClient } from "@toncast/sdk-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "../i18n/useT";
@@ -16,6 +16,21 @@ import { TonDiamond } from "./ui/TonDiamond";
  * useTonConnectClient — this component is therefore a no-op there (idempotent).
  * It is necessary when BetCard is rendered standalone outside the widget tree.
  */
+/** User-visible send/confirm failure — includes Toncast `code` when available. */
+function formatBetSendError(err: unknown): string {
+  if (err instanceof ToncastError) {
+    return `${err.code}: ${err.message}`;
+  }
+  if (err instanceof Error) {
+    const code = (err as Error & { code?: unknown }).code;
+    if (typeof code === "string" && code.length > 0) {
+      return `${code}: ${err.message}`;
+    }
+    return err.message;
+  }
+  return String(err);
+}
+
 function WalletSync({ address }: { address: string }) {
   useTonConnectClient(address || null);
   return null;
@@ -110,7 +125,7 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
       if (refreshTimerRef.current !== null) clearTimeout(refreshTimerRef.current);
       refreshTimerRef.current = setTimeout(() => void bet.refresh(), 8_000);
     } catch (err) {
-      setSendError(err instanceof Error ? err.message : String(err));
+      setSendError(formatBetSendError(err));
     } finally {
       setSending(false);
     }

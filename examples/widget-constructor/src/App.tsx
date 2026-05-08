@@ -24,13 +24,13 @@ function normalizeDomain(raw: unknown): string {
   }
 }
 
-/** Trim; keep address only if `Address.parse` succeeds; canonical bounceable string from `@ton/core`. */
+/** Trim; valid addresses only; normalize to **non-bounceable** user-facing form (typically `UQ…`). */
 function normalizeReferralAddress(raw: unknown): string {
   if (typeof raw !== "string") return "";
   const s = raw.trim();
   if (!s) return "";
   try {
-    return Address.parse(s).toString();
+    return Address.parse(s).toString({ bounceable: false, urlSafe: true });
   } catch {
     return "";
   }
