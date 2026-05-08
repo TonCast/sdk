@@ -22,6 +22,11 @@
       "types": "./dist/density-presets.d.ts",
       "import": "./dist/density-presets.js",
       "require": "./dist/density-presets.cjs"
+    },
+    "./color-math": {
+      "types": "./dist/color-math.d.ts",
+      "import": "./dist/color-math.js",
+      "require": "./dist/color-math.cjs"
     }
   },
   "files": [

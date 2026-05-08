@@ -16,7 +16,12 @@ import { WidgetHeader } from "./components/WidgetHeader";
 import { ConfigProvider, NavProvider, useNav } from "./context";
 import { I18nProvider } from "./i18n/I18nProvider";
 import { useT } from "./i18n/useT";
-import { IntegratedProvider, StandaloneProvider, useTcState } from "./tc-bridge";
+import {
+  IntegratedProvider,
+  StandaloneProvider,
+  useStandaloneManifestOk,
+  useTcState,
+} from "./tc-bridge";
 import { buildCssVarStyle } from "./theme/cssVars";
 import type { ClientStandaloneDescriptor, ToncastWidgetConfig } from "./types";
 import { cn } from "./utils/cn";
@@ -91,10 +96,30 @@ function WidgetErrorBoundary({ children }: { children: ReactNode }) {
   );
 }
 
+/** Inline alert when standalone `tonconnect.options.domain` is missing or not an absolute http(s) URL. */
+function StandaloneDomainWarning() {
+  const t = useT();
+  return (
+    <div
+      role="alert"
+      className="tc-text-sm"
+      style={{
+        padding: "8px 12px",
+        background: "var(--tc-danger-bg)",
+        color: "var(--tc-danger-fg)",
+        borderBottom: "1px solid var(--tc-danger-border)",
+      }}
+    >
+      {t("error.invalidStandaloneDomain")}
+    </div>
+  );
+}
+
 /** Internal router — syncs wallet state and renders the active view. */
 function WidgetShell() {
   const { view } = useNav();
   const { address } = useTcState();
+  const standaloneManifestOk = useStandaloneManifestOk();
   const queryClient = useQueryClient();
 
   // delegate address→client sync to the canonical SDK hook (avoids duplication).
@@ -115,6 +140,7 @@ function WidgetShell() {
 
   return (
     <div className="tc-shell">
+      {!standaloneManifestOk && <StandaloneDomainWarning />}
       <WidgetHeader />
       <div className="tc-content">
         {view.name === "list" && <ParisListView />}

@@ -123,10 +123,12 @@ describe("ToncastWidgetLoader.load", () => {
     const loader = await importFreshLoader();
 
     const first = loader.load("https://cdn.example/widget.js");
-    const firstFailure = expect(first).rejects.toThrow("Failed to load bundle");
     expect(scripts).toHaveLength(1);
+    const failure = first.catch((err: unknown) => err);
     scripts[0]?.onerror?.();
-    await firstFailure;
+    const err = await failure;
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error).message).toContain("Failed to load bundle");
     expect(scripts).toHaveLength(0);
 
     class Widget {}
@@ -136,6 +138,29 @@ describe("ToncastWidgetLoader.load", () => {
     expect(scripts[0]?.src).toBe("https://cdn.example/widget.js");
     scripts[0]?.onload?.();
     await expect(second).resolves.toBe(Widget);
+  });
+
+  it("caches constructors separately per cdnUrl", async () => {
+    const { scripts } = installFakeDocument();
+    class WidgetA {}
+    class WidgetB {}
+    vi.stubGlobal("ToncastWidget", { ToncastWidget: WidgetA });
+    const loader = await importFreshLoader();
+
+    const first = loader.load("https://cdn.example/a.js");
+    expect(scripts).toHaveLength(1);
+    scripts[0]?.onload?.();
+    await expect(first).resolves.toBe(WidgetA);
+
+    vi.stubGlobal("ToncastWidget", { ToncastWidget: WidgetB });
+    const second = loader.load("https://cdn.example/b.js");
+    expect(scripts).toHaveLength(2);
+    scripts[1]?.onload?.();
+    await expect(second).resolves.toBe(WidgetB);
+
+    await expect(loader.load("https://cdn.example/a.js")).resolves.toBe(WidgetA);
+    await expect(loader.load("https://cdn.example/b.js")).resolves.toBe(WidgetB);
+    expect(scripts).toHaveLength(2);
   });
 
   it("loads custom URLs that are unsafe inside CSS selectors", async () => {

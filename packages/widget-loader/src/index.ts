@@ -89,43 +89,86 @@ export interface ToncastWidgetLoaderOptions {
 /** CDN URL template — major-versioned for non-breaking auto-updates. */
 const CDN_URL = "https://widget.toncast.app/v0/index.iife.js";
 
-let cachedConstructor: ToncastWidgetConstructor | null = null;
-let pendingPromise: Promise<ToncastWidgetConstructor> | null = null;
-
 /**
  * Download and cache the Toncast widget bundle from CDN.
- * Subsequent calls return the cached constructor without re-fetching.
+ * Subsequent calls with the **same** `cdnUrl` return the cached constructor without re-fetching.
+ * Different URLs are cached separately. Loads are serialized so `window.ToncastWidget` reads match
+ * the script that just finished (sequential use of multiple CDN URLs on one page).
  */
+const ctorCache = new Map<string, ToncastWidgetConstructor>();
+/** In-flight promise per URL — dedupes concurrent `load(url)` calls. */
+const inflightByUrl = new Map<string, Promise<ToncastWidgetConstructor>>();
+/** Serializes script injection across different `cdnUrl`s without deferring the first `injectScript` (matches prior sync-until-await behavior). */
+let serializeLocked = false;
+const serializeWaiters: Array<() => void> = [];
+
+/** Returns a promise only when another URL load is in progress; otherwise acquires the lock synchronously. */
+function enterSerialization(): Promise<void> | undefined {
+  if (!serializeLocked) {
+    serializeLocked = true;
+    return undefined;
+  }
+  return new Promise<void>((resolve) => {
+    serializeWaiters.push(resolve);
+  });
+}
+
+function leaveSerialization(): void {
+  const next = serializeWaiters.shift();
+  if (next) next();
+  else serializeLocked = false;
+}
+
+async function loadUncached(
+  cdnUrl: string,
+  options: ToncastWidgetLoaderOptions,
+): Promise<ToncastWidgetConstructor> {
+  const hit = ctorCache.get(cdnUrl);
+  if (hit) return hit;
+
+  await injectScript(cdnUrl, options);
+
+  // The IIFE sets window.ToncastWidget = { ToncastWidget: [class] }
+  // biome-ignore lint/suspicious/noExplicitAny: global set by CDN bundle
+  const g = globalThis as any;
+  const ctor: ToncastWidgetConstructor = g.ToncastWidget?.ToncastWidget ?? g.ToncastWidget;
+
+  if (typeof ctor !== "function") {
+    throw new Error(
+      "[ToncastWidgetLoader] CDN bundle loaded but window.ToncastWidget is not a constructor. " +
+        "Check the CDN URL or bundle version.",
+    );
+  }
+
+  ctorCache.set(cdnUrl, ctor);
+  return ctor;
+}
+
 async function load(
   cdnUrl: string = CDN_URL,
   options: ToncastWidgetLoaderOptions = {},
 ): Promise<ToncastWidgetConstructor> {
-  if (cachedConstructor) return cachedConstructor;
-  if (pendingPromise) return pendingPromise;
+  const cached = ctorCache.get(cdnUrl);
+  if (cached) return cached;
 
-  pendingPromise = (async () => {
-    await injectScript(cdnUrl, options);
-
-    // The IIFE sets window.ToncastWidget = { ToncastWidget: [class] }
-    // biome-ignore lint/suspicious/noExplicitAny: global set by CDN bundle
-    const g = globalThis as any;
-    const ctor: ToncastWidgetConstructor = g.ToncastWidget?.ToncastWidget ?? g.ToncastWidget;
-
-    if (typeof ctor !== "function") {
-      throw new Error(
-        "[ToncastWidgetLoader] CDN bundle loaded but window.ToncastWidget is not a constructor. " +
-          "Check the CDN URL or bundle version.",
-      );
-    }
-
-    cachedConstructor = ctor;
-    return ctor;
-  })().catch((err) => {
-    pendingPromise = null;
-    throw err;
-  });
-
-  return pendingPromise;
+  let pending = inflightByUrl.get(cdnUrl);
+  if (!pending) {
+    const maybeWait = enterSerialization();
+    pending = (async () => {
+      if (maybeWait) await maybeWait;
+      try {
+        try {
+          return await loadUncached(cdnUrl, options);
+        } finally {
+          leaveSerialization();
+        }
+      } finally {
+        inflightByUrl.delete(cdnUrl);
+      }
+    })();
+    inflightByUrl.set(cdnUrl, pending);
+  }
+  return pending;
 }
 
 function injectScript(src: string, options: ToncastWidgetLoaderOptions): Promise<void> {
@@ -134,6 +177,12 @@ function injectScript(src: string, options: ToncastWidgetLoaderOptions): Promise
       resolve();
       return;
     }
+    let settled = false;
+    const finish = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      fn();
+    };
     const el = document.createElement("script");
     el.src = src;
     el.async = true;
@@ -145,10 +194,10 @@ function injectScript(src: string, options: ToncastWidgetLoaderOptions): Promise
     }
     if (options.nonce) el.nonce = options.nonce;
     el.setAttribute("data-tc-widget-loader", src);
-    el.onload = () => resolve();
+    el.onload = () => finish(() => resolve());
     el.onerror = () => {
       el.remove();
-      reject(new Error(`[ToncastWidgetLoader] Failed to load bundle from ${src}`));
+      finish(() => reject(new Error(`[ToncastWidgetLoader] Failed to load bundle from ${src}`)));
     };
     document.head.appendChild(el);
   });

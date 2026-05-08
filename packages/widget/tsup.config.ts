@@ -6,6 +6,7 @@ export default defineConfig({
     index: "src/index.ts",
     react: "src/react.ts",
     "density-presets": "src/theme/densityPresets.ts",
+    "color-math": "src/theme/colorMath.ts",
   },
   format: ["esm", "cjs"],
   dts: true,

@@ -15,6 +15,8 @@ const en = {
 
   "error.somethingWentWrong": "Something went wrong.",
   "error.retry": "Retry",
+  "error.invalidStandaloneDomain":
+    "TonConnect needs a valid absolute https or http URL as the app domain. Wallet connect is disabled until this is fixed.",
 
   "category.all": "All",
   "category.loadFailed": "Categories unavailable",
@@ -123,6 +125,8 @@ const ru: Catalog = {
 
   "error.somethingWentWrong": "Что-то пошло не так.",
   "error.retry": "Повторить",
+  "error.invalidStandaloneDomain":
+    "Для TonConnect нужен корректный абсолютный URL приложения (https или http). Подключение кошелька недоступно, пока домен не исправлен.",
 
   "category.all": "Все",
   "category.loadFailed": "Категории недоступны",

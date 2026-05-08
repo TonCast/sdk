@@ -5,6 +5,7 @@ import type {
   ToncastWidgetCssVarsBase,
   ToncastWidgetDerivedCssVarsOptions,
 } from "../types";
+import { isLightColor, mix, parseHexColor, readableFg, rgba } from "./colorMath";
 import { WIDGET_DENSITY_PRESETS } from "./densityPresets";
 
 type StyleVars = Record<string, string>;
@@ -14,67 +15,6 @@ function deriveEnabled(options: DeriveOptions, key: keyof ToncastWidgetDerivedCs
   if (options === false) return false;
   if (options === true || options === undefined) return true;
   return options[key] !== false;
-}
-
-function parseHexColor(value: string): [number, number, number] | null {
-  const hex = value.trim();
-  const short = /^#([\da-fA-F])([\da-fA-F])([\da-fA-F])$/.exec(hex);
-  if (short) {
-    return [
-      Number.parseInt(`${short[1]}${short[1]}`, 16),
-      Number.parseInt(`${short[2]}${short[2]}`, 16),
-      Number.parseInt(`${short[3]}${short[3]}`, 16),
-    ];
-  }
-
-  const full = /^#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2})$/.exec(hex);
-  if (!full) return null;
-  return [
-    Number.parseInt(full[1] ?? "0", 16),
-    Number.parseInt(full[2] ?? "0", 16),
-    Number.parseInt(full[3] ?? "0", 16),
-  ];
-}
-
-function rgba(value: string, alpha: number): string | null {
-  const rgb = parseHexColor(value);
-  if (!rgb) return null;
-  return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
-}
-
-function relativeLuminance([r, g, b]: [number, number, number]): number {
-  const [rs, gs, bs] = [r, g, b].map((channel) => {
-    const normalized = channel / 255;
-    return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
-  }) as [number, number, number];
-  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
-}
-
-/**
- * Whether `value` reads as a light surface (luminance > 0.55).
- * **Hex-only:** returns `false` when the string is not `#rgb` / `#rrggbb` — do not use the
- * result to classify `rgb()`, `hsl()`, or CSS variables.
- */
-function isLightColor(value: string): boolean {
-  const rgb = parseHexColor(value);
-  if (!rgb) return false;
-  return relativeLuminance(rgb) > 0.55;
-}
-
-function readableFg(value: string, lightFg = "#0f172a", darkFg = "#ffffff"): string | null {
-  const rgb = parseHexColor(value);
-  if (!rgb) return null;
-  return relativeLuminance(rgb) > 0.55 ? lightFg : darkFg;
-}
-
-function mix(value: string, target: [number, number, number], weight: number): string | null {
-  const rgb = parseHexColor(value);
-  if (!rgb) return null;
-  const mixed = rgb.map((channel, i) => {
-    const targetChannel = target[i] ?? 0;
-    return Math.round(channel * (1 - weight) + targetChannel * weight);
-  });
-  return `#${mixed.map((n) => n.toString(16).padStart(2, "0")).join("")}`;
 }
 
 function put(style: StyleVars, name: string, value: string | undefined): void {
