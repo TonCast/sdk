@@ -7,5 +7,7 @@ export type {
   ToncastWidgetConfig,
   ToncastWidgetCssVars,
   ToncastWidgetCssVarsBase,
+  ToncastWidgetDensity,
+  ToncastWidgetDerivedCssVarsOptions,
   ToncastWidgetEventMap,
 } from "./types";

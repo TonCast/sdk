@@ -1,4 +1,9 @@
-import { DEFAULT_ACCENT, type ConstructorConfig, type ThemeColorSet } from "../types";
+import {
+  type ConstructorConfig,
+  DEFAULT_DARK_COLORS,
+  DEFAULT_LIGHT_COLORS,
+  type ThemeColorSet,
+} from "../types";
 
 const WIDGET_CDN_URL = "https://widget.toncast.app/v0/index.iife.js";
 
@@ -25,6 +30,128 @@ function safeHexColor(value: string): string | null {
   return /^#[\da-fA-F]{3,8}$/.test(trimmed) ? trimmed : null;
 }
 
+function parseHexColor(value: string): [number, number, number] | null {
+  const hex = value.trim();
+  const short = /^#([\da-fA-F])([\da-fA-F])([\da-fA-F])$/.exec(hex);
+  if (short) {
+    return [
+      Number.parseInt(`${short[1]}${short[1]}`, 16),
+      Number.parseInt(`${short[2]}${short[2]}`, 16),
+      Number.parseInt(`${short[3]}${short[3]}`, 16),
+    ];
+  }
+
+  const full = /^#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2})$/.exec(hex);
+  if (!full) return null;
+  return [
+    Number.parseInt(full[1] ?? "0", 16),
+    Number.parseInt(full[2] ?? "0", 16),
+    Number.parseInt(full[3] ?? "0", 16),
+  ];
+}
+
+function rgba(value: string, alpha: number): string | null {
+  const rgb = parseHexColor(value);
+  if (!rgb) return null;
+  return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
+}
+
+function mix(value: string, target: [number, number, number], weight: number): string | null {
+  const rgb = parseHexColor(value);
+  if (!rgb) return null;
+  const mixed = rgb.map((channel, i) => {
+    const targetChannel = target[i] ?? 0;
+    return Math.round(channel * (1 - weight) + targetChannel * weight);
+  });
+  return `#${mixed.map((n) => n.toString(16).padStart(2, "0")).join("")}`;
+}
+
+function relativeLuminance([r, g, b]: [number, number, number]): number {
+  const [rs, gs, bs] = [r, g, b].map((channel) => {
+    const normalized = channel / 255;
+    return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+  }) as [number, number, number];
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+}
+
+function readableFg(value: string, lightFg = "#0f172a", darkFg = "#ffffff"): string | null {
+  const rgb = parseHexColor(value);
+  if (!rgb) return null;
+  return relativeLuminance(rgb) > 0.55 ? lightFg : darkFg;
+}
+
+function appendVar(lines: string[], name: string, value: string | null | undefined): void {
+  if (value) lines.push(`  ${name}: ${value};`);
+}
+
+function appendSemanticCssVars(
+  lines: string[],
+  prefix: "success" | "danger" | "warn",
+  source: string,
+  theme: "light" | "dark",
+): void {
+  const textMixTarget: [number, number, number] = theme === "dark" ? [255, 255, 255] : [0, 0, 0];
+  const textWeight = theme === "dark" ? 0.18 : 0.2;
+  appendVar(lines, `--tc-${prefix}`, source);
+  appendVar(lines, `--tc-${prefix}-fg`, mix(source, textMixTarget, textWeight));
+  appendVar(lines, `--tc-${prefix}-bg`, rgba(source, theme === "dark" ? 0.16 : 0.1));
+  appendVar(lines, `--tc-${prefix}-border`, rgba(source, theme === "dark" ? 0.34 : 0.25));
+  if (prefix !== "warn") {
+    appendVar(lines, `--tc-${prefix}-hover-bg`, rgba(source, theme === "dark" ? 0.24 : 0.18));
+    appendVar(lines, `--tc-${prefix}-active-bg`, rgba(source, theme === "dark" ? 0.3 : 0.22));
+    appendVar(lines, `--tc-${prefix}-active-border`, rgba(source, 0.4));
+    appendVar(lines, `--tc-${prefix}-fill-bg`, rgba(source, theme === "dark" ? 0.44 : 0.35));
+    const shadow = rgba(source, 0.35);
+    if (shadow) lines.push(`  --tc-${prefix}-active-shadow: 0 4px 12px -4px ${shadow};`);
+  }
+}
+
+function appendPaletteCssVars(
+  lines: string[],
+  colors: ThemeColorSet,
+  defaults: ThemeColorSet,
+  theme: "light" | "dark",
+): void {
+  const accent = safeHexColor(colors.accent);
+  const bg = colors.bg ? safeHexColor(colors.bg) : null;
+  const success = safeHexColor(colors.success);
+  const danger = safeHexColor(colors.danger);
+  const warn = safeHexColor(colors.warn);
+
+  if (accent !== null && accent !== defaults.accent) {
+    appendVar(lines, "--tc-accent", accent);
+    appendVar(lines, "--tc-accent-fg", readableFg(accent));
+    appendVar(lines, "--tc-accent-bg", rgba(accent, theme === "dark" ? 0.18 : 0.1));
+    appendVar(lines, "--tc-accent-hover", mix(accent, [0, 0, 0], 0.1) ?? accent);
+    const shadow = rgba(accent, 0.55);
+    if (shadow) lines.push(`  --tc-accent-shadow: 0 8px 24px -8px ${shadow};`);
+  }
+  if (bg !== null) {
+    const fg = readableFg(bg);
+    if (fg) {
+      const darkBg = fg === "#ffffff";
+      const surfaceTarget: [number, number, number] = darkBg ? [255, 255, 255] : [15, 23, 42];
+      appendVar(lines, "--tc-bg", bg);
+      appendVar(lines, "--tc-fg", fg);
+      appendVar(lines, "--tc-fg-muted", mix(fg, parseHexColor(bg) ?? [0, 0, 0], 0.38));
+      appendVar(lines, "--tc-bg-chrome", mix(bg, surfaceTarget, darkBg ? 0.1 : 0.04));
+      appendVar(lines, "--tc-bg-card", mix(bg, surfaceTarget, darkBg ? 0.08 : 0.025));
+      appendVar(lines, "--tc-bg-muted", mix(bg, surfaceTarget, darkBg ? 0.12 : 0.06));
+      appendVar(lines, "--tc-border", rgba(fg, darkBg ? 0.16 : 0.12));
+      appendVar(lines, "--tc-bg-hover", rgba(fg, darkBg ? 0.08 : 0.04));
+    }
+  }
+  if (success !== null && success !== defaults.success) {
+    appendSemanticCssVars(lines, "success", success, theme);
+  }
+  if (danger !== null && danger !== defaults.danger) {
+    appendSemanticCssVars(lines, "danger", danger, theme);
+  }
+  if (warn !== null && warn !== defaults.warn) {
+    appendSemanticCssVars(lines, "warn", warn, theme);
+  }
+}
+
 /** Builds tonconnect-manifest.json content. */
 export function buildManifestJson(config: ConstructorConfig): string {
   const cleanDomain = (config.domain || "https://your-domain.com").replace(/\/$/, "");
@@ -42,32 +169,37 @@ export function buildManifestJson(config: ConstructorConfig): string {
 /** Returns a CSS vars sub-object for a given color set, or null if no overrides. */
 function colorSetVars(
   colors: ThemeColorSet,
-  defaultAccent = DEFAULT_ACCENT,
+  defaults: ThemeColorSet,
 ): Record<string, string> | null {
   const vars: Record<string, string> = {};
   const accent = safeHexColor(colors.accent);
   const bg = colors.bg ? safeHexColor(colors.bg) : null;
-  if (accent !== null && accent !== defaultAccent) {
+  const success = safeHexColor(colors.success);
+  const danger = safeHexColor(colors.danger);
+  const warn = safeHexColor(colors.warn);
+  if (accent !== null && accent !== defaults.accent) {
     vars.accent = accent;
-    vars.accentHover = accent;
   }
   if (bg !== null) vars.bg = bg;
+  if (success !== null && success !== defaults.success) vars.success = success;
+  if (danger !== null && danger !== defaults.danger) vars.danger = danger;
+  if (warn !== null && warn !== defaults.warn) vars.warn = warn;
   return Object.keys(vars).length > 0 ? vars : null;
 }
 
 /** Returns gridCols CSS value for the selected column count (null = auto/default). */
 function gridColsValue(columns: number): string | null {
   if (!columns || columns < 1) return null;
-  return `repeat(${columns}, 1fr)`;
+  const safeColumns = Math.max(1, Math.min(4, Math.trunc(columns)));
+  const totalDefaultGap = Math.max(0, safeColumns - 1) * 10;
+  return `repeat(auto-fit, minmax(max(180px, calc((100% - ${totalDefaultGap}px) / ${safeColumns})), 1fr))`;
 }
 
 /**
  * Builds the widget.cssVars object for JS/React configs.
  * Exported so LivePreview can reuse without duplicating the logic.
  */
-export function buildCssVarsConfig(
-  config: ConstructorConfig,
-): Record<string, unknown> | undefined {
+export function buildCssVarsConfig(config: ConstructorConfig): Record<string, unknown> | undefined {
   const { theme } = config;
   const radius = Number.isFinite(theme.radius) ? Math.max(0, Math.min(64, theme.radius)) : 12;
   const gridCols = gridColsValue(theme.columns);
@@ -79,10 +211,11 @@ export function buildCssVarsConfig(
 
   // Grid columns (applies globally)
   if (gridCols) vars.gridCols = gridCols;
+  if (theme.density !== "default") vars.density = theme.density;
 
   // Per-theme color overrides
-  const lightVars = colorSetVars(theme.light);
-  const darkVars = colorSetVars(theme.dark);
+  const lightVars = colorSetVars(theme.light, DEFAULT_LIGHT_COLORS);
+  const darkVars = colorSetVars(theme.dark, DEFAULT_DARK_COLORS);
 
   if (theme.colorScheme === "light") {
     // Only light mode active — put vars at base level (simpler output)
@@ -105,43 +238,21 @@ export function buildStyleCss(config: ConstructorConfig): string | null {
   const radius = Number.isFinite(theme.radius) ? Math.max(0, Math.min(64, theme.radius)) : 12;
   const gridCols = gridColsValue(theme.columns);
 
-  const lightAccent = safeHexColor(theme.light.accent);
-  const lightBg = theme.light.bg ? safeHexColor(theme.light.bg) : null;
-  const darkAccent = safeHexColor(theme.dark.accent);
-  const darkBg = theme.dark.bg ? safeHexColor(theme.dark.bg) : null;
-
   const baseLines: string[] = [];
   if (radius !== 12) baseLines.push(`  --tc-radius: ${radius}px;`);
   if (gridCols) baseLines.push(`  --tc-grid-cols: ${gridCols};`);
 
   const lightLines: string[] = [];
-  if (
-    theme.colorScheme !== "dark" &&
-    lightAccent !== null &&
-    lightAccent !== DEFAULT_ACCENT
-  ) {
-    lightLines.push(`  --tc-accent: ${lightAccent};`);
-    lightLines.push(`  --tc-accent-hover: ${lightAccent};`);
-  }
-  if (theme.colorScheme !== "dark" && lightBg !== null) {
-    lightLines.push(`  --tc-bg: ${lightBg};`);
+  if (theme.colorScheme !== "dark") {
+    appendPaletteCssVars(lightLines, theme.light, DEFAULT_LIGHT_COLORS, "light");
   }
 
   const darkLines: string[] = [];
-  if (
-    theme.colorScheme !== "light" &&
-    darkAccent !== null &&
-    darkAccent !== DEFAULT_ACCENT
-  ) {
-    darkLines.push(`  --tc-accent: ${darkAccent};`);
-    darkLines.push(`  --tc-accent-hover: ${darkAccent};`);
-  }
-  if (theme.colorScheme !== "light" && darkBg !== null) {
-    darkLines.push(`  --tc-bg: ${darkBg};`);
+  if (theme.colorScheme !== "light") {
+    appendPaletteCssVars(darkLines, theme.dark, DEFAULT_DARK_COLORS, "dark");
   }
 
-  const hasOverrides =
-    baseLines.length > 0 || lightLines.length > 0 || darkLines.length > 0;
+  const hasOverrides = baseLines.length > 0 || lightLines.length > 0 || darkLines.length > 0;
   if (!hasOverrides) return null;
 
   const out: string[] = [];

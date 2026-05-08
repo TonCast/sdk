@@ -5,6 +5,9 @@ export type Device = "mobile" | "tablet" | "desktop";
 export interface ThemeColorSet {
   accent: string;
   bg: string;
+  success: string;
+  danger: string;
+  warn: string;
 }
 
 export interface ThemeConfig {
@@ -12,6 +15,7 @@ export interface ThemeConfig {
   radius: number;
   /** Grid columns: 0 = auto (responsive), 1–4 = fixed count */
   columns: number;
+  density: "compact" | "default" | "comfortable";
   /** Colors applied in light mode */
   light: ThemeColorSet;
   /** Colors applied in dark mode */
@@ -34,6 +38,20 @@ export interface ConstructorConfig {
 }
 
 export const DEFAULT_ACCENT = "#0098ea";
+export const DEFAULT_LIGHT_COLORS: ThemeColorSet = {
+  accent: DEFAULT_ACCENT,
+  bg: "",
+  success: "#16a34a",
+  danger: "#dc2626",
+  warn: "#d97706",
+};
+export const DEFAULT_DARK_COLORS: ThemeColorSet = {
+  accent: DEFAULT_ACCENT,
+  bg: "",
+  success: "#22c55e",
+  danger: "#f87171",
+  warn: "#f59e0b",
+};
 
 export const DEFAULT_CONFIG: ConstructorConfig = {
   domain: "",
@@ -47,7 +65,8 @@ export const DEFAULT_CONFIG: ConstructorConfig = {
     colorScheme: "light",
     radius: 12,
     columns: 0,
-    light: { accent: DEFAULT_ACCENT, bg: "" },
-    dark: { accent: DEFAULT_ACCENT, bg: "" },
+    density: "default",
+    light: DEFAULT_LIGHT_COLORS,
+    dark: DEFAULT_DARK_COLORS,
   },
 };

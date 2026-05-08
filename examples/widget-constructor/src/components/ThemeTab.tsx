@@ -1,64 +1,94 @@
-import { DEFAULT_ACCENT, type ThemeColorSet, type ThemeConfig } from "../types";
+import {
+  DEFAULT_ACCENT,
+  DEFAULT_DARK_COLORS,
+  DEFAULT_LIGHT_COLORS,
+  type ThemeColorSet,
+  type ThemeConfig,
+} from "../types";
 
 interface Props {
   theme: ThemeConfig;
   onChange: (t: ThemeConfig) => void;
 }
 
-const sectionLabelCls =
-  "text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide";
+const sectionLabelCls = "text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide";
 
-/** Reusable color set editor (accent + background). */
+function ColorField({
+  label,
+  colorKey,
+  value,
+  defaultValue,
+  onChange,
+}: {
+  label: string;
+  colorKey: keyof ThemeColorSet;
+  value: ThemeColorSet;
+  defaultValue: string;
+  onChange: (key: keyof ThemeColorSet, val: string) => void;
+}) {
+  const current = value[colorKey];
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs text-slate-400">{label}</span>
+        <span className="font-mono text-[10px] text-slate-500">{current || "optional"}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={current || defaultValue}
+          onChange={(e) => onChange(colorKey, e.target.value)}
+          className="w-8 h-8 rounded-md border border-slate-700 cursor-pointer bg-slate-800 p-0.5 shrink-0"
+          aria-label={`${label} color`}
+        />
+        <input
+          type="text"
+          value={current}
+          onChange={(e) => onChange(colorKey, e.target.value)}
+          placeholder={defaultValue}
+          className="flex-1 h-8 px-2.5 rounded-md border border-slate-700 bg-slate-800 text-slate-200 text-xs font-mono focus:outline-none focus:border-sky-500/50"
+        />
+        {current !== defaultValue && current !== "" && (
+          <button
+            type="button"
+            onClick={() => onChange(colorKey, defaultValue)}
+            className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            Reset
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Reusable color set editor (brand + semantic colors). */
 function ColorSetEditor({
   label,
   value,
   onChange,
   defaultBg,
+  defaults,
 }: {
   label: string;
   value: ThemeColorSet;
   onChange: (v: ThemeColorSet) => void;
   defaultBg: string;
+  defaults: ThemeColorSet;
 }) {
-  const set = (key: keyof ThemeColorSet, val: string) =>
-    onChange({ ...value, [key]: val });
+  const set = (key: keyof ThemeColorSet, val: string) => onChange({ ...value, [key]: val });
 
   return (
     <div className="rounded-lg border border-slate-700/60 bg-slate-900/40 p-3 space-y-3">
       <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{label}</p>
 
-      {/* Accent */}
-      <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs text-slate-400">Accent</span>
-          <span className="font-mono text-[10px] text-slate-500">{value.accent}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <input
-            type="color"
-            value={value.accent}
-            onChange={(e) => set("accent", e.target.value)}
-            className="w-8 h-8 rounded-md border border-slate-700 cursor-pointer bg-slate-800 p-0.5 shrink-0"
-            aria-label={`${label} accent color`}
-          />
-          <input
-            type="text"
-            value={value.accent}
-            onChange={(e) => set("accent", e.target.value)}
-            placeholder={DEFAULT_ACCENT}
-            className="flex-1 h-8 px-2.5 rounded-md border border-slate-700 bg-slate-800 text-slate-200 text-xs font-mono focus:outline-none focus:border-sky-500/50"
-          />
-          {value.accent !== DEFAULT_ACCENT && (
-            <button
-              type="button"
-              onClick={() => set("accent", DEFAULT_ACCENT)}
-              className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors"
-            >
-              Reset
-            </button>
-          )}
-        </div>
-      </div>
+      <ColorField
+        label="Accent"
+        colorKey="accent"
+        value={value}
+        defaultValue={DEFAULT_ACCENT}
+        onChange={set}
+      />
 
       {/* Background */}
       <div>
@@ -92,6 +122,28 @@ function ColorSetEditor({
           )}
         </div>
       </div>
+
+      <ColorField
+        label="Positive"
+        colorKey="success"
+        value={value}
+        defaultValue={defaults.success}
+        onChange={set}
+      />
+      <ColorField
+        label="Negative"
+        colorKey="danger"
+        value={value}
+        defaultValue={defaults.danger}
+        onChange={set}
+      />
+      <ColorField
+        label="Warning"
+        colorKey="warn"
+        value={value}
+        defaultValue={defaults.warn}
+        onChange={set}
+      />
     </div>
   );
 }
@@ -147,6 +199,7 @@ export function ThemeTab({ theme, onChange }: Props) {
             value={theme.light}
             onChange={(v) => set("light", v)}
             defaultBg="#ffffff"
+            defaults={DEFAULT_LIGHT_COLORS}
           />
         )}
         {showDark && (
@@ -155,6 +208,7 @@ export function ThemeTab({ theme, onChange }: Props) {
             value={theme.dark}
             onChange={(v) => set("dark", v)}
             defaultBg="#0f172a"
+            defaults={DEFAULT_DARK_COLORS}
           />
         )}
       </div>
@@ -236,10 +290,43 @@ export function ThemeTab({ theme, onChange }: Props) {
         </p>
       </div>
 
+      {/* Density */}
+      <div>
+        <p className="flex items-center justify-between text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">
+          Density
+          <span className="text-slate-500 normal-case font-normal">{theme.density}</span>
+        </p>
+        <div className="flex gap-1.5">
+          {(
+            [
+              { value: "compact", label: "Compact" },
+              { value: "default", label: "Default" },
+              { value: "comfortable", label: "Comfort" },
+            ] as const
+          ).map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => set("density", item.value)}
+              className={`flex-1 py-1.5 text-xs rounded border font-medium transition-all ${
+                theme.density === item.value
+                  ? "bg-sky-500/20 text-sky-300 border-sky-500/50"
+                  : "bg-slate-800 text-slate-500 border-slate-700 hover:border-slate-500"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <p className="mt-1.5 text-[10px] text-slate-600">
+          Changes core widget spacing while keeping the layout stable.
+        </p>
+      </div>
+
       {/* Width note */}
       <div className="rounded-lg bg-sky-900/20 border border-sky-800/40 px-3 py-2.5 text-xs text-sky-400">
-        <strong>Width:</strong> responsive by default (<code>100%</code>, min 320px).
-        Constrain via the container you pass to <code>mount()</code>.
+        <strong>Width:</strong> responsive by default (<code>100%</code>, min 320px). Constrain via
+        the container you pass to <code>mount()</code>.
       </div>
     </div>
   );

@@ -137,7 +137,7 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
       {/* Sync wallet address into ToncastClient */}
       <WalletSync address={address} />
 
-      <div className="tc-bet-card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div className="tc-bet-card">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ flex: 1, fontWeight: 600, fontSize: 14, color: "var(--tc-fg)" }}>
             {t("bet.title")}
@@ -393,9 +393,9 @@ function CoefficientSlider({ bet }: { bet: ReturnType<typeof useBet> }) {
             }}
           />
         )}
-        {bet.liquidityMarkers.map((d, i) => (
+        {bet.liquidityMarkers.map((d) => (
           <span
-            key={`liq-${d.yesOdds}-${i}`}
+            key={`liq-${d.yesOdds}-${d.leftPct}`}
             style={{
               position: "absolute",
               top: "50%",
@@ -443,8 +443,12 @@ function QuoteBox({ bet, sourceSym }: { bet: ReturnType<typeof useBet>; sourceSy
                 <span>{t("bet.matched", { n: bet.quote.totals.matchedTickets })}</span>
                 <span className="tc-font-mono">{ton(bet.quote.totals.matchedTicketCost)} TON</span>
               </div>
-              {bet.quote.matched.map((m, i) => (
-                <div key={`m-${m.yesOdds}-${i}`} className="tc-quote-row" style={{ paddingLeft: 8 }}>
+              {bet.quote.matched.map((m) => (
+                <div
+                  key={`m-${m.yesOdds}-${m.tickets}-${m.stake.toString()}`}
+                  className="tc-quote-row"
+                  style={{ paddingLeft: 8 }}
+                >
                   <span className="tc-quote-row-label tc-text-xs">
                     • {m.tickets} @ {m.yesOdds}% (×{m.decimalOdds.toFixed(2)})
                   </span>
@@ -455,7 +459,7 @@ function QuoteBox({ bet, sourceSym }: { bet: ReturnType<typeof useBet>; sourceSy
           )}
           {bet.quote.placed && (
             <div style={{ paddingTop: 4 }}>
-              <div className="tc-quote-row" style={{ color: "var(--tc-warn)", fontWeight: 600 }}>
+              <div className="tc-quote-row" style={{ color: "var(--tc-warn-fg)", fontWeight: 600 }}>
                 <span>{t("bet.placed", { n: bet.quote.placed.tickets })}</span>
                 <span className="tc-font-mono">{ton(bet.quote.placed.cost)} TON</span>
               </div>
@@ -512,17 +516,16 @@ function QuoteRow({
     <div className="tc-quote-row">
       <span
         className={`tc-quote-row-label${muted ? " tc-text-muted" : warn ? "" : ""}`}
-        style={warn ? { color: "var(--tc-warn)" } : {}}
+        style={warn ? { color: "var(--tc-warn-fg)" } : {}}
       >
         {label}
       </span>
       <span
         className={`tc-font-mono${accent ? " tc-quote-row-accent" : ""}`}
-        style={warn ? { color: "var(--tc-warn)" } : {}}
+        style={warn ? { color: "var(--tc-warn-fg)" } : {}}
       >
         {value}
       </span>
     </div>
   );
 }
-
