@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useT } from "@/lib/i18n/useT";
 
 const DESCRIPTION_PREVIEW_LENGTH = 160;
+const HERO_IMAGE_VARIANT = "w=600,h=600,fit=contain,format=webp,quality=90";
 
 function ExpandableDescription({ text }: { text: string }) {
   const t = useT();
@@ -86,6 +87,71 @@ function PariOutcomeBanner({ pari }: { pari: Pari }) {
   return null;
 }
 
+/** Hero card: cover art, title, description, volume stats — matches skeleton grid layout. */
+function PariHeroCard({ pari }: { pari: Pari }) {
+  const t = useT();
+  const img = pariCoverUrl(pari.image, HERO_IMAGE_VARIANT);
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="grid sm:grid-cols-[240px_1fr] gap-0">
+        {/* Ambient-background technique: a blurred, scaled-up copy of
+            the image fills the letterbox areas so there's no empty
+            void around portrait / landscape art.
+            The container locks the aspect-ratio so layout never
+            shifts once the card appears; `loading="eager"` ensures
+            the image request starts immediately (this is the hero). */}
+        {img ? (
+          <div className="relative aspect-video w-full overflow-hidden sm:aspect-square sm:w-60">
+            <div
+              className="absolute inset-0 scale-125 bg-cover bg-center opacity-60 blur-xl"
+              style={{ backgroundImage: `url(${img})` }}
+            />
+            <img
+              src={img}
+              alt=""
+              loading="eager"
+              decoding="async"
+              className="relative h-full w-full object-contain"
+            />
+          </div>
+        ) : (
+          <div className="aspect-video w-full bg-muted sm:aspect-square sm:w-60" />
+        )}
+        <div className="flex flex-col min-w-0">
+          <CardHeader>
+            <div className="flex items-start justify-between gap-4">
+              <CardTitle className="text-xl wrap-break-word min-w-0">{pari.name}</CardTitle>
+              <Badge variant="outline" className="shrink-0">
+                {pari.status}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <ExpandableDescription text={pari.description} />
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+              <span>
+                {t("pari.detail.volYesLabel")}{" "}
+                <span className="text-foreground font-medium">{pari.yesVolume.toFixed(2)} TON</span>
+              </span>
+              <span>
+                {t("pari.detail.volNoLabel")}{" "}
+                <span className="text-foreground font-medium">{pari.noVolume.toFixed(2)} TON</span>
+              </span>
+              {pari.bestYesOdds !== null && (
+                <span>
+                  {t("pari.detail.bestYesLabel")}{" "}
+                  <span className="text-foreground font-medium">{pari.bestYesOdds}</span>
+                </span>
+              )}
+            </div>
+          </CardContent>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 export function PariDetailPage() {
   const t = useT();
   const { pariId } = useParams<{ pariId: string }>();
@@ -127,79 +193,7 @@ export function PariDetailPage() {
           </div>
         </Card>
       ) : (
-        (() => {
-          const img = pariCoverUrl(
-            snap.pari.image,
-            "w=600,h=600,fit=contain,format=webp,quality=90",
-          );
-          return (
-            <Card className="overflow-hidden">
-              <div className="grid sm:grid-cols-[240px_1fr] gap-0">
-                {/* Ambient-background technique: a blurred, scaled-up copy of
-                    the image fills the letterbox areas so there's no empty
-                    void around portrait / landscape art.
-                    The container locks the aspect-ratio so layout never
-                    shifts once the card appears; `loading="eager"` ensures
-                    the image request starts immediately (this is the hero). */}
-                {img ? (
-                  <div className="relative aspect-video w-full overflow-hidden sm:aspect-square sm:w-60">
-                    {/* blurred ambient fill */}
-                    <div
-                      className="absolute inset-0 scale-125 bg-cover bg-center opacity-60 blur-xl"
-                      style={{ backgroundImage: `url(${img})` }}
-                    />
-                    <img
-                      src={img}
-                      alt=""
-                      loading="eager"
-                      decoding="async"
-                      className="relative h-full w-full object-contain"
-                    />
-                  </div>
-                ) : (
-                  <div className="aspect-video w-full bg-muted sm:aspect-square sm:w-60" />
-                )}
-                <div className="flex flex-col min-w-0">
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-4">
-                      <CardTitle className="text-xl wrap-break-word min-w-0">
-                        {snap.pari.name}
-                      </CardTitle>
-                      <Badge variant="outline" className="shrink-0">
-                        {snap.pari.status}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3 text-sm">
-                    <ExpandableDescription text={snap.pari.description} />
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                      <span>
-                        YES vol{" "}
-                        <span className="text-foreground font-medium">
-                          {snap.pari.yesVolume.toFixed(2)} TON
-                        </span>
-                      </span>
-                      <span>
-                        NO vol{" "}
-                        <span className="text-foreground font-medium">
-                          {snap.pari.noVolume.toFixed(2)} TON
-                        </span>
-                      </span>
-                      {snap.pari.bestYesOdds !== null && (
-                        <span>
-                          best YES{" "}
-                          <span className="text-foreground font-medium">
-                            {snap.pari.bestYesOdds}
-                          </span>
-                        </span>
-                      )}
-                    </div>
-                  </CardContent>
-                </div>
-              </div>
-            </Card>
-          );
-        })()
+        <PariHeroCard pari={snap.pari} />
       )}
 
       {snap?.pari ? <PariOutcomeBanner pari={snap.pari} /> : null}

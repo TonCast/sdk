@@ -7,13 +7,15 @@
 // surfaces.
 
 import { useQueryClient } from "@tanstack/react-query";
-import { formatBetQuoteReason, parseUnits, TON_ADDRESS } from "@toncast/sdk";
-import { type BetMode, useBet } from "@toncast/sdk-react";
+import { parseUnits, TON_ADDRESS } from "@toncast/sdk";
+import { type BetMode, toncastQueryKeys, useBet } from "@toncast/sdk-react";
 import { useIsConnectionRestored, useTonAddress, useTonConnectUI } from "@tonconnect/ui-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { BetCardCoefficientSlider } from "@/components/BetCardCoefficientSlider";
+import { BetCardQuotePanel } from "@/components/BetCardQuotePanel";
+import { BareWrapper, CardWrapper, SidePill } from "@/components/betCardShared";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -23,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
-import { formatRaw, ton } from "@/lib/format";
+import { formatRaw } from "@/lib/format";
 import { useT } from "@/lib/i18n/useT";
 import { ConnectButton } from "./ConnectButton";
 
@@ -91,16 +93,22 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
       // Wallet balance changes once the on-chain tx settles. Refresh a few
       // times over the next ~30s so the UI catches the new state without
       // hammering toncenter.
-      void queryClient.invalidateQueries({ queryKey: ["toncast", "betting", "bets"] });
+      void queryClient.invalidateQueries({
+        queryKey: [...toncastQueryKeys.betting.betsInvalidationPrefix],
+      });
       void bet.refresh();
       for (const timer of refreshTimerRefs.current) clearTimeout(timer);
       refreshTimerRefs.current = [
         setTimeout(() => {
-          void queryClient.invalidateQueries({ queryKey: ["toncast", "betting", "bets"] });
+          void queryClient.invalidateQueries({
+            queryKey: [...toncastQueryKeys.betting.betsInvalidationPrefix],
+          });
           void bet.refresh();
         }, 8_000),
         setTimeout(() => {
-          void queryClient.invalidateQueries({ queryKey: ["toncast", "betting", "bets"] });
+          void queryClient.invalidateQueries({
+            queryKey: [...toncastQueryKeys.betting.betsInvalidationPrefix],
+          });
           void bet.refresh();
         }, 30_000),
       ];
@@ -179,8 +187,6 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
           <label className="text-xs text-muted-foreground" htmlFor="coin">
             {t("bet.sourceCoin")}
           </label>
-          {/* Render a Skeleton until the SDK's phase-1 summary lands (~200 ms)
-              so we don't briefly flash "Pick a coin" before TON appears. */}
           {!bet.summary.data ? (
             <Skeleton className="h-10 w-full" />
           ) : (
@@ -194,8 +200,6 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
                   const sym = cap.source.symbol ?? (isTon ? "TON" : "?");
                   const decimals = cap.source.decimals ?? 9;
                   const native = `${formatRaw(cap.source.amount, decimals, 4)} ${sym}`;
-                  // Phase-1 jetton — wallet balance known but STON.fi pricing still loading.
-                  // Show the symbol + native balance, replace the "≈ X TON" with a small loader.
                   const isPricing = cap.reason === "pricing_in_progress";
                   const priced = bet.summary.data?.pricedCoins.find(
                     (p) => p.address === cap.source.address,
@@ -214,8 +218,6 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
                     <SelectItem
                       key={cap.source.address}
                       value={cap.source.address}
-                      // Pricing-in-progress jettons are non-selectable until phase 2 lands,
-                      // but visible so the user knows their balance exists.
                       disabled={!cap.feasible}
                     >
                       <div className="flex w-full items-center justify-between gap-3">
@@ -269,7 +271,7 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
                 +
               </Button>
             </div>
-            <CoefficientSlider bet={bet} />
+            <BetCardCoefficientSlider bet={bet} />
           </div>
         )}
 
@@ -296,8 +298,6 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
                 onChange={(e) => {
                   const val = e.target.value.replace(/\D/g, "");
                   setTicketsDraft(val);
-                  // Update bet live so the quote refreshes while typing,
-                  // but only when the field is non-empty (never force-reset to 1).
                   if (val) {
                     const raw = Math.max(1, Math.trunc(Number(val)));
                     bet.setTickets(bet.mode === "fixed" ? Math.min(raw, bet.maxTickets) : raw);
@@ -383,7 +383,6 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
           </div>
         )}
 
-        {/* Insufficient balance in limit/fixed mode */}
         {bet.selectedCoin && bet.maxTickets <= 0 && bet.mode !== "market" && (
           <div className="glass-subtle rounded-xl p-3 text-sm text-muted-foreground">
             {t("bet.balanceTooLow")}
@@ -401,221 +400,8 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
             : t("bet.action", { side: t(`side.${bet.side}` as const) })}
         </Button>
 
-        {/* Quote breakdown */}
-        <div className="glass-subtle space-y-1 rounded-xl p-3 text-xs">
-          {!bet.quote.data && bet.quote.underlying.isFetching ? (
-            // First-ever quote fetch: `keepPreviousData` makes `isLoading`
-            // false even while truly loading (TanStack v5), so we branch on
-            // `isFetching && !data`. Subsequent re-fetches keep the previous
-            // quote visible so the modal doesn't jitter.
-            <Skeleton className="h-4 w-1/2" />
-          ) : !bet.quote.data && bet.quote.underlying.error ? (
-            // Surface real errors so the user knows the modal is broken
-            // rather than waiting for a quote that will never come.
-            <span className="text-destructive">
-              {bet.quote.underlying.error instanceof Error
-                ? bet.quote.underlying.error.message
-                : String(bet.quote.underlying.error)}
-            </span>
-          ) : !bet.quote.data ? (
-            <span className="text-muted-foreground">{t("bet.quoteWillAppear")}</span>
-          ) : (
-            <>
-              {bet.quote.reason ? (
-                <div className="mb-1 rounded-lg border border-yellow-700/40 bg-yellow-500/10 px-2 py-1 text-[11px] text-amber-700 dark:border-yellow-400/40 dark:bg-yellow-400/10 dark:text-yellow-400">
-                  {t("bet.previewOnly", {
-                    reason: formatBetQuoteReason(bet.quote.reason, { sourceSymbol: sourceSym }),
-                  })}
-                </div>
-              ) : null}
-              {bet.quote.matched.length > 0 ? (
-                <div>
-                  <div className="flex items-baseline justify-between gap-2 font-semibold text-success">
-                    <span className="min-w-0 truncate">
-                      {t("bet.matched", { n: bet.quote.totals.matchedTickets })}
-                    </span>
-                    <span className="shrink-0 font-mono">
-                      {ton(bet.quote.totals.matchedTicketCost)} TON
-                    </span>
-                  </div>
-                  {bet.quote.matched.map((m) => (
-                    <div
-                      key={`m-${m.yesOdds}`}
-                      className="flex items-baseline justify-between gap-2 pl-2 text-[11px] text-muted-foreground"
-                    >
-                      <span className="min-w-0 truncate">
-                        • {m.tickets} @ {m.yesOdds}% (×{m.decimalOdds.toFixed(2)})
-                      </span>
-                      <span className="shrink-0 font-mono">{ton(m.stake)}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-              {bet.quote.placed ? (
-                <div className="pt-1">
-                  <div className="flex items-baseline justify-between gap-2 font-semibold text-yellow-500 dark:text-yellow-400">
-                    <span className="min-w-0 truncate">
-                      {t("bet.placed", { n: bet.quote.placed.tickets })}
-                    </span>
-                    <span className="shrink-0 font-mono">{ton(bet.quote.placed.cost)} TON</span>
-                  </div>
-                  <div className="pl-2 text-[11px] text-muted-foreground">
-                    {t("bet.placed.note", {
-                      odds: bet.quote.placed.yesOdds,
-                      mult: bet.quote.placed.decimalOdds.toFixed(2),
-                    })}
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="my-1 border-t border-border/50" />
-              <Row label={t("bet.total")} value={`${ton(bet.quote.totalCost)} TON`} accent />
-              {bet.quote.walletReserve > 0n ? (
-                <>
-                  <Row
-                    label={t("bet.walletReserve")}
-                    value={`${ton(bet.quote.walletReserve)} TON`}
-                    dim
-                  />
-                  <Row
-                    label={t("bet.required")}
-                    value={`${ton(bet.quote.required)} TON`}
-                    warn={!bet.quote.isFeasible && bet.quote.reason === "insufficient_balance"}
-                  />
-                </>
-              ) : null}
-              <div className="my-1 border-t border-border/50" />
-              <Row
-                label={t("bet.winnings", { side: t(`side.${bet.side}` as const) })}
-                value={`${ton(bet.quote.winnings)} TON`}
-                accent
-              />
-            </>
-          )}
-        </div>
+        <BetCardQuotePanel bet={bet} sourceSym={sourceSym} />
       </div>
     </Wrapper>
-  );
-}
-
-interface CoefficientSliderProps {
-  bet: ReturnType<typeof useBet>;
-}
-
-function CoefficientSlider({ bet }: CoefficientSliderProps) {
-  const t = useT();
-  const fillLeftPct = useMemo(() => {
-    if (bet.mode !== "limit") return 0;
-    const sliderPos = bet.oddsSliderProps.value[0];
-    return (
-      ((sliderPos - bet.oddsSliderProps.min) /
-        (bet.oddsSliderProps.max - bet.oddsSliderProps.min)) *
-      100
-    );
-  }, [bet.mode, bet.oddsSliderProps]);
-
-  return (
-    <div className="relative">
-      {/*
-        inset-x-2.5 mirrors Radix Slider's thumb-bounds offset (size-5 thumb = 20px →
-        half = 10px = 2.5 * 4px). Within this container leftPct 0 % aligns with the
-        thumb center at min value and 100 % aligns with the thumb center at max value,
-        so both the fill bar and the liquidity dots stay in sync with the thumb.
-      */}
-      <div className="pointer-events-none absolute inset-x-2.5 inset-y-0 z-0">
-        {bet.mode === "limit" && (
-          <div
-            className="absolute top-1/2 h-2.5 -translate-y-1/2 rounded-full bg-success"
-            style={{ left: `${fillLeftPct}%`, right: "-10px" }}
-          />
-        )}
-        {bet.liquidityMarkers.map((d) => (
-          <span
-            key={d.yesOdds}
-            className="absolute top-1/2 size-1.5 rounded-full bg-destructive"
-            style={{ left: `${d.leftPct}%`, transform: "translate(-50%, -50%)" }}
-          />
-        ))}
-      </div>
-      <Slider
-        {...bet.oddsSliderProps}
-        hideRange
-        className="relative z-10"
-        aria-label={t("bet.coefficient")}
-      />
-    </div>
-  );
-}
-
-function BareWrapper({ children }: { children: React.ReactNode }) {
-  return <div className="min-w-0 space-y-4 overflow-hidden p-4">{children}</div>;
-}
-
-function CardWrapper({ children }: { children: React.ReactNode }) {
-  return (
-    <Card className="min-w-0 overflow-hidden">
-      <div className="min-w-0 space-y-5 p-4 sm:p-6">{children}</div>
-    </Card>
-  );
-}
-
-function SidePill({
-  active,
-  kind,
-  label,
-  onClick,
-}: {
-  active: boolean;
-  kind: "yes" | "no";
-  label: string;
-  onClick: () => void;
-}) {
-  const cls =
-    kind === "yes"
-      ? active
-        ? "bg-success/25 text-success ring-1 ring-success/45 shadow-[0_4px_16px_-6px_color-mix(in_oklch,var(--color-success)_45%,transparent)]"
-        : "bg-success/10 text-success hover:bg-success/20"
-      : active
-        ? "bg-destructive/25 text-destructive ring-1 ring-destructive/45 shadow-[0_4px_16px_-6px_color-mix(in_oklch,var(--color-destructive)_45%,transparent)]"
-        : "bg-destructive/10 text-destructive hover:bg-destructive/20";
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`h-9 shrink-0 rounded-full px-4 text-sm font-semibold tracking-tight transition-all duration-200 ease-out active:scale-[0.97] ${cls}`}
-    >
-      {label}
-    </button>
-  );
-}
-
-function Row({
-  label,
-  value,
-  dim,
-  accent,
-  warn,
-}: {
-  label: string;
-  value: string;
-  dim?: boolean;
-  accent?: boolean;
-  warn?: boolean;
-}) {
-  const labelColor = warn
-    ? "text-amber-700 dark:text-yellow-400"
-    : dim
-      ? "text-muted-foreground/85"
-      : "text-muted-foreground";
-  const valueColor = warn
-    ? "text-amber-700 dark:text-yellow-400"
-    : accent
-      ? "font-semibold text-foreground"
-      : "text-foreground";
-  return (
-    <div className="flex items-baseline justify-between gap-2">
-      <span className={`min-w-0 truncate ${labelColor}`}>{label}</span>
-      <span className={`shrink-0 font-mono ${valueColor}`}>{value}</span>
-    </div>
   );
 }

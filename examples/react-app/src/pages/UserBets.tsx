@@ -162,8 +162,17 @@ function BetRow({ bet }: { bet: Bet }) {
             </span>
           )}
           <div className="mt-1 text-xs text-muted-foreground">
-            {bet.ticketsCount} {bet.ticketsCount === 1 ? "ticket" : "tickets"} · {amountTon} TON ·{" "}
-            {date}
+            {bet.ticketsCount === 1
+              ? t("page.bets.rowMetaOne", {
+                  count: bet.ticketsCount,
+                  amountTon,
+                  date,
+                })
+              : t("page.bets.rowMetaMany", {
+                  count: bet.ticketsCount,
+                  amountTon,
+                  date,
+                })}
           </div>
         </div>
 

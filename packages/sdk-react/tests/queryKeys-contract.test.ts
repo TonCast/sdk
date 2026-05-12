@@ -96,4 +96,12 @@ describe("toncastQueryKeys contract", () => {
       serializeKey(params),
     ]);
   });
+
+  it("betting.betsInvalidationPrefix matches start of bets and infiniteBets keys", () => {
+    const prefix = [...toncastQueryKeys.betting.betsInvalidationPrefix];
+    expect(prefix).toEqual(["toncast", "betting", "bets"]);
+    const userParams = { userAddress: "EQuser" };
+    expect([...toncastQueryKeys.betting.bets(userParams)].slice(0, 3)).toEqual(prefix);
+    expect([...toncastQueryKeys.betting.infiniteBets(userParams)].slice(0, 3)).toEqual(prefix);
+  });
 });

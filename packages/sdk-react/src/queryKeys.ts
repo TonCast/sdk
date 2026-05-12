@@ -39,6 +39,16 @@ export const toncastQueryKeys = {
         "infinite",
         serializeKey(params),
       ] as const,
+    /**
+     * Prefix shared by `bets()` and `infiniteBets()` query keys. Use with
+     * `queryClient.invalidateQueries({ queryKey: [...toncastQueryKeys.betting.betsInvalidationPrefix] })`
+     * when you need to bust every user/pari bets cache (e.g. after placing a bet).
+     *
+     * Do **not** pass the full return value of `bets(...)` here: `infiniteBets` inserts an
+     * extra `"infinite"` segment before `serializeKey`, so a full `bets` key is not a prefix
+     * of infinite-query keys and those entries would not match.
+     */
+    betsInvalidationPrefix: ["toncast", "betting", "bets"] as const,
     marketCapacity: (sourceKey: string, isYes: boolean, opts: MarketCapacityKeyOpts = {}) =>
       ["toncast", "betting", "marketCapacity", sourceKey, isYes, serializeKey(opts)] as const,
   },
