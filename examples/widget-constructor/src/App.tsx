@@ -18,28 +18,24 @@ const TABS: { id: Tab; label: string }[] = [
 
 const DEVICES: {
   id: Device;
-  label: string;
   width: string;
   icon: string;
   previewLabel: string;
 }[] = [
   {
     id: "mobile",
-    label: "370px",
     width: "370px",
     icon: "📱",
     previewLabel: "Mobile, 370 pixels wide",
   },
   {
     id: "tablet",
-    label: "640px",
     width: "640px",
     icon: "📟",
     previewLabel: "Tablet, 640 pixels wide",
   },
   {
     id: "desktop",
-    label: "100%",
     width: "100%",
     icon: "🖥",
     previewLabel: "Desktop, full width",
@@ -188,10 +184,10 @@ export function App() {
                     ? "bg-slate-700 text-slate-100 shadow"
                     : "text-slate-500 hover:text-slate-300"
                 }`}
-                title={d.label}
+                title={d.width}
               >
                 <span aria-hidden="true">{d.icon}</span>
-                <span>{d.label}</span>
+                <span>{d.width}</span>
               </button>
             ))}
           </div>
