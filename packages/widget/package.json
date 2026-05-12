@@ -42,6 +42,11 @@
       "types": "./dist/use-prefers-color-scheme-dark.d.ts",
       "import": "./dist/use-prefers-color-scheme-dark.js",
       "require": "./dist/use-prefers-color-scheme-dark.cjs"
+    },
+    "./constants": {
+      "types": "./dist/constants.d.ts",
+      "import": "./dist/constants.js",
+      "require": "./dist/constants.cjs"
     }
   },
   "files": [
@@ -107,6 +112,7 @@
     "@tonconnect/ui-react": "^2.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "jsdom": "^29.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   }

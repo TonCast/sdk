@@ -46,8 +46,8 @@ describe("widget export snippets", () => {
     const maliciousConfig = config({
       domain: "https://safe.example/'</script><script>alert(1)</script>",
       appName: "Bad </script><script>alert(2)</script>",
-      language: "en</script><script>alert(3)</script>",
-      languages: ["en</script><script>alert(4)</script>"],
+      language: "en</script><script>alert(3)</script>" as never,
+      languages: ["en</script><script>alert(4)</script>" as never],
       referralAddress: "UQ_FAKE</script><script>alert(5)</script>",
       referralPct: 3,
       theme: {

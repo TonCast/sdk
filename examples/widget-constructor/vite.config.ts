@@ -34,6 +34,7 @@ export default defineConfig({
         __dirname,
         "../../packages/widget/src/utils/usePrefersColorSchemeDark.ts",
       ),
+      "@toncast/widget/constants": resolve(__dirname, "../../packages/widget/src/constants.ts"),
       // Resolve workspace packages from source so Vite always uses fresh code.
       "@toncast/widget": resolve(__dirname, "../../packages/widget/src"),
       "@toncast/sdk-react": resolve(__dirname, "../../packages/sdk-react/src"),

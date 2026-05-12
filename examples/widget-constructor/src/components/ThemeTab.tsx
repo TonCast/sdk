@@ -1,3 +1,4 @@
+import { RADIUS_DEFAULT, RADIUS_MAX } from "@toncast/widget/constants";
 import {
   DEFAULT_ACCENT,
   DEFAULT_DARK_COLORS,
@@ -24,7 +25,7 @@ const COLOR_SCHEME_OPTIONS = [
 const RADIUS_OPTIONS = [
   { value: 0, label: "0" },
   { value: 6, label: "6" },
-  { value: 12, label: "12" },
+  { value: RADIUS_DEFAULT, label: String(RADIUS_DEFAULT) },
   { value: 16, label: "16" },
   { value: 24, label: "24" },
 ] as const;
@@ -171,12 +172,14 @@ export function ThemeTab({ theme, onChange }: Props) {
           id="tc-radius-range"
           type="range"
           min={0}
-          max={64}
+          max={RADIUS_MAX}
           value={theme.radius}
           onChange={(e) => set("radius", Number(e.target.value))}
           className="w-full accent-sky-500"
         />
-        <p className="mt-1.5 text-[10px] text-slate-600">0–64 px (matches export clamp).</p>
+        <p className="mt-1.5 text-[10px] text-slate-600">
+          0–{RADIUS_MAX} px (matches export clamp).
+        </p>
       </div>
 
       {/* Responsive grid columns */}

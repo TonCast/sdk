@@ -17,6 +17,11 @@
   box-shadow: var(--tc-shadow);
   transform: translateY(-1px);
 }
+.tc-pari-cover-link {
+  all: unset;
+  display: contents;
+  cursor: pointer;
+}
 
 .tc-pari-cover {
   width: 100%;

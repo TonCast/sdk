@@ -11,6 +11,7 @@ import { type CSSProperties, useMemo } from "react";
 import "@toncast/widget/styles/widget.css";
 import { type ConstructorConfig, DEFAULT_ACCENT, type Device, type ThemeConfig } from "../types";
 import { buildWidgetConfig } from "../utils/buildWidgetConfig";
+import { clampRadius } from "../utils/normalizeConfig";
 import { usePrefersColorSchemeDark } from "../utils/usePrefersColorSchemeDark";
 
 // Dev manifest from the Toncast main domain — works in any environment.
@@ -50,9 +51,7 @@ export function LivePreview({ config, deviceMode }: LivePreviewProps) {
   const prefersDark = usePrefersColorSchemeDark();
   const accentHex = effectiveAccentHex(config.theme, prefersDark);
   const frameStyle = useMemo(() => {
-    const r = Number.isFinite(config.theme.radius)
-      ? Math.min(64, Math.max(0, config.theme.radius))
-      : 12;
+    const r = clampRadius(config.theme.radius);
     const accentLift = rgba(accentHex, 0.28) ?? "rgba(0, 152, 234, 0.28)";
     // Explicit elevation: tight key + soft ambient + accent-tinted spread (no border).
     const boxShadow = ["0 8px 24px rgba(0, 0, 0, 0.38)", `0 20px 48px -8px ${accentLift}`].join(
@@ -70,8 +69,7 @@ export function LivePreview({ config, deviceMode }: LivePreviewProps) {
 
   return (
     <div style={frameStyle as CSSProperties}>
-      {/* Widget config is plain JSON; cast through unknown is fine here (test-only build). */}
-      <Widget config={widgetConfig as unknown as Parameters<typeof Widget>[0]["config"]} />
+      <Widget config={widgetConfig} />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import {
   buildReactSnippet,
   buildStyleCss,
   downloadZip,
+  PLACEHOLDER_DOMAIN,
 } from "../utils/generateZip";
 
 function CopyButton({ text }: { text: string }) {
@@ -131,7 +132,7 @@ export function ExportTab({ config }: { config: ConstructorConfig }) {
           <code className="text-slate-500">
             {config.domain
               ? `${config.domain}/tonconnect-manifest.json`
-              : "https://your-domain.com/…"}
+              : `${PLACEHOLDER_DOMAIN}/…`}
           </code>
         </p>
         <CodeBlock title="tonconnect-manifest.json" code={buildManifestJson(config)} />

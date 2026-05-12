@@ -22,10 +22,10 @@ export function OrderBook({ oddsState }: { oddsState: OddsState | null }) {
   const noMax = Math.max(1, ...visible.map((b) => b.noDepth));
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+    <div className="tc-ob">
       <div className="tc-ob-header">
         <div className="tc-ob-yes-label">{t("orderBook.buyYes")}</div>
-        <div style={{ textAlign: "center" }}>{t("orderBook.price")}</div>
+        <div className="tc-ob-price-label">{t("orderBook.price")}</div>
         <div className="tc-ob-no-label">{t("orderBook.buyNo")}</div>
       </div>
       {/* One ladder row per `yesOdds` — stable unique key without index. */}

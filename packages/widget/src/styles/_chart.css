@@ -26,6 +26,18 @@
   width: 100%;
   height: 96px;
 }
+.tc-chart-canvas {
+  position: relative;
+  width: 100%;
+}
+.tc-chart-empty-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
 
 /* ===== MY BETS ===== */
 .tc-bet-row {

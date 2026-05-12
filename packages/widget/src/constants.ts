@@ -17,3 +17,6 @@ export const DESCRIPTION_PREVIEW_CHARS = 160;
 
 /** Maximum allowed `--tc-radius` value (px) for the constructor + theme inputs. */
 export const RADIUS_MAX = 64;
+
+/** Default `--tc-radius` (px) when omitted or when a non-finite radius is coerced. */
+export const RADIUS_DEFAULT = 12;

@@ -18,3 +18,8 @@ export function parseHttpUrl(raw: unknown): URL | null {
   if (url.protocol !== "https:" && url.protocol !== "http:") return null;
   return url;
 }
+
+/** Removes one or more trailing `/` characters (empty string stays empty). */
+export function stripTrailingSlashes(input: string): string {
+  return input.replace(/\/+$/, "");
+}

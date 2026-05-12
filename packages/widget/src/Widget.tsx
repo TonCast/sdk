@@ -52,8 +52,8 @@ class ErrorBoundary extends Component<
   render() {
     if (this.state.error) {
       return (
-        <div className="tc-error" style={{ padding: 16, textAlign: "center" }}>
-          <p style={{ marginBottom: 10 }}>{this.props.errorText}</p>
+        <div className="tc-error tc-error-card">
+          <p className="tc-error-card-msg">{this.props.errorText}</p>
           <button
             type="button"
             className="tc-btn tc-btn-secondary"

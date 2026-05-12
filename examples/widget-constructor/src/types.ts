@@ -1,4 +1,5 @@
 import type { SupportedLanguage } from "@toncast/sdk";
+import { RADIUS_DEFAULT } from "@toncast/widget/constants";
 
 export type Device = "mobile" | "tablet" | "desktop";
 
@@ -72,7 +73,7 @@ export const DEFAULT_CONFIG: ConstructorConfig = {
   referralPct: 0,
   theme: {
     colorScheme: "light",
-    radius: 12,
+    radius: RADIUS_DEFAULT,
     grid: {
       mobile: 1,
       tablet: 2,

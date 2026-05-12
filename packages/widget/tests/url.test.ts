@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseHttpUrl } from "../src/utils/url";
+import { parseHttpUrl, stripTrailingSlashes } from "../src/utils/url";
 
 describe("parseHttpUrl", () => {
   it("returns URL for absolute http(s) input", () => {
@@ -46,5 +46,18 @@ describe("parseHttpUrl", () => {
   it("handles trailing slash and pathnames", () => {
     expect(parseHttpUrl("https://app.example")?.pathname).toBe("/");
     expect(parseHttpUrl("https://app.example/widget/")?.pathname).toBe("/widget/");
+  });
+});
+
+describe("stripTrailingSlashes", () => {
+  it("removes one or more trailing slashes", () => {
+    expect(stripTrailingSlashes("https://a.example/")).toBe("https://a.example");
+    expect(stripTrailingSlashes("https://a.example///")).toBe("https://a.example");
+    expect(stripTrailingSlashes("https://a.example/api/v1//")).toBe("https://a.example/api/v1");
+  });
+
+  it("leaves strings without trailing slashes unchanged", () => {
+    expect(stripTrailingSlashes("https://a.example")).toBe("https://a.example");
+    expect(stripTrailingSlashes("")).toBe("");
   });
 });

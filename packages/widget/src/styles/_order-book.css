@@ -1,4 +1,12 @@
 /* ===== ORDER BOOK ===== */
+.tc-ob {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tc-ob-price-label {
+  text-align: center;
+}
 .tc-ob-header {
   display: grid;
   grid-template-columns: 1fr 5rem 1fr;

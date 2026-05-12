@@ -23,7 +23,7 @@ function cssHash(css: string): string {
   }
   return (h >>> 0).toString(36);
 }
-const STYLE_VERSION = cssHash(widgetCss as unknown as string);
+const STYLE_VERSION = cssHash(widgetCss);
 
 /** Tracks how many ToncastWidget instances are currently mounted. */
 let mountedCount = 0;
@@ -48,7 +48,7 @@ function injectStyles(): void {
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.setAttribute("data-version", STYLE_VERSION);
-  style.textContent = widgetCss as unknown as string;
+  style.textContent = widgetCss;
   document.head.appendChild(style);
 }
 

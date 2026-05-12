@@ -7,6 +7,8 @@ export type {
   ToncastWidgetCssVarsBase,
   ToncastWidgetDensity,
   ToncastWidgetDerivedCssVarsOptions,
+  ToncastWidgetGridLayout,
+  ToncastWidgetLayout,
 } from "./types";
 export type { WidgetProps } from "./Widget";
 export { Widget } from "./Widget";

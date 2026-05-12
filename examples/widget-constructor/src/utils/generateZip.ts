@@ -1,10 +1,12 @@
-import type { ToncastWidgetCssVarsBase } from "@toncast/widget";
+import type { ToncastWidgetCssVars, ToncastWidgetCssVarsBase } from "@toncast/widget";
 import { safeHexColor } from "@toncast/widget/color-math";
+import { RADIUS_DEFAULT } from "@toncast/widget/constants";
 import { deriveCssVars } from "@toncast/widget/css-vars-builder";
 import {
   densityPresetToCssCustomProperties,
   WIDGET_DENSITY_PRESETS,
 } from "@toncast/widget/density-presets";
+import { stripTrailingSlashes } from "@toncast/widget/url";
 import widgetIifeCss from "../../../../packages/widget/src/styles/widget.css?raw";
 import {
   type ConstructorConfig,
@@ -13,8 +15,12 @@ import {
   type ThemeColorSet,
 } from "../types";
 import { buildWidgetConfig } from "./buildWidgetConfig";
+import { clampRadius } from "./normalizeConfig";
 
 const WIDGET_CDN_JS_URL = "https://widget.toncast.app/v0/index.iife.js";
+
+/** Shown in export UI when no app domain is set; used in generated HTML/JS placeholders. */
+export const PLACEHOLDER_DOMAIN = "https://your-domain.com";
 
 function escapeHtml(value: string): string {
   return value
@@ -73,7 +79,7 @@ function appendPaletteCssVars(
 
 /** Builds tonconnect-manifest.json content. */
 export function buildManifestJson(config: ConstructorConfig): string {
-  const cleanDomain = (config.domain || "https://your-domain.com").replace(/\/$/, "");
+  const cleanDomain = stripTrailingSlashes(config.domain || PLACEHOLDER_DOMAIN);
   return JSON.stringify(
     {
       url: cleanDomain,
@@ -83,27 +89,6 @@ export function buildManifestJson(config: ConstructorConfig): string {
     null,
     2,
   );
-}
-
-/** Returns a CSS vars sub-object for a given color set, or null if no overrides. */
-function colorSetVars(
-  colors: ThemeColorSet,
-  defaults: ThemeColorSet,
-): Record<string, string> | null {
-  const vars: Record<string, string> = {};
-  const accent = safeHexColor(colors.accent);
-  const bg = colors.bg ? safeHexColor(colors.bg) : null;
-  const success = safeHexColor(colors.success);
-  const danger = safeHexColor(colors.danger);
-  const warn = safeHexColor(colors.warn);
-  if (accent !== null && accent !== defaults.accent) {
-    vars.accent = accent;
-  }
-  if (bg !== null) vars.bg = bg;
-  if (success !== null && success !== defaults.success) vars.success = success;
-  if (danger !== null && danger !== defaults.danger) vars.danger = danger;
-  if (warn !== null && warn !== defaults.warn) vars.warn = warn;
-  return Object.keys(vars).length > 0 ? vars : null;
 }
 
 const HOST_BACKDROP_LIGHT = "#f8fafc";
@@ -123,30 +108,33 @@ export function previewBackdropFromConfig(config: ConstructorConfig, prefersDark
   return prefersDark ? darkBody : lightBody;
 }
 
+function paletteOrNull(
+  colors: ThemeColorSet,
+  defaults: ThemeColorSet,
+): ToncastWidgetCssVarsBase | null {
+  const palette = buildDeltaPalette(colors, defaults);
+  return Object.keys(palette).length > 0 ? palette : null;
+}
+
 /**
  * Builds the widget.cssVars object for JS/React configs.
  * Exported so LivePreview can reuse without duplicating the logic.
  */
-export function buildCssVarsConfig(config: ConstructorConfig): Record<string, unknown> | undefined {
+export function buildCssVarsConfig(config: ConstructorConfig): ToncastWidgetCssVars | undefined {
   const { theme } = config;
-  const radius = Number.isFinite(theme.radius) ? Math.max(0, Math.min(64, theme.radius)) : 12;
+  const radius = clampRadius(theme.radius);
 
-  const vars: Record<string, unknown> = {};
+  const vars: ToncastWidgetCssVars = {};
 
-  // Base radius (applies to both themes)
-  if (radius !== 12) vars.radius = `${radius}px`;
-
+  if (radius !== RADIUS_DEFAULT) vars.radius = `${radius}px`;
   if (theme.density !== "default") vars.density = theme.density;
 
-  // Per-theme color overrides
-  const lightVars = colorSetVars(theme.light, DEFAULT_LIGHT_COLORS);
-  const darkVars = colorSetVars(theme.dark, DEFAULT_DARK_COLORS);
+  const lightVars = paletteOrNull(theme.light, DEFAULT_LIGHT_COLORS);
+  const darkVars = paletteOrNull(theme.dark, DEFAULT_DARK_COLORS);
 
   if (theme.colorScheme === "light") {
-    // Only light mode active — put vars at base level (simpler output)
     if (lightVars) Object.assign(vars, lightVars);
   } else if (theme.colorScheme === "dark") {
-    // Only dark mode active — put vars at base level
     if (darkVars) Object.assign(vars, darkVars);
   } else {
     // System: emit per-theme sub-objects so each mode gets its own palette
@@ -160,10 +148,10 @@ export function buildCssVarsConfig(config: ConstructorConfig): Record<string, un
 /** Builds optional host CSS overrides for the widget container (for CSS snippet export). */
 export function buildStyleCss(config: ConstructorConfig): string | null {
   const { theme } = config;
-  const radius = Number.isFinite(theme.radius) ? Math.max(0, Math.min(64, theme.radius)) : 12;
+  const radius = clampRadius(theme.radius);
 
   const baseLines: string[] = [];
-  if (radius !== 12) baseLines.push(`  --tc-radius: ${radius}px;`);
+  if (radius !== RADIUS_DEFAULT) baseLines.push(`  --tc-radius: ${radius}px;`);
   // Emit density spacing tokens (same presets as @toncast/widget WIDGET_DENSITY_PRESETS).
   if (theme.density !== "default") {
     const preset = WIDGET_DENSITY_PRESETS[theme.density];
@@ -216,11 +204,9 @@ export function buildStyleCss(config: ConstructorConfig): string | null {
   return out.length > 0 ? out.join("\n") : null;
 }
 
-const PLACEHOLDER_DOMAIN = "https://your-domain.com";
-
 export function buildIndexHtml(config: ConstructorConfig): string {
   // Empty domain would break TonConnect (invalid manifest URL).
-  const domain = (config.domain || PLACEHOLDER_DOMAIN).replace(/\/$/, "");
+  const domain = stripTrailingSlashes(config.domain || PLACEHOLDER_DOMAIN);
   const widgetConfig = buildWidgetConfig(config, { domain });
 
   const css = buildStyleCss(config);
@@ -276,7 +262,7 @@ export function buildIndexHtml(config: ConstructorConfig): string {
 }
 
 export function buildJsSnippet(config: ConstructorConfig): string {
-  const domain = config.domain || PLACEHOLDER_DOMAIN;
+  const domain = stripTrailingSlashes(config.domain || PLACEHOLDER_DOMAIN);
   const widgetConfig = buildWidgetConfig(config, { domain });
 
   return `<div id="toncast-widget"></div>

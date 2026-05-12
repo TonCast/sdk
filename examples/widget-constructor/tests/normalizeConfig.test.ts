@@ -1,6 +1,8 @@
+import { RADIUS_DEFAULT, RADIUS_MAX } from "@toncast/widget/constants";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_CONFIG } from "../src/types";
 import {
+  clampRadius,
   normalizeApiBaseUrl,
   normalizeConfig,
   normalizeDomain,
@@ -8,8 +10,8 @@ import {
 } from "../src/utils/normalizeConfig";
 
 describe("normalizeDomain", () => {
-  it("returns trimmed http(s) URL", () => {
-    expect(normalizeDomain("  https://app.example/  ")).toBe("https://app.example/");
+  it("returns trimmed http(s) URL without trailing slashes", () => {
+    expect(normalizeDomain("  https://app.example/  ")).toBe("https://app.example");
   });
   it("rejects non-http schemes / non-string / empty", () => {
     expect(normalizeDomain("javascript:alert(1)")).toBe("");
@@ -26,6 +28,27 @@ describe("normalizeApiBaseUrl", () => {
   it("rejects bad input", () => {
     expect(normalizeApiBaseUrl("foo")).toBe("");
     expect(normalizeApiBaseUrl(undefined)).toBe("");
+  });
+});
+
+describe("clampRadius", () => {
+  it("clamps finite numbers to [0, RADIUS_MAX]", () => {
+    expect(clampRadius(10)).toBe(10);
+    expect(clampRadius(200)).toBe(RADIUS_MAX);
+    expect(clampRadius(-1)).toBe(0);
+  });
+
+  it("falls back for non-finite input", () => {
+    expect(clampRadius(NaN)).toBe(RADIUS_DEFAULT);
+    expect(clampRadius("abc")).toBe(RADIUS_DEFAULT);
+  });
+
+  it("accepts numeric strings", () => {
+    expect(clampRadius("8")).toBe(8);
+  });
+
+  it("respects explicit fallback", () => {
+    expect(clampRadius(NaN, 6)).toBe(6);
   });
 });
 

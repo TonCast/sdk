@@ -1,11 +1,7 @@
+import type { ToncastWidgetConfig, ToncastWidgetLayout } from "@toncast/widget";
+import { stripTrailingSlashes } from "@toncast/widget/url";
 import type { ConstructorConfig } from "../types";
 import { buildCssVarsConfig } from "./generateZip";
-
-export interface BuiltWidgetConfig {
-  tonconnect: { type: "standalone"; options: { domain: string } };
-  client?: { type: "standalone"; baseUrl: string };
-  widget?: Record<string, unknown>;
-}
 
 interface BuildOpts {
   /** Pre-resolved absolute http(s) URL — caller decides fallback (DEV_DOMAIN, placeholder). */
@@ -16,7 +12,7 @@ function normalizeGridColumn(value: number, fallback: number): number {
   return Number.isFinite(value) ? Math.max(1, Math.min(6, Math.round(value))) : fallback;
 }
 
-function buildLayout(config: ConstructorConfig) {
+function buildLayout(config: ConstructorConfig): ToncastWidgetLayout {
   return {
     grid: {
       mobile: normalizeGridColumn(config.theme.grid.mobile, 1),
@@ -26,24 +22,24 @@ function buildLayout(config: ConstructorConfig) {
   };
 }
 
-function buildClient(config: ConstructorConfig): BuiltWidgetConfig["client"] | undefined {
-  const baseUrl = config.apiBaseUrl.trim().replace(/\/+$/, "");
+function buildClient(config: ConstructorConfig): ToncastWidgetConfig["client"] | undefined {
+  const baseUrl = stripTrailingSlashes(config.apiBaseUrl.trim());
   if (!baseUrl) return undefined;
   return { type: "standalone", baseUrl };
 }
 
-function buildWidgetOptions(config: ConstructorConfig): Record<string, unknown> {
-  const opts: Record<string, unknown> = {};
-  if (config.language) opts.language = config.language;
-  if (config.theme.colorScheme !== "light") opts.theme = config.theme.colorScheme;
+function buildWidgetOptions(config: ConstructorConfig): NonNullable<ToncastWidgetConfig["widget"]> {
+  const widget: NonNullable<ToncastWidgetConfig["widget"]> = {};
+  if (config.language) widget.language = config.language;
+  if (config.theme.colorScheme !== "light") widget.theme = config.theme.colorScheme;
   const cssVars = buildCssVarsConfig(config);
-  if (cssVars) opts.cssVars = cssVars;
-  opts.layout = buildLayout(config);
+  if (cssVars) widget.cssVars = cssVars;
+  widget.layout = buildLayout(config);
   if (config.referralAddress && config.referralPct > 0) {
-    opts.referral = { address: config.referralAddress, pct: config.referralPct };
+    widget.referral = { address: config.referralAddress, pct: config.referralPct };
   }
-  if (config.languages.length > 0) opts.languages = config.languages;
-  return opts;
+  if (config.languages.length > 0) widget.languages = config.languages;
+  return widget;
 }
 
 /**
@@ -53,16 +49,15 @@ function buildWidgetOptions(config: ConstructorConfig): Record<string, unknown> 
  * - HTML/JS/React snippet generators in `generateZip` (serialised to text);
  * - `LivePreview` (passed as a prop to <Widget/>).
  *
- * `tonconnect` is always emitted; `client` and `widget` only when there is
- * something to emit (avoids spurious empty `{}` in the output).
+ * `tonconnect` is always emitted; `client` only when `apiBaseUrl` is non-empty.
+ * `widget` is always emitted (includes responsive `layout`).
  */
-export function buildWidgetConfig(config: ConstructorConfig, opts: BuildOpts): BuiltWidgetConfig {
-  const out: BuiltWidgetConfig = {
+export function buildWidgetConfig(config: ConstructorConfig, opts: BuildOpts): ToncastWidgetConfig {
+  const out: ToncastWidgetConfig = {
     tonconnect: { type: "standalone", options: { domain: opts.domain } },
+    widget: buildWidgetOptions(config),
   };
   const client = buildClient(config);
   if (client) out.client = client;
-  const widget = buildWidgetOptions(config);
-  if (Object.keys(widget).length > 0) out.widget = widget;
   return out;
 }

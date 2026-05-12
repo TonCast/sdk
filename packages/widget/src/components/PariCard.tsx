@@ -78,7 +78,7 @@ export function PariCard({ pari }: { pari: Pari }) {
 
   return (
     <div className="tc-pari-card">
-      <button type="button" onClick={goDetail} style={{ all: "unset", display: "contents" }}>
+      <button type="button" className="tc-pari-cover-link" onClick={goDetail}>
         {showImage ? (
           <img
             src={img ?? ""}

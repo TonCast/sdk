@@ -15,6 +15,7 @@ export default defineConfig({
     "css-vars-builder": "src/theme/cssVarBuilder.ts",
     url: "src/utils/url.ts",
     "use-prefers-color-scheme-dark": "src/utils/usePrefersColorSchemeDark.ts",
+    constants: "src/constants.ts",
   },
   format: ["esm", "cjs"],
   dts: true,
