@@ -9,7 +9,6 @@ import {
   useEffect,
   useMemo,
   useRef,
-  useState,
 } from "react";
 import { NavBar } from "./components/NavBar";
 import { WidgetHeader } from "./components/WidgetHeader";
@@ -26,27 +25,10 @@ import { buildCssVarStyle } from "./theme/cssVars";
 import type { ClientStandaloneDescriptor, ToncastWidgetConfig } from "./types";
 import { cn } from "./utils/cn";
 import { stableJsonStringify } from "./utils/stableJsonStringify";
+import { usePrefersColorSchemeDark } from "./utils/usePrefersColorSchemeDark";
 import { MyBetsView } from "./views/MyBets";
 import { PariDetailView } from "./views/PariDetail";
 import { ParisListView } from "./views/ParisList";
-
-/** Subscribes to OS color scheme preference and returns the effective theme. */
-function useSystemTheme(): "light" | "dark" {
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    if (typeof window === "undefined") return "light";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  });
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = (e: MediaQueryListEvent) => setTheme(e.matches ? "dark" : "light");
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-
-  return theme;
-}
 
 /**
  * Catches render errors and shows an inline retry card.
@@ -235,10 +217,10 @@ export interface WidgetProps {
 }
 
 export function Widget({ config, className, style }: WidgetProps) {
-  const systemTheme = useSystemTheme();
+  const prefersDark = usePrefersColorSchemeDark();
   const configTheme = config.widget?.theme;
   const effectiveTheme: "light" | "dark" =
-    configTheme === "system" ? systemTheme : (configTheme ?? "light");
+    configTheme === "system" ? (prefersDark ? "dark" : "light") : (configTheme ?? "light");
 
   const themeClass = effectiveTheme === "dark" ? "tc-w tc-dark" : "tc-w";
   const cssVarsInput = config.widget?.cssVars;

@@ -1,123 +1,14 @@
-import { Address } from "@ton/core";
 import { useEffect, useState } from "react";
 import { ConfigTab } from "./components/ConfigTab";
 import { ExportTab } from "./components/ExportTab";
 import { LivePreview } from "./components/LivePreview";
 import { ThemeTab } from "./components/ThemeTab";
-import {
-  type ConstructorConfig,
-  DEFAULT_CONFIG,
-  type Device,
-  type ThemeConfig,
-} from "./types";
+import { type ConstructorConfig, DEFAULT_CONFIG, type Device } from "./types";
 import { previewBackdropFromConfig } from "./utils/generateZip";
+import { normalizeConfig } from "./utils/normalizeConfig";
 import { usePrefersColorSchemeDark } from "./utils/usePrefersColorSchemeDark";
 
 type Tab = "theme" | "config" | "export";
-
-const VALID_DENSITIES: ThemeConfig["density"][] = [
-  "compact",
-  "default",
-  "comfortable",
-];
-const VALID_SCHEMES: ThemeConfig["colorScheme"][] = ["light", "dark", "system"];
-
-function normalizeGridColumn(raw: unknown, fallback: number): number {
-  const n = Number(raw);
-  return Number.isFinite(n)
-    ? Math.min(6, Math.max(1, Math.round(n)))
-    : fallback;
-}
-
-/** Normalizes constructor domain: trim, require absolute http(s) URL or empty. */
-function normalizeDomain(raw: unknown): string {
-  if (typeof raw !== "string") return DEFAULT_CONFIG.domain;
-  const s = raw.trim();
-  if (!s) return "";
-  try {
-    const u = new URL(s);
-    return u.protocol === "http:" || u.protocol === "https:" ? s : "";
-  } catch {
-    return "";
-  }
-}
-
-/** Normalizes optional Toncast API base URL: trim, require absolute http(s) URL or empty. */
-function normalizeApiBaseUrl(raw: unknown): string {
-  if (typeof raw !== "string") return DEFAULT_CONFIG.apiBaseUrl;
-  const s = raw.trim().replace(/\/+$/, "");
-  if (!s) return "";
-  try {
-    const u = new URL(s);
-    return u.protocol === "http:" || u.protocol === "https:" ? s : "";
-  } catch {
-    return "";
-  }
-}
-
-/** Trim; valid addresses only; normalize to **non-bounceable** user-facing form (typically `UQ…`). */
-function normalizeReferralAddress(raw: unknown): string {
-  if (typeof raw !== "string") return "";
-  const s = raw.trim();
-  if (!s) return "";
-  try {
-    return Address.parse(s).toString({ bounceable: false, urlSafe: true });
-  } catch {
-    return "";
-  }
-}
-
-/** Coerces a persisted config into a well-typed, bounded ConstructorConfig. */
-function normalizeConfig(
-  parsed: Partial<ConstructorConfig>,
-): ConstructorConfig {
-  const t = parsed.theme;
-  return {
-    ...DEFAULT_CONFIG,
-    ...parsed,
-    // Ensure array fields are actually arrays (null/undefined from corrupt storage crashes .length)
-    languages: Array.isArray(parsed.languages)
-      ? parsed.languages
-      : DEFAULT_CONFIG.languages,
-    apiBaseUrl: normalizeApiBaseUrl(parsed.apiBaseUrl),
-    referralPct: Number.isFinite(Number(parsed.referralPct))
-      ? Math.min(7, Math.max(0, Number(parsed.referralPct)))
-      : DEFAULT_CONFIG.referralPct,
-    domain: normalizeDomain(parsed.domain),
-    referralAddress: normalizeReferralAddress(parsed.referralAddress),
-    theme: {
-      ...DEFAULT_CONFIG.theme,
-      ...t,
-      colorScheme: VALID_SCHEMES.includes(
-        t?.colorScheme as ThemeConfig["colorScheme"],
-      )
-        ? (t?.colorScheme as ThemeConfig["colorScheme"])
-        : DEFAULT_CONFIG.theme.colorScheme,
-      density: VALID_DENSITIES.includes(t?.density as ThemeConfig["density"])
-        ? (t?.density as ThemeConfig["density"])
-        : DEFAULT_CONFIG.theme.density,
-      radius: Number.isFinite(Number(t?.radius))
-        ? Math.min(64, Math.max(0, Number(t?.radius)))
-        : DEFAULT_CONFIG.theme.radius,
-      grid: {
-        mobile: normalizeGridColumn(
-          t?.grid?.mobile,
-          DEFAULT_CONFIG.theme.grid.mobile,
-        ),
-        tablet: normalizeGridColumn(
-          t?.grid?.tablet,
-          DEFAULT_CONFIG.theme.grid.tablet,
-        ),
-        desktop: normalizeGridColumn(
-          t?.grid?.desktop,
-          DEFAULT_CONFIG.theme.grid.desktop,
-        ),
-      },
-      light: { ...DEFAULT_CONFIG.theme.light, ...(t?.light ?? {}) },
-      dark: { ...DEFAULT_CONFIG.theme.dark, ...(t?.dark ?? {}) },
-    },
-  };
-}
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "theme", label: "Theme" },
@@ -204,16 +95,11 @@ export function App() {
           <div className="text-sm font-bold text-slate-100 leading-tight">
             Toncast Widget Constructor
           </div>
-          <div className="text-xs text-slate-500 mt-0.5">
-            configure · preview · export
-          </div>
+          <div className="text-xs text-slate-500 mt-0.5">configure · preview · export</div>
         </div>
 
         {/* Tab bar */}
-        <div
-          role="tablist"
-          className="flex border-b border-slate-800 bg-slate-900/50"
-        >
+        <div role="tablist" className="flex border-b border-slate-800 bg-slate-900/50">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -236,21 +122,14 @@ export function App() {
 
         {/* Tab content — scrollable */}
         <div className="flex-1 overflow-y-auto">
-          <div
-            role="tabpanel"
-            id={`panel-${tab}`}
-            aria-labelledby={`tab-${tab}`}
-            className="p-4"
-          >
+          <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="p-4">
             {tab === "theme" && (
               <ThemeTab
                 theme={config.theme}
                 onChange={(theme) => setConfig((c) => ({ ...c, theme }))}
               />
             )}
-            {tab === "config" && (
-              <ConfigTab config={config} onChange={setConfig} />
-            )}
+            {tab === "config" && <ConfigTab config={config} onChange={setConfig} />}
             {tab === "export" && <ExportTab config={config} />}
           </div>
         </div>

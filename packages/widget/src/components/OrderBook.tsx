@@ -1,6 +1,6 @@
 import { type OddsState, orderBookLadder } from "@toncast/sdk";
 import { useT } from "../i18n/useT";
-import { Skeleton } from "./ui/Skeleton";
+import { SkeletonList } from "./ui/SkeletonList";
 
 type Bucket = ReturnType<typeof orderBookLadder>[number];
 
@@ -8,13 +8,7 @@ export function OrderBook({ oddsState }: { oddsState: OddsState | null }) {
   const t = useT();
 
   if (!oddsState) {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={String(i)} style={{ height: 28, width: "100%" }} />
-        ))}
-      </div>
-    );
+    return <SkeletonList count={6} gap={4} itemStyle={{ height: 28, width: "100%" }} />;
   }
 
   const buckets = orderBookLadder(oddsState);

@@ -25,6 +25,15 @@ export default defineConfig({
         __dirname,
         "../../packages/widget/src/theme/colorMath.ts",
       ),
+      "@toncast/widget/css-vars-builder": resolve(
+        __dirname,
+        "../../packages/widget/src/theme/cssVarBuilder.ts",
+      ),
+      "@toncast/widget/url": resolve(__dirname, "../../packages/widget/src/utils/url.ts"),
+      "@toncast/widget/use-prefers-color-scheme-dark": resolve(
+        __dirname,
+        "../../packages/widget/src/utils/usePrefersColorSchemeDark.ts",
+      ),
       // Resolve workspace packages from source so Vite always uses fresh code.
       "@toncast/widget": resolve(__dirname, "../../packages/widget/src"),
       "@toncast/sdk-react": resolve(__dirname, "../../packages/sdk-react/src"),

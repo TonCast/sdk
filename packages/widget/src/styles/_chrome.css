@@ -1,0 +1,152 @@
+/* ===== WIDGET HEADER ===== */
+.tc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--tc-header-padding-y) var(--tc-header-padding-x);
+  border-bottom: 1px solid var(--tc-border);
+  background: var(--tc-bg-chrome);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.tc-lang-select {
+  height: 30px;
+  padding: 0 24px 0 8px;
+  border: 1px solid var(--tc-border);
+  border-radius: 6px;
+  background: var(--tc-bg);
+  color: var(--tc-fg);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  appearance: none;
+}
+
+.tc-lang-select:focus {
+  outline: none;
+  border-color: var(--tc-accent);
+}
+
+.tc-lang-wrapper .tc-lang-select {
+  /* Extra left inset so label text clears the inline globe icon */
+  padding-left: 22px;
+}
+
+.tc-lang-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  /* Match `.tc-lang-select` so inline icons scale with header density / font-size */
+  font-size: 12px;
+}
+
+.tc-lang-globe-icon {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  display: block;
+}
+.tc-lang-icon {
+  position: absolute;
+  right: 6px;
+  pointer-events: none;
+  color: var(--tc-fg-muted);
+  width: 12px;
+  height: 12px;
+}
+
+.tc-header-connect {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  height: 30px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    var(--tc-accent) 0%,
+    var(--tc-accent-hover) 100%
+  );
+  color: var(--tc-accent-fg);
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: filter 0.15s;
+}
+.tc-header-connect:hover {
+  filter: brightness(1.1);
+}
+.tc-header-connected {
+  background: var(--tc-bg-muted);
+  color: var(--tc-fg-muted);
+  border: 1px solid var(--tc-border);
+}
+
+/* ===== NAVBAR ===== */
+.tc-nav {
+  display: flex;
+  border-top: 1px solid var(--tc-border);
+  background: var(--tc-bg-chrome);
+}
+
+.tc-nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--tc-fg-muted);
+  font-size: 10px;
+  font-family: inherit;
+  transition:
+    color 0.15s,
+    background 0.15s;
+  padding: var(--tc-nav-padding-y) 4px calc(var(--tc-nav-padding-y) - 2px);
+  border-radius: 0;
+}
+
+.tc-nav-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tc-nav-btn:hover {
+  color: var(--tc-fg);
+  background: var(--tc-bg-hover);
+}
+.tc-nav-btn.tc-active {
+  color: var(--tc-accent);
+}
+
+/* ===== CARD ===== */
+.tc-card {
+  background: var(--tc-bg-card);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius);
+  overflow: hidden;
+}
+
+.tc-card-body {
+  padding: var(--tc-card-padding);
+}
+.tc-card-header {
+  padding: var(--tc-card-padding) var(--tc-card-padding)
+    calc(var(--tc-card-padding) - 4px);
+}
+.tc-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tc-fg);
+}

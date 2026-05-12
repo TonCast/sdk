@@ -19,6 +19,11 @@
       "@toncast/widget/react": ["../../packages/widget/src/react.ts"],
       "@toncast/widget/density-presets": ["../../packages/widget/src/theme/densityPresets.ts"],
       "@toncast/widget/color-math": ["../../packages/widget/src/theme/colorMath.ts"],
+      "@toncast/widget/css-vars-builder": ["../../packages/widget/src/theme/cssVarBuilder.ts"],
+      "@toncast/widget/url": ["../../packages/widget/src/utils/url.ts"],
+      "@toncast/widget/use-prefers-color-scheme-dark": [
+        "../../packages/widget/src/utils/usePrefersColorSchemeDark.ts"
+      ],
       "@toncast/widget/styles/widget.css": ["../../packages/widget/src/styles/widget.css"],
       "@toncast/widget/*": ["../../packages/widget/src/*"],
       "@toncast/sdk-react": ["../../packages/sdk-react/src/index.ts"],

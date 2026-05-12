@@ -5,6 +5,8 @@ import {
   type ThemeColorSet,
   type ThemeConfig,
 } from "../types";
+import { ColorField } from "./ui/ColorField";
+import { SegmentedButtonGroup } from "./ui/SegmentedButtonGroup";
 
 interface Props {
   theme: ThemeConfig;
@@ -13,77 +15,51 @@ interface Props {
 
 const sectionLabelCls = "text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide";
 
-/** Matches row controls (`h-8` inputs) so action labels align vertically. */
-const colorRowActionCls =
-  "inline-flex h-8 shrink-0 items-center text-[10px] text-slate-500 hover:text-slate-300 transition-colors";
+const COLOR_SCHEME_OPTIONS = [
+  { value: "light", label: "Light", icon: "☀️" },
+  { value: "dark", label: "Dark", icon: "🌙" },
+  { value: "system", label: "System", icon: "🖥️" },
+] as const;
 
-/** Flex row + hex field: `min-w-0` lets the text input shrink so actions stay inside narrow sidebars. */
-const colorRowCls = "flex min-w-0 items-center gap-2";
-const colorHexInputCls =
-  "min-w-0 flex-1 h-8 px-2.5 rounded-md border border-slate-700 bg-slate-800 text-slate-200 text-xs font-mono focus:outline-none focus:border-sky-500/50";
+const RADIUS_OPTIONS = [
+  { value: 0, label: "0" },
+  { value: 6, label: "6" },
+  { value: 12, label: "12" },
+  { value: 16, label: "16" },
+  { value: 24, label: "24" },
+] as const;
 
-function ColorField({
-  label,
-  colorKey,
-  value,
-  defaultValue,
-  onChange,
-}: {
-  label: string;
-  colorKey: keyof ThemeColorSet;
-  value: ThemeColorSet;
-  defaultValue: string;
-  onChange: (key: keyof ThemeColorSet, val: string) => void;
-}) {
-  const current = value[colorKey];
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs text-slate-400">{label}</span>
-        <span className="font-mono text-[10px] text-slate-500">{current || "optional"}</span>
-      </div>
-      <div className={colorRowCls}>
-        <input
-          type="color"
-          value={current || defaultValue}
-          onChange={(e) => onChange(colorKey, e.target.value)}
-          className="w-8 h-8 rounded-md border border-slate-700 cursor-pointer bg-slate-800 p-0.5 shrink-0"
-          aria-label={`${label} color`}
-        />
-        <input
-          type="text"
-          value={current}
-          onChange={(e) => onChange(colorKey, e.target.value)}
-          placeholder={defaultValue}
-          aria-label={`${label} hex color`}
-          className={colorHexInputCls}
-        />
-        {current !== defaultValue && current !== "" && (
-          <button
-            type="button"
-            onClick={() => onChange(colorKey, defaultValue)}
-            className={colorRowActionCls}
-          >
-            Reset
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
+const DENSITY_OPTIONS = [
+  { value: "compact", label: "Compact" },
+  { value: "default", label: "Default" },
+  { value: "comfortable", label: "Comfort" },
+] as const;
+
+const GRID_DEVICES = [
+  { key: "mobile", label: "Mobile" },
+  { key: "tablet", label: "Tablet" },
+  { key: "desktop", label: "Desktop" },
+] as const;
+
+const GRID_COLUMN_OPTIONS = [
+  { value: 1, label: "1" },
+  { value: 2, label: "2" },
+  { value: 3, label: "3" },
+  { value: 4, label: "4" },
+  { value: 5, label: "5" },
+  { value: 6, label: "6" },
+] as const;
 
 /** Reusable color set editor (brand + semantic colors). */
 function ColorSetEditor({
   label,
   value,
   onChange,
-  defaultBg,
   defaults,
 }: {
   label: string;
   value: ThemeColorSet;
   onChange: (v: ThemeColorSet) => void;
-  defaultBg: string;
   defaults: ThemeColorSet;
 }) {
   const set = (key: keyof ThemeColorSet, val: string) => onChange({ ...value, [key]: val });
@@ -94,62 +70,33 @@ function ColorSetEditor({
 
       <ColorField
         label="Accent"
-        colorKey="accent"
-        value={value}
+        value={value.accent}
         defaultValue={DEFAULT_ACCENT}
-        onChange={set}
+        onChange={(v) => set("accent", v)}
       />
-
-      {/* Background */}
-      <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs text-slate-400">Background</span>
-          <span className="text-[10px] text-slate-600">optional</span>
-        </div>
-        <div className={colorRowCls}>
-          <input
-            type="color"
-            value={value.bg || defaultBg}
-            onChange={(e) => set("bg", e.target.value)}
-            className="w-8 h-8 rounded-md border border-slate-700 cursor-pointer bg-slate-800 p-0.5 shrink-0"
-            aria-label={`${label} background color`}
-          />
-          <input
-            type="text"
-            value={value.bg}
-            onChange={(e) => set("bg", e.target.value)}
-            placeholder={defaultBg}
-            aria-label={`${label} background hex color`}
-            className={colorHexInputCls}
-          />
-          {value.bg && (
-            <button type="button" onClick={() => set("bg", "")} className={colorRowActionCls}>
-              Clear
-            </button>
-          )}
-        </div>
-      </div>
-
+      <ColorField
+        label="Background"
+        value={value.bg ?? ""}
+        placeholderHint={defaults.bg ?? "#ffffff"}
+        onChange={(v) => set("bg", v)}
+      />
       <ColorField
         label="Positive"
-        colorKey="success"
-        value={value}
+        value={value.success}
         defaultValue={defaults.success}
-        onChange={set}
+        onChange={(v) => set("success", v)}
       />
       <ColorField
         label="Negative"
-        colorKey="danger"
-        value={value}
+        value={value.danger}
         defaultValue={defaults.danger}
-        onChange={set}
+        onChange={(v) => set("danger", v)}
       />
       <ColorField
         label="Warning"
-        colorKey="warn"
-        value={value}
+        value={value.warn}
         defaultValue={defaults.warn}
-        onChange={set}
+        onChange={(v) => set("warn", v)}
       />
     </div>
   );
@@ -169,30 +116,12 @@ export function ThemeTab({ theme, onChange }: Props) {
       {/* Color scheme */}
       <div>
         <p className={sectionLabelCls}>Color scheme</p>
-        <div className="flex gap-2">
-          {(
-            [
-              { value: "light", label: "Light", emoji: "☀️" },
-              { value: "dark", label: "Dark", emoji: "🌙" },
-              { value: "system", label: "System", emoji: "🖥️" },
-            ] as const
-          ).map(({ value, label, emoji }) => (
-            <button
-              key={value}
-              type="button"
-              aria-label={label}
-              aria-pressed={theme.colorScheme === value}
-              onClick={() => set("colorScheme", value)}
-              className={`flex-1 py-2 rounded-lg border text-xs font-semibold transition-all ${
-                theme.colorScheme === value
-                  ? "bg-sky-500/20 text-sky-300 border-sky-500/50"
-                  : "bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-500"
-              }`}
-            >
-              <span aria-hidden="true">{emoji}</span> {label}
-            </button>
-          ))}
-        </div>
+        <SegmentedButtonGroup
+          value={theme.colorScheme}
+          onChange={(v) => set("colorScheme", v)}
+          options={COLOR_SCHEME_OPTIONS}
+          size="lg"
+        />
         {theme.colorScheme === "system" && (
           <p className="mt-1.5 text-[10px] text-slate-600">
             Configure colors for each mode independently below.
@@ -207,7 +136,6 @@ export function ThemeTab({ theme, onChange }: Props) {
             label="Light mode"
             value={theme.light}
             onChange={(v) => set("light", v)}
-            defaultBg="#ffffff"
             defaults={DEFAULT_LIGHT_COLORS}
           />
         )}
@@ -216,7 +144,6 @@ export function ThemeTab({ theme, onChange }: Props) {
             label="Dark mode"
             value={theme.dark}
             onChange={(v) => set("dark", v)}
-            defaultBg="#0f172a"
             defaults={DEFAULT_DARK_COLORS}
           />
         )}
@@ -231,29 +158,14 @@ export function ThemeTab({ theme, onChange }: Props) {
           Border radius
           <span className="font-mono text-slate-500 normal-case">{theme.radius}px</span>
         </label>
-        <div className="flex gap-1.5 mb-2">
-          {[
-            { v: 0, label: "0" },
-            { v: 6, label: "6" },
-            { v: 12, label: "12" },
-            { v: 16, label: "16" },
-            { v: 24, label: "24" },
-          ].map(({ v, label }) => (
-            <button
-              key={v}
-              type="button"
-              aria-label={`Border radius ${label} pixels`}
-              aria-pressed={theme.radius === v}
-              onClick={() => set("radius", v)}
-              className={`flex-1 py-1.5 text-xs rounded border font-mono font-medium transition-all ${
-                theme.radius === v
-                  ? "bg-sky-500/20 text-sky-300 border-sky-500/50"
-                  : "bg-slate-800 text-slate-500 border-slate-700 hover:border-slate-500"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="mb-2">
+          <SegmentedButtonGroup
+            value={theme.radius}
+            onChange={(v) => set("radius", v)}
+            options={RADIUS_OPTIONS}
+            mono
+            itemAriaLabel={(o) => `Border radius ${o.label} pixels`}
+          />
         </div>
         <input
           id="tc-radius-range"
@@ -276,33 +188,15 @@ export function ThemeTab({ theme, onChange }: Props) {
           </span>
         </p>
         <div className="space-y-2">
-          {(
-            [
-              { key: "mobile", label: "Mobile" },
-              { key: "tablet", label: "Tablet" },
-              { key: "desktop", label: "Desktop" },
-            ] as const
-          ).map(({ key, label }) => (
+          {GRID_DEVICES.map(({ key, label }) => (
             <div key={key} className="grid grid-cols-[64px_1fr] items-center gap-2">
               <span className="text-[11px] text-slate-500">{label}</span>
-              <div className="flex gap-1.5">
-                {[1, 2, 3, 4, 5, 6].map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    aria-label={`${label} grid ${v} columns`}
-                    aria-pressed={theme.grid[key] === v}
-                    onClick={() => setGrid(key, v)}
-                    className={`flex-1 py-1.5 text-xs rounded border font-medium transition-all ${
-                      theme.grid[key] === v
-                        ? "bg-sky-500/20 text-sky-300 border-sky-500/50"
-                        : "bg-slate-800 text-slate-500 border-slate-700 hover:border-slate-500"
-                    }`}
-                  >
-                    {v}
-                  </button>
-                ))}
-              </div>
+              <SegmentedButtonGroup
+                value={theme.grid[key]}
+                onChange={(v) => setGrid(key, v)}
+                options={GRID_COLUMN_OPTIONS}
+                itemAriaLabel={(o) => `${label} grid ${o.label} columns`}
+              />
             </div>
           ))}
         </div>
@@ -317,30 +211,12 @@ export function ThemeTab({ theme, onChange }: Props) {
           Density
           <span className="text-slate-500 normal-case font-normal">{theme.density}</span>
         </p>
-        <div className="flex gap-1.5">
-          {(
-            [
-              { value: "compact", label: "Compact" },
-              { value: "default", label: "Default" },
-              { value: "comfortable", label: "Comfort" },
-            ] as const
-          ).map((item) => (
-            <button
-              key={item.value}
-              type="button"
-              aria-pressed={theme.density === item.value}
-              aria-label={`Density ${item.label}`}
-              onClick={() => set("density", item.value)}
-              className={`flex-1 py-1.5 text-xs rounded border font-medium transition-all ${
-                theme.density === item.value
-                  ? "bg-sky-500/20 text-sky-300 border-sky-500/50"
-                  : "bg-slate-800 text-slate-500 border-slate-700 hover:border-slate-500"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
+        <SegmentedButtonGroup
+          value={theme.density}
+          onChange={(v) => set("density", v)}
+          options={DENSITY_OPTIONS}
+          itemAriaLabel={(o) => `Density ${o.label}`}
+        />
         <p className="mt-1.5 text-[10px] text-slate-600">
           Changes core widget spacing while keeping the layout stable.
         </p>

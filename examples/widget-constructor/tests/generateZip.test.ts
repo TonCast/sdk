@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { type ConstructorConfig, DEFAULT_CONFIG } from "../src/types";
 import {
+  buildCssVarsConfig,
   buildIndexHtml,
   buildJsSnippet,
   buildReactSnippet,
   buildStyleCss,
-  buildCssVarsConfig,
   previewBackdropFromConfig,
 } from "../src/utils/generateZip";
 
@@ -27,9 +27,7 @@ describe("widget export snippets", () => {
     expect(html).toContain('href="index.iife.css"');
     expect(html).toContain("data-toncast-widget-css");
     expect(html).not.toContain("https://widget.toncast.app/v0/index.iife.css");
-    expect(html.indexOf("index.iife.css")).toBeLessThan(
-      html.indexOf("index.iife.js"),
-    );
+    expect(html.indexOf("index.iife.css")).toBeLessThan(html.indexOf("index.iife.js"));
 
     const snippet = buildJsSnippet(c);
     expect(snippet).toContain("https://widget.toncast.app/v0/index.iife.js");
@@ -40,12 +38,8 @@ describe("widget export snippets", () => {
   it("emits standalone Toncast API baseUrl when configured", () => {
     const c = config({ apiBaseUrl: "https://api.staging.toncast.test" });
 
-    expect(buildIndexHtml(c)).toContain(
-      '"baseUrl": "https://api.staging.toncast.test"',
-    );
-    expect(buildJsSnippet(c)).toContain(
-      '"baseUrl": "https://api.staging.toncast.test"',
-    );
+    expect(buildIndexHtml(c)).toContain('"baseUrl": "https://api.staging.toncast.test"');
+    expect(buildJsSnippet(c)).toContain('"baseUrl": "https://api.staging.toncast.test"');
   });
 
   it("does not emit raw script-closing tags from config values", () => {
@@ -71,9 +65,7 @@ describe("widget export snippets", () => {
     expect(buildIndexHtml(maliciousConfig)).not.toContain("</script><script>");
     expect(buildIndexHtml(maliciousConfig)).not.toContain("</style><script>");
     expect(buildJsSnippet(maliciousConfig)).not.toContain("</script><script>");
-    expect(buildReactSnippet(maliciousConfig)).not.toContain(
-      "</script><script>",
-    );
+    expect(buildReactSnippet(maliciousConfig)).not.toContain("</script><script>");
   });
 
   it("emits semantic source colors and density in widget cssVars", () => {

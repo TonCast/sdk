@@ -27,6 +27,21 @@
       "types": "./dist/color-math.d.ts",
       "import": "./dist/color-math.js",
       "require": "./dist/color-math.cjs"
+    },
+    "./css-vars-builder": {
+      "types": "./dist/css-vars-builder.d.ts",
+      "import": "./dist/css-vars-builder.js",
+      "require": "./dist/css-vars-builder.cjs"
+    },
+    "./url": {
+      "types": "./dist/url.d.ts",
+      "import": "./dist/url.js",
+      "require": "./dist/url.cjs"
+    },
+    "./use-prefers-color-scheme-dark": {
+      "types": "./dist/use-prefers-color-scheme-dark.d.ts",
+      "import": "./dist/use-prefers-color-scheme-dark.js",
+      "require": "./dist/use-prefers-color-scheme-dark.cjs"
     }
   },
   "files": [
@@ -44,6 +59,9 @@
     "node": ">=20"
   },
   "scripts": {
+    "build:css": "node scripts/bundle-widget-css.mjs",
+    "build:css:check": "node scripts/bundle-widget-css.mjs --check",
+    "prebuild": "npm run build:css",
     "build": "tsup && npm run build:iife",
     "build:iife": "tsup --config tsup.iife.config.ts",
     "dev": "tsup --watch",

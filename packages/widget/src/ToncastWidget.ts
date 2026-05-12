@@ -58,6 +58,24 @@ function removeStyles(): void {
 
 type EventListener<T> = T extends void ? () => void : (payload: T) => void;
 
+/**
+ * Returns a copy of `config` with an `onBet` bridge that fires both the
+ * supplied `emit` callback and any user-provided `widget.onBet`.
+ *
+ * Exported for unit testing — production code uses ToncastWidget#mount/update.
+ */
+export function composeOnBetBridge(
+  config: ToncastWidgetConfig,
+  emit: (e: { pariId: string; amount: bigint; side: "yes" | "no" }) => void,
+): ToncastWidgetConfig {
+  const userOnBet = config.widget?.onBet;
+  const onBet = (pariId: string, amount: bigint, side: "yes" | "no") => {
+    emit({ pariId, amount, side });
+    userOnBet?.(pariId, amount, side);
+  };
+  return { ...config, widget: { ...config.widget, onBet } };
+}
+
 export class ToncastWidget {
   private config: ToncastWidgetConfig;
   private root: Root | null = null;
@@ -69,17 +87,9 @@ export class ToncastWidget {
     this.config = config;
   }
 
-  /**
-   * Merges current config with an `onBet` bridge.
-   * Composes with user-supplied `onBet` if present — both receive every event.
-   */
+  /** Composes current config with an `onBet` bridge that re-emits via this instance. */
   private buildConfig(): ToncastWidgetConfig {
-    const userOnBet = this.config.widget?.onBet;
-    const onBet = (pariId: string, amount: bigint, side: "yes" | "no") => {
-      this.emit("bet", { pariId, amount, side });
-      userOnBet?.(pariId, amount, side);
-    };
-    return { ...this.config, widget: { ...this.config.widget, onBet } };
+    return composeOnBetBridge(this.config, (payload) => this.emit("bet", payload));
   }
 
   mount(container: Element): void {

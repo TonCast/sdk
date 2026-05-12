@@ -1,6 +1,7 @@
 import type { Pari } from "@toncast/sdk";
 import { ODDS_MAX, ODDS_MIN, pariCoverUrl, yesOddsToDecimalOdds } from "@toncast/sdk";
 import { useEffect, useReducer, useState } from "react";
+import { MINUTE_TICK_MS } from "../constants";
 import { useNav } from "../context";
 import { useT } from "../i18n/useT";
 import { formatTimeLeft } from "../utils/format";
@@ -17,7 +18,7 @@ function subscribeMinuteTick(cb: () => void): () => void {
   if (!minuteTickInterval && typeof setInterval !== "undefined") {
     minuteTickInterval = setInterval(() => {
       for (const listener of minuteTickListeners) listener();
-    }, 60_000);
+    }, MINUTE_TICK_MS);
   }
   return () => {
     minuteTickListeners.delete(cb);

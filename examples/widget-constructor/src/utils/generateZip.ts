@@ -1,10 +1,6 @@
-import {
-  mix,
-  parseHexColor,
-  readableFg,
-  rgba,
-  safeHexColor,
-} from "@toncast/widget/color-math";
+import type { ToncastWidgetCssVarsBase } from "@toncast/widget";
+import { safeHexColor } from "@toncast/widget/color-math";
+import { deriveCssVars } from "@toncast/widget/css-vars-builder";
 import {
   densityPresetToCssCustomProperties,
   WIDGET_DENSITY_PRESETS,
@@ -16,6 +12,7 @@ import {
   DEFAULT_LIGHT_COLORS,
   type ThemeColorSet,
 } from "../types";
+import { buildWidgetConfig } from "./buildWidgetConfig";
 
 const WIDGET_CDN_JS_URL = "https://widget.toncast.app/v0/index.iife.js";
 
@@ -37,56 +34,27 @@ function stringifyForScript(value: unknown, space: number): string {
     .replace(/\u2029/g, "\\u2029");
 }
 
-function appendVar(
-  lines: string[],
-  name: string,
-  value: string | null | undefined,
-): void {
-  if (value) lines.push(`  ${name}: ${value};`);
-}
-
-function appendSemanticCssVars(
-  lines: string[],
-  prefix: "success" | "danger" | "warn",
-  source: string,
-  theme: "light" | "dark",
-): void {
-  const textMixTarget: [number, number, number] =
-    theme === "dark" ? [255, 255, 255] : [0, 0, 0];
-  const textWeight = theme === "dark" ? 0.18 : 0.2;
-  appendVar(lines, `--tc-${prefix}`, source);
-  appendVar(lines, `--tc-${prefix}-fg`, mix(source, textMixTarget, textWeight));
-  appendVar(
-    lines,
-    `--tc-${prefix}-bg`,
-    rgba(source, theme === "dark" ? 0.16 : 0.1),
-  );
-  appendVar(
-    lines,
-    `--tc-${prefix}-border`,
-    rgba(source, theme === "dark" ? 0.34 : 0.25),
-  );
-  if (prefix !== "warn") {
-    appendVar(
-      lines,
-      `--tc-${prefix}-hover-bg`,
-      rgba(source, theme === "dark" ? 0.24 : 0.18),
-    );
-    appendVar(
-      lines,
-      `--tc-${prefix}-active-bg`,
-      rgba(source, theme === "dark" ? 0.3 : 0.22),
-    );
-    appendVar(lines, `--tc-${prefix}-active-border`, rgba(source, 0.4));
-    appendVar(
-      lines,
-      `--tc-${prefix}-fill-bg`,
-      rgba(source, theme === "dark" ? 0.44 : 0.35),
-    );
-    const shadow = rgba(source, 0.35);
-    if (shadow)
-      lines.push(`  --tc-${prefix}-active-shadow: 0 4px 12px -4px ${shadow};`);
-  }
+/**
+ * Builds a "delta palette" containing only colors that differ from defaults.
+ * The widget's runtime defaults already cover unchanged values, so we emit
+ * overrides only for what the user actually changed (smaller style.css).
+ */
+function buildDeltaPalette(
+  colors: ThemeColorSet,
+  defaults: ThemeColorSet,
+): ToncastWidgetCssVarsBase {
+  const palette: ToncastWidgetCssVarsBase = {};
+  const accent = safeHexColor(colors.accent);
+  const bg = colors.bg ? safeHexColor(colors.bg) : null;
+  const success = safeHexColor(colors.success);
+  const danger = safeHexColor(colors.danger);
+  const warn = safeHexColor(colors.warn);
+  if (accent !== null && accent !== defaults.accent) palette.accent = accent;
+  if (bg !== null) palette.bg = bg;
+  if (success !== null && success !== defaults.success) palette.success = success;
+  if (danger !== null && danger !== defaults.danger) palette.danger = danger;
+  if (warn !== null && warn !== defaults.warn) palette.warn = warn;
+  return palette;
 }
 
 function appendPaletteCssVars(
@@ -95,80 +63,17 @@ function appendPaletteCssVars(
   defaults: ThemeColorSet,
   theme: "light" | "dark",
 ): void {
-  const accent = safeHexColor(colors.accent);
-  const bg = colors.bg ? safeHexColor(colors.bg) : null;
-  const success = safeHexColor(colors.success);
-  const danger = safeHexColor(colors.danger);
-  const warn = safeHexColor(colors.warn);
-
-  if (accent !== null && accent !== defaults.accent) {
-    appendVar(lines, "--tc-accent", accent);
-    appendVar(lines, "--tc-accent-fg", readableFg(accent));
-    appendVar(
-      lines,
-      "--tc-accent-bg",
-      rgba(accent, theme === "dark" ? 0.18 : 0.1),
-    );
-    const accentHoverTarget: [number, number, number] =
-      theme === "dark" ? [255, 255, 255] : [0, 0, 0];
-    appendVar(
-      lines,
-      "--tc-accent-hover",
-      mix(accent, accentHoverTarget, 0.1) ?? accent,
-    );
-    const shadow = rgba(accent, 0.55);
-    if (shadow) lines.push(`  --tc-accent-shadow: 0 8px 24px -8px ${shadow};`);
-  }
-  if (bg !== null) {
-    const fg = readableFg(bg);
-    if (fg) {
-      const darkBg = fg === "#ffffff";
-      const surfaceTarget: [number, number, number] = darkBg
-        ? [255, 255, 255]
-        : [15, 23, 42];
-      appendVar(lines, "--tc-bg", bg);
-      appendVar(lines, "--tc-fg", fg);
-      appendVar(
-        lines,
-        "--tc-fg-muted",
-        mix(fg, parseHexColor(bg) ?? [0, 0, 0], 0.38),
-      );
-      appendVar(
-        lines,
-        "--tc-bg-chrome",
-        mix(bg, surfaceTarget, darkBg ? 0.1 : 0.04),
-      );
-      appendVar(
-        lines,
-        "--tc-bg-card",
-        mix(bg, surfaceTarget, darkBg ? 0.08 : 0.025),
-      );
-      appendVar(
-        lines,
-        "--tc-bg-muted",
-        mix(bg, surfaceTarget, darkBg ? 0.12 : 0.06),
-      );
-      appendVar(lines, "--tc-border", rgba(fg, darkBg ? 0.16 : 0.12));
-      appendVar(lines, "--tc-bg-hover", rgba(fg, darkBg ? 0.08 : 0.04));
-    }
-  }
-  if (success !== null && success !== defaults.success) {
-    appendSemanticCssVars(lines, "success", success, theme);
-  }
-  if (danger !== null && danger !== defaults.danger) {
-    appendSemanticCssVars(lines, "danger", danger, theme);
-  }
-  if (warn !== null && warn !== defaults.warn) {
-    appendSemanticCssVars(lines, "warn", warn, theme);
+  const palette = buildDeltaPalette(colors, defaults);
+  if (Object.keys(palette).length === 0) return;
+  const vars = deriveCssVars(palette, theme);
+  for (const [name, value] of Object.entries(vars)) {
+    lines.push(`  ${name}: ${value};`);
   }
 }
 
 /** Builds tonconnect-manifest.json content. */
 export function buildManifestJson(config: ConstructorConfig): string {
-  const cleanDomain = (config.domain || "https://your-domain.com").replace(
-    /\/$/,
-    "",
-  );
+  const cleanDomain = (config.domain || "https://your-domain.com").replace(/\/$/, "");
   return JSON.stringify(
     {
       url: cleanDomain,
@@ -201,30 +106,6 @@ function colorSetVars(
   return Object.keys(vars).length > 0 ? vars : null;
 }
 
-function normalizeGridColumn(value: number, fallback: number): number {
-  return Number.isFinite(value)
-    ? Math.max(1, Math.min(6, Math.round(value)))
-    : fallback;
-}
-
-function buildLayoutConfig(config: ConstructorConfig): Record<string, unknown> {
-  return {
-    grid: {
-      mobile: normalizeGridColumn(config.theme.grid.mobile, 1),
-      tablet: normalizeGridColumn(config.theme.grid.tablet, 2),
-      desktop: normalizeGridColumn(config.theme.grid.desktop, 3),
-    },
-  };
-}
-
-function buildStandaloneClientConfig(
-  config: ConstructorConfig,
-): Record<string, unknown> | null {
-  const baseUrl = config.apiBaseUrl.trim().replace(/\/+$/, "");
-  if (!baseUrl) return null;
-  return { type: "standalone", baseUrl };
-}
-
 const HOST_BACKDROP_LIGHT = "#f8fafc";
 const HOST_BACKDROP_DARK = "#0f172a";
 
@@ -232,10 +113,7 @@ const HOST_BACKDROP_DARK = "#0f172a";
  * Page mat behind the widget in Live Preview / export: uses optional shell bg
  * when set, otherwise the same defaults as the widget (`--tc-bg` light/dark).
  */
-export function previewBackdropFromConfig(
-  config: ConstructorConfig,
-  prefersDark: boolean,
-): string {
+export function previewBackdropFromConfig(config: ConstructorConfig, prefersDark: boolean): string {
   const lightRaw = config.theme.light.bg?.trim();
   const darkRaw = config.theme.dark.bg?.trim();
   const lightBody = (lightRaw && safeHexColor(lightRaw)) || HOST_BACKDROP_LIGHT;
@@ -249,13 +127,9 @@ export function previewBackdropFromConfig(
  * Builds the widget.cssVars object for JS/React configs.
  * Exported so LivePreview can reuse without duplicating the logic.
  */
-export function buildCssVarsConfig(
-  config: ConstructorConfig,
-): Record<string, unknown> | undefined {
+export function buildCssVarsConfig(config: ConstructorConfig): Record<string, unknown> | undefined {
   const { theme } = config;
-  const radius = Number.isFinite(theme.radius)
-    ? Math.max(0, Math.min(64, theme.radius))
-    : 12;
+  const radius = Number.isFinite(theme.radius) ? Math.max(0, Math.min(64, theme.radius)) : 12;
 
   const vars: Record<string, unknown> = {};
 
@@ -286,9 +160,7 @@ export function buildCssVarsConfig(
 /** Builds optional host CSS overrides for the widget container (for CSS snippet export). */
 export function buildStyleCss(config: ConstructorConfig): string | null {
   const { theme } = config;
-  const radius = Number.isFinite(theme.radius)
-    ? Math.max(0, Math.min(64, theme.radius))
-    : 12;
+  const radius = Number.isFinite(theme.radius) ? Math.max(0, Math.min(64, theme.radius)) : 12;
 
   const baseLines: string[] = [];
   if (radius !== 12) baseLines.push(`  --tc-radius: ${radius}px;`);
@@ -296,18 +168,12 @@ export function buildStyleCss(config: ConstructorConfig): string | null {
   if (theme.density !== "default") {
     const preset = WIDGET_DENSITY_PRESETS[theme.density];
     const densityVars = densityPresetToCssCustomProperties(preset);
-    for (const [k, v] of Object.entries(densityVars))
-      baseLines.push(`  ${k}: ${v};`);
+    for (const [k, v] of Object.entries(densityVars)) baseLines.push(`  ${k}: ${v};`);
   }
 
   const lightLines: string[] = [];
   if (theme.colorScheme !== "dark") {
-    appendPaletteCssVars(
-      lightLines,
-      theme.light,
-      DEFAULT_LIGHT_COLORS,
-      "light",
-    );
+    appendPaletteCssVars(lightLines, theme.light, DEFAULT_LIGHT_COLORS, "light");
   }
 
   const darkLines: string[] = [];
@@ -315,8 +181,7 @@ export function buildStyleCss(config: ConstructorConfig): string | null {
     appendPaletteCssVars(darkLines, theme.dark, DEFAULT_DARK_COLORS, "dark");
   }
 
-  const hasOverrides =
-    baseLines.length > 0 || lightLines.length > 0 || darkLines.length > 0;
+  const hasOverrides = baseLines.length > 0 || lightLines.length > 0 || darkLines.length > 0;
   if (!hasOverrides) return null;
 
   const out: string[] = [];
@@ -351,41 +216,12 @@ export function buildStyleCss(config: ConstructorConfig): string | null {
   return out.length > 0 ? out.join("\n") : null;
 }
 
-/** Shared helper — builds the widget options object from constructor config. */
-function buildWidgetOptions(
-  config: ConstructorConfig,
-): Record<string, unknown> {
-  const opts: Record<string, unknown> = {};
-  if (config.language) opts.language = config.language;
-  if (config.theme.colorScheme !== "light")
-    opts.theme = config.theme.colorScheme;
-  const cssVars = buildCssVarsConfig(config);
-  if (cssVars) opts.cssVars = cssVars;
-  opts.layout = buildLayoutConfig(config);
-  if (config.referralAddress && config.referralPct > 0) {
-    opts.referral = {
-      address: config.referralAddress,
-      pct: config.referralPct,
-    };
-  }
-  if (config.languages.length > 0) opts.languages = config.languages;
-  return opts;
-}
+const PLACEHOLDER_DOMAIN = "https://your-domain.com";
 
 export function buildIndexHtml(config: ConstructorConfig): string {
-  // Match buildJsSnippet: empty domain would break TonConnect (invalid manifest URL).
-  const domain = (config.domain || "https://your-domain.com").replace(
-    /\/$/,
-    "",
-  );
-  const widgetOptions = buildWidgetOptions(config);
-  const widgetConfig: Record<string, unknown> = {
-    tonconnect: { type: "standalone", options: { domain } },
-  };
-  const clientConfig = buildStandaloneClientConfig(config);
-  if (clientConfig) widgetConfig.client = clientConfig;
-  if (Object.keys(widgetOptions).length > 0)
-    widgetConfig.widget = widgetOptions;
+  // Empty domain would break TonConnect (invalid manifest URL).
+  const domain = (config.domain || PLACEHOLDER_DOMAIN).replace(/\/$/, "");
+  const widgetConfig = buildWidgetConfig(config, { domain });
 
   const css = buildStyleCss(config);
 
@@ -393,8 +229,7 @@ export function buildIndexHtml(config: ConstructorConfig): string {
   const isDark = config.theme.colorScheme === "dark";
   const lightRaw = config.theme.light.bg?.trim();
   const darkRaw = config.theme.dark.bg?.trim();
-  const bodyBgLight =
-    (lightRaw && safeHexColor(lightRaw)) || HOST_BACKDROP_LIGHT;
+  const bodyBgLight = (lightRaw && safeHexColor(lightRaw)) || HOST_BACKDROP_LIGHT;
   const bodyBgDark = (darkRaw && safeHexColor(darkRaw)) || HOST_BACKDROP_DARK;
   const bodyBackground = isDark ? bodyBgDark : bodyBgLight;
   const systemDarkCss = isSystem
@@ -441,18 +276,8 @@ export function buildIndexHtml(config: ConstructorConfig): string {
 }
 
 export function buildJsSnippet(config: ConstructorConfig): string {
-  const domain = config.domain || "https://your-domain.com";
-  const widgetOptions = buildWidgetOptions(config);
-  const widgetConfig: Record<string, unknown> = {
-    tonconnect: {
-      type: "standalone",
-      options: { domain },
-    },
-  };
-  const clientConfig = buildStandaloneClientConfig(config);
-  if (clientConfig) widgetConfig.client = clientConfig;
-  if (Object.keys(widgetOptions).length > 0)
-    widgetConfig.widget = widgetOptions;
+  const domain = config.domain || PLACEHOLDER_DOMAIN;
+  const widgetConfig = buildWidgetConfig(config, { domain });
 
   return `<div id="toncast-widget"></div>
 
@@ -464,14 +289,14 @@ export function buildJsSnippet(config: ConstructorConfig): string {
 }
 
 export function buildReactSnippet(config: ConstructorConfig): string {
-  const widgetOptions = buildWidgetOptions(config);
-  const clientConfig = buildStandaloneClientConfig(config);
-  const widgetPart =
-    Object.keys(widgetOptions).length > 0
-      ? `,\n        widget: ${stringifyForScript(widgetOptions, 8).replace(/\n/g, "\n        ")}`
-      : "";
-  const clientPart = clientConfig
-    ? `,\n          client: ${stringifyForScript(clientConfig, 10).replace(/\n/g, "\n          ")}`
+  // React snippet emits `tonconnect: { type: 'integrated', instance: tonconnect }`,
+  // so we ignore tonconnect from buildWidgetConfig but reuse client/widget.
+  const built = buildWidgetConfig(config, { domain: "" });
+  const widgetPart = built.widget
+    ? `,\n        widget: ${stringifyForScript(built.widget, 8).replace(/\n/g, "\n        ")}`
+    : "";
+  const clientPart = built.client
+    ? `,\n          client: ${stringifyForScript(built.client, 10).replace(/\n/g, "\n          ")}`
     : "";
 
   return `// NOTE: ToncastBettingWidget must be rendered inside a TonConnectUIProvider.

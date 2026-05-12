@@ -38,42 +38,22 @@ export type TimeLeftTranslate = (
   vars?: Record<string, number>,
 ) => string;
 
-/** English prose fallback used when no translator is provided. */
-function englishTimeLeft(
-  key: Parameters<TimeLeftTranslate>[0],
-  vars?: Record<string, number>,
-): string {
-  switch (key) {
-    case "time.ended":
-      return "ended";
-    case "time.daysHours":
-      return `${vars?.d ?? 0}d ${vars?.h ?? 0}h`;
-    case "time.hoursMinutes":
-      return `${vars?.h ?? 0}h ${vars?.m ?? 0}m`;
-    case "time.minutes":
-      return `${vars?.m ?? 0}m`;
-    case "time.lessThanMinute":
-      return "< 1m";
-  }
-}
-
 /**
- * Returns a human-readable time remaining string.
- * Pass a `t` translator to get localised output; omit for English fallback.
+ * Returns a localised "time remaining" string. The translator `t` is required —
+ * call-sites running outside the widget must supply a stub (see tests).
  */
 export function formatTimeLeft(
   endTime: number,
-  t?: TimeLeftTranslate,
+  t: TimeLeftTranslate,
   now: number = Date.now(),
 ): string {
-  const translate = t ?? englishTimeLeft;
   const remaining = Math.floor(endTime - now / 1000);
-  if (remaining <= 0) return translate("time.ended");
+  if (remaining <= 0) return t("time.ended");
   const d = Math.floor(remaining / 86_400);
   const h = Math.floor((remaining % 86_400) / 3600);
   const m = Math.floor((remaining % 3600) / 60);
-  if (d > 0) return translate("time.daysHours", { d, h });
-  if (h > 0) return translate("time.hoursMinutes", { h, m });
-  if (m > 0) return translate("time.minutes", { m });
-  return translate("time.lessThanMinute");
+  if (d > 0) return t("time.daysHours", { d, h });
+  if (h > 0) return t("time.hoursMinutes", { h, m });
+  if (m > 0) return t("time.minutes", { m });
+  return t("time.lessThanMinute");
 }
