@@ -5,6 +5,8 @@ import {
   buildJsSnippet,
   buildReactSnippet,
   buildStyleCss,
+  buildCssVarsConfig,
+  previewBackdropFromConfig,
 } from "../src/utils/generateZip";
 
 function config(overrides: Partial<ConstructorConfig>): ConstructorConfig {
@@ -25,7 +27,9 @@ describe("widget export snippets", () => {
     expect(html).toContain('href="index.iife.css"');
     expect(html).toContain("data-toncast-widget-css");
     expect(html).not.toContain("https://widget.toncast.app/v0/index.iife.css");
-    expect(html.indexOf("index.iife.css")).toBeLessThan(html.indexOf("index.iife.js"));
+    expect(html.indexOf("index.iife.css")).toBeLessThan(
+      html.indexOf("index.iife.js"),
+    );
 
     const snippet = buildJsSnippet(c);
     expect(snippet).toContain("https://widget.toncast.app/v0/index.iife.js");
@@ -36,8 +40,12 @@ describe("widget export snippets", () => {
   it("emits standalone Toncast API baseUrl when configured", () => {
     const c = config({ apiBaseUrl: "https://api.staging.toncast.test" });
 
-    expect(buildIndexHtml(c)).toContain('"baseUrl": "https://api.staging.toncast.test"');
-    expect(buildJsSnippet(c)).toContain('"baseUrl": "https://api.staging.toncast.test"');
+    expect(buildIndexHtml(c)).toContain(
+      '"baseUrl": "https://api.staging.toncast.test"',
+    );
+    expect(buildJsSnippet(c)).toContain(
+      '"baseUrl": "https://api.staging.toncast.test"',
+    );
   });
 
   it("does not emit raw script-closing tags from config values", () => {
@@ -63,7 +71,9 @@ describe("widget export snippets", () => {
     expect(buildIndexHtml(maliciousConfig)).not.toContain("</script><script>");
     expect(buildIndexHtml(maliciousConfig)).not.toContain("</style><script>");
     expect(buildJsSnippet(maliciousConfig)).not.toContain("</script><script>");
-    expect(buildReactSnippet(maliciousConfig)).not.toContain("</script><script>");
+    expect(buildReactSnippet(maliciousConfig)).not.toContain(
+      "</script><script>",
+    );
   });
 
   it("emits semantic source colors and density in widget cssVars", () => {
@@ -151,5 +161,48 @@ describe("widget export snippets", () => {
     expect(css).toContain("--tc-bg-chrome");
     expect(css).toContain("--tc-success-fill-bg");
     expect(css).toContain("--tc-danger-fill-bg");
+  });
+
+  it("includes shell background in widget cssVars when set (dark mode)", () => {
+    const c = config({
+      theme: {
+        ...DEFAULT_CONFIG.theme,
+        colorScheme: "dark",
+        dark: {
+          ...DEFAULT_CONFIG.theme.dark,
+          bg: "#1a1a2e",
+        },
+      },
+    });
+    expect(buildCssVarsConfig(c)).toMatchObject({ bg: "#1a1a2e" });
+  });
+
+  it("previewBackdropFromConfig follows optional shell colors", () => {
+    const withDarkBg = config({
+      theme: {
+        ...DEFAULT_CONFIG.theme,
+        colorScheme: "dark",
+        dark: { ...DEFAULT_CONFIG.theme.dark, bg: "#2b1050" },
+      },
+    });
+    expect(previewBackdropFromConfig(withDarkBg, false)).toBe("#2b1050");
+
+    const system = config({
+      theme: { ...DEFAULT_CONFIG.theme, colorScheme: "system" },
+    });
+    expect(previewBackdropFromConfig(system, false)).toBe("#f8fafc");
+    expect(previewBackdropFromConfig(system, true)).toBe("#0f172a");
+  });
+
+  it("buildIndexHtml body background uses configured shell bg in dark mode", () => {
+    const c = config({
+      theme: {
+        ...DEFAULT_CONFIG.theme,
+        colorScheme: "dark",
+        dark: { ...DEFAULT_CONFIG.theme.dark, bg: "#111827" },
+      },
+    });
+    const html = buildIndexHtml(c);
+    expect(html).toContain("background: #111827");
   });
 });

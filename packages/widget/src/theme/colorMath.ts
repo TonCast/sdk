@@ -38,7 +38,9 @@ export function rgba(value: string, alpha: number): string | null {
 export function relativeLuminance([r, g, b]: [number, number, number]): number {
   const [rs, gs, bs] = [r, g, b].map((channel) => {
     const normalized = channel / 255;
-    return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+    return normalized <= 0.03928
+      ? normalized / 12.92
+      : ((normalized + 0.055) / 1.055) ** 2.4;
   }) as [number, number, number];
   return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
 }
@@ -53,7 +55,11 @@ export function isLightColor(value: string): boolean {
   return relativeLuminance(rgb) > 0.55;
 }
 
-export function readableFg(value: string, lightFg = "#0f172a", darkFg = "#ffffff"): string | null {
+export function readableFg(
+  value: string,
+  lightFg = "#0f172a",
+  darkFg = "#ffffff",
+): string | null {
   const rgb = parseHexColor(value);
   if (!rgb) return null;
   return relativeLuminance(rgb) > 0.55 ? lightFg : darkFg;

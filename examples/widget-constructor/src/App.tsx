@@ -4,16 +4,29 @@ import { ConfigTab } from "./components/ConfigTab";
 import { ExportTab } from "./components/ExportTab";
 import { LivePreview } from "./components/LivePreview";
 import { ThemeTab } from "./components/ThemeTab";
-import { type ConstructorConfig, DEFAULT_CONFIG, type Device, type ThemeConfig } from "./types";
+import {
+  type ConstructorConfig,
+  DEFAULT_CONFIG,
+  type Device,
+  type ThemeConfig,
+} from "./types";
+import { previewBackdropFromConfig } from "./utils/generateZip";
+import { usePrefersColorSchemeDark } from "./utils/usePrefersColorSchemeDark";
 
 type Tab = "theme" | "config" | "export";
 
-const VALID_DENSITIES: ThemeConfig["density"][] = ["compact", "default", "comfortable"];
+const VALID_DENSITIES: ThemeConfig["density"][] = [
+  "compact",
+  "default",
+  "comfortable",
+];
 const VALID_SCHEMES: ThemeConfig["colorScheme"][] = ["light", "dark", "system"];
 
 function normalizeGridColumn(raw: unknown, fallback: number): number {
   const n = Number(raw);
-  return Number.isFinite(n) ? Math.min(6, Math.max(1, Math.round(n))) : fallback;
+  return Number.isFinite(n)
+    ? Math.min(6, Math.max(1, Math.round(n)))
+    : fallback;
 }
 
 /** Normalizes constructor domain: trim, require absolute http(s) URL or empty. */
@@ -55,13 +68,17 @@ function normalizeReferralAddress(raw: unknown): string {
 }
 
 /** Coerces a persisted config into a well-typed, bounded ConstructorConfig. */
-function normalizeConfig(parsed: Partial<ConstructorConfig>): ConstructorConfig {
+function normalizeConfig(
+  parsed: Partial<ConstructorConfig>,
+): ConstructorConfig {
   const t = parsed.theme;
   return {
     ...DEFAULT_CONFIG,
     ...parsed,
     // Ensure array fields are actually arrays (null/undefined from corrupt storage crashes .length)
-    languages: Array.isArray(parsed.languages) ? parsed.languages : DEFAULT_CONFIG.languages,
+    languages: Array.isArray(parsed.languages)
+      ? parsed.languages
+      : DEFAULT_CONFIG.languages,
     apiBaseUrl: normalizeApiBaseUrl(parsed.apiBaseUrl),
     referralPct: Number.isFinite(Number(parsed.referralPct))
       ? Math.min(7, Math.max(0, Number(parsed.referralPct)))
@@ -71,7 +88,9 @@ function normalizeConfig(parsed: Partial<ConstructorConfig>): ConstructorConfig 
     theme: {
       ...DEFAULT_CONFIG.theme,
       ...t,
-      colorScheme: VALID_SCHEMES.includes(t?.colorScheme as ThemeConfig["colorScheme"])
+      colorScheme: VALID_SCHEMES.includes(
+        t?.colorScheme as ThemeConfig["colorScheme"],
+      )
         ? (t?.colorScheme as ThemeConfig["colorScheme"])
         : DEFAULT_CONFIG.theme.colorScheme,
       density: VALID_DENSITIES.includes(t?.density as ThemeConfig["density"])
@@ -81,9 +100,18 @@ function normalizeConfig(parsed: Partial<ConstructorConfig>): ConstructorConfig 
         ? Math.min(64, Math.max(0, Number(t?.radius)))
         : DEFAULT_CONFIG.theme.radius,
       grid: {
-        mobile: normalizeGridColumn(t?.grid?.mobile, DEFAULT_CONFIG.theme.grid.mobile),
-        tablet: normalizeGridColumn(t?.grid?.tablet, DEFAULT_CONFIG.theme.grid.tablet),
-        desktop: normalizeGridColumn(t?.grid?.desktop, DEFAULT_CONFIG.theme.grid.desktop),
+        mobile: normalizeGridColumn(
+          t?.grid?.mobile,
+          DEFAULT_CONFIG.theme.grid.mobile,
+        ),
+        tablet: normalizeGridColumn(
+          t?.grid?.tablet,
+          DEFAULT_CONFIG.theme.grid.tablet,
+        ),
+        desktop: normalizeGridColumn(
+          t?.grid?.desktop,
+          DEFAULT_CONFIG.theme.grid.desktop,
+        ),
       },
       light: { ...DEFAULT_CONFIG.theme.light, ...(t?.light ?? {}) },
       dark: { ...DEFAULT_CONFIG.theme.dark, ...(t?.dark ?? {}) },
@@ -97,24 +125,35 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "export", label: "Export" },
 ];
 
-const DEVICES: { id: Device; label: string; width: string; icon: string; previewLabel: string }[] =
-  [
-    {
-      id: "mobile",
-      label: "370px",
-      width: "370px",
-      icon: "📱",
-      previewLabel: "Mobile, 370 pixels wide",
-    },
-    {
-      id: "tablet",
-      label: "640px",
-      width: "640px",
-      icon: "📟",
-      previewLabel: "Tablet, 640 pixels wide",
-    },
-    { id: "desktop", label: "100%", width: "100%", icon: "🖥", previewLabel: "Desktop, full width" },
-  ];
+const DEVICES: {
+  id: Device;
+  label: string;
+  width: string;
+  icon: string;
+  previewLabel: string;
+}[] = [
+  {
+    id: "mobile",
+    label: "370px",
+    width: "370px",
+    icon: "📱",
+    previewLabel: "Mobile, 370 pixels wide",
+  },
+  {
+    id: "tablet",
+    label: "640px",
+    width: "640px",
+    icon: "📟",
+    previewLabel: "Tablet, 640 pixels wide",
+  },
+  {
+    id: "desktop",
+    label: "100%",
+    width: "100%",
+    icon: "🖥",
+    previewLabel: "Desktop, full width",
+  },
+];
 
 const STORAGE_KEY = "tc-constructor-config-v2";
 
@@ -135,6 +174,8 @@ export function App() {
   const [config, setConfig] = useState<ConstructorConfig>(loadConfig);
   const [tab, setTab] = useState<Tab>("theme");
   const [device, setDevice] = useState<Device>("mobile");
+  const prefersDark = usePrefersColorSchemeDark();
+  const previewBackdrop = previewBackdropFromConfig(config, prefersDark);
 
   // Persist config changes to localStorage.
   useEffect(() => {
@@ -163,11 +204,16 @@ export function App() {
           <div className="text-sm font-bold text-slate-100 leading-tight">
             Toncast Widget Constructor
           </div>
-          <div className="text-xs text-slate-500 mt-0.5">configure · preview · export</div>
+          <div className="text-xs text-slate-500 mt-0.5">
+            configure · preview · export
+          </div>
         </div>
 
         {/* Tab bar */}
-        <div role="tablist" className="flex border-b border-slate-800 bg-slate-900/50">
+        <div
+          role="tablist"
+          className="flex border-b border-slate-800 bg-slate-900/50"
+        >
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -190,14 +236,21 @@ export function App() {
 
         {/* Tab content — scrollable */}
         <div className="flex-1 overflow-y-auto">
-          <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="p-4">
+          <div
+            role="tabpanel"
+            id={`panel-${tab}`}
+            aria-labelledby={`tab-${tab}`}
+            className="p-4"
+          >
             {tab === "theme" && (
               <ThemeTab
                 theme={config.theme}
                 onChange={(theme) => setConfig((c) => ({ ...c, theme }))}
               />
             )}
-            {tab === "config" && <ConfigTab config={config} onChange={setConfig} />}
+            {tab === "config" && (
+              <ConfigTab config={config} onChange={setConfig} />
+            )}
             {tab === "export" && <ExportTab config={config} />}
           </div>
         </div>
@@ -266,7 +319,10 @@ export function App() {
         </div>
 
         {/* Preview canvas */}
-        <div className="flex-1 overflow-auto flex items-start justify-center p-8 bg-slate-950/80">
+        <div
+          className="flex-1 overflow-auto flex items-start justify-center p-8"
+          style={{ backgroundColor: previewBackdrop }}
+        >
           <div
             style={{
               width: DEVICES.find((d) => d.id === device)?.width ?? "100%",

@@ -1,4 +1,10 @@
-import { mix, parseHexColor, readableFg, rgba, safeHexColor } from "@toncast/widget/color-math";
+import {
+  mix,
+  parseHexColor,
+  readableFg,
+  rgba,
+  safeHexColor,
+} from "@toncast/widget/color-math";
 import {
   densityPresetToCssCustomProperties,
   WIDGET_DENSITY_PRESETS,
@@ -31,7 +37,11 @@ function stringifyForScript(value: unknown, space: number): string {
     .replace(/\u2029/g, "\\u2029");
 }
 
-function appendVar(lines: string[], name: string, value: string | null | undefined): void {
+function appendVar(
+  lines: string[],
+  name: string,
+  value: string | null | undefined,
+): void {
   if (value) lines.push(`  ${name}: ${value};`);
 }
 
@@ -41,19 +51,41 @@ function appendSemanticCssVars(
   source: string,
   theme: "light" | "dark",
 ): void {
-  const textMixTarget: [number, number, number] = theme === "dark" ? [255, 255, 255] : [0, 0, 0];
+  const textMixTarget: [number, number, number] =
+    theme === "dark" ? [255, 255, 255] : [0, 0, 0];
   const textWeight = theme === "dark" ? 0.18 : 0.2;
   appendVar(lines, `--tc-${prefix}`, source);
   appendVar(lines, `--tc-${prefix}-fg`, mix(source, textMixTarget, textWeight));
-  appendVar(lines, `--tc-${prefix}-bg`, rgba(source, theme === "dark" ? 0.16 : 0.1));
-  appendVar(lines, `--tc-${prefix}-border`, rgba(source, theme === "dark" ? 0.34 : 0.25));
+  appendVar(
+    lines,
+    `--tc-${prefix}-bg`,
+    rgba(source, theme === "dark" ? 0.16 : 0.1),
+  );
+  appendVar(
+    lines,
+    `--tc-${prefix}-border`,
+    rgba(source, theme === "dark" ? 0.34 : 0.25),
+  );
   if (prefix !== "warn") {
-    appendVar(lines, `--tc-${prefix}-hover-bg`, rgba(source, theme === "dark" ? 0.24 : 0.18));
-    appendVar(lines, `--tc-${prefix}-active-bg`, rgba(source, theme === "dark" ? 0.3 : 0.22));
+    appendVar(
+      lines,
+      `--tc-${prefix}-hover-bg`,
+      rgba(source, theme === "dark" ? 0.24 : 0.18),
+    );
+    appendVar(
+      lines,
+      `--tc-${prefix}-active-bg`,
+      rgba(source, theme === "dark" ? 0.3 : 0.22),
+    );
     appendVar(lines, `--tc-${prefix}-active-border`, rgba(source, 0.4));
-    appendVar(lines, `--tc-${prefix}-fill-bg`, rgba(source, theme === "dark" ? 0.44 : 0.35));
+    appendVar(
+      lines,
+      `--tc-${prefix}-fill-bg`,
+      rgba(source, theme === "dark" ? 0.44 : 0.35),
+    );
     const shadow = rgba(source, 0.35);
-    if (shadow) lines.push(`  --tc-${prefix}-active-shadow: 0 4px 12px -4px ${shadow};`);
+    if (shadow)
+      lines.push(`  --tc-${prefix}-active-shadow: 0 4px 12px -4px ${shadow};`);
   }
 }
 
@@ -72,10 +104,18 @@ function appendPaletteCssVars(
   if (accent !== null && accent !== defaults.accent) {
     appendVar(lines, "--tc-accent", accent);
     appendVar(lines, "--tc-accent-fg", readableFg(accent));
-    appendVar(lines, "--tc-accent-bg", rgba(accent, theme === "dark" ? 0.18 : 0.1));
+    appendVar(
+      lines,
+      "--tc-accent-bg",
+      rgba(accent, theme === "dark" ? 0.18 : 0.1),
+    );
     const accentHoverTarget: [number, number, number] =
       theme === "dark" ? [255, 255, 255] : [0, 0, 0];
-    appendVar(lines, "--tc-accent-hover", mix(accent, accentHoverTarget, 0.1) ?? accent);
+    appendVar(
+      lines,
+      "--tc-accent-hover",
+      mix(accent, accentHoverTarget, 0.1) ?? accent,
+    );
     const shadow = rgba(accent, 0.55);
     if (shadow) lines.push(`  --tc-accent-shadow: 0 8px 24px -8px ${shadow};`);
   }
@@ -83,13 +123,31 @@ function appendPaletteCssVars(
     const fg = readableFg(bg);
     if (fg) {
       const darkBg = fg === "#ffffff";
-      const surfaceTarget: [number, number, number] = darkBg ? [255, 255, 255] : [15, 23, 42];
+      const surfaceTarget: [number, number, number] = darkBg
+        ? [255, 255, 255]
+        : [15, 23, 42];
       appendVar(lines, "--tc-bg", bg);
       appendVar(lines, "--tc-fg", fg);
-      appendVar(lines, "--tc-fg-muted", mix(fg, parseHexColor(bg) ?? [0, 0, 0], 0.38));
-      appendVar(lines, "--tc-bg-chrome", mix(bg, surfaceTarget, darkBg ? 0.1 : 0.04));
-      appendVar(lines, "--tc-bg-card", mix(bg, surfaceTarget, darkBg ? 0.08 : 0.025));
-      appendVar(lines, "--tc-bg-muted", mix(bg, surfaceTarget, darkBg ? 0.12 : 0.06));
+      appendVar(
+        lines,
+        "--tc-fg-muted",
+        mix(fg, parseHexColor(bg) ?? [0, 0, 0], 0.38),
+      );
+      appendVar(
+        lines,
+        "--tc-bg-chrome",
+        mix(bg, surfaceTarget, darkBg ? 0.1 : 0.04),
+      );
+      appendVar(
+        lines,
+        "--tc-bg-card",
+        mix(bg, surfaceTarget, darkBg ? 0.08 : 0.025),
+      );
+      appendVar(
+        lines,
+        "--tc-bg-muted",
+        mix(bg, surfaceTarget, darkBg ? 0.12 : 0.06),
+      );
       appendVar(lines, "--tc-border", rgba(fg, darkBg ? 0.16 : 0.12));
       appendVar(lines, "--tc-bg-hover", rgba(fg, darkBg ? 0.08 : 0.04));
     }
@@ -107,7 +165,10 @@ function appendPaletteCssVars(
 
 /** Builds tonconnect-manifest.json content. */
 export function buildManifestJson(config: ConstructorConfig): string {
-  const cleanDomain = (config.domain || "https://your-domain.com").replace(/\/$/, "");
+  const cleanDomain = (config.domain || "https://your-domain.com").replace(
+    /\/$/,
+    "",
+  );
   return JSON.stringify(
     {
       url: cleanDomain,
@@ -141,7 +202,9 @@ function colorSetVars(
 }
 
 function normalizeGridColumn(value: number, fallback: number): number {
-  return Number.isFinite(value) ? Math.max(1, Math.min(6, Math.round(value))) : fallback;
+  return Number.isFinite(value)
+    ? Math.max(1, Math.min(6, Math.round(value)))
+    : fallback;
 }
 
 function buildLayoutConfig(config: ConstructorConfig): Record<string, unknown> {
@@ -154,19 +217,45 @@ function buildLayoutConfig(config: ConstructorConfig): Record<string, unknown> {
   };
 }
 
-function buildStandaloneClientConfig(config: ConstructorConfig): Record<string, unknown> | null {
+function buildStandaloneClientConfig(
+  config: ConstructorConfig,
+): Record<string, unknown> | null {
   const baseUrl = config.apiBaseUrl.trim().replace(/\/+$/, "");
   if (!baseUrl) return null;
   return { type: "standalone", baseUrl };
+}
+
+const HOST_BACKDROP_LIGHT = "#f8fafc";
+const HOST_BACKDROP_DARK = "#0f172a";
+
+/**
+ * Page mat behind the widget in Live Preview / export: uses optional shell bg
+ * when set, otherwise the same defaults as the widget (`--tc-bg` light/dark).
+ */
+export function previewBackdropFromConfig(
+  config: ConstructorConfig,
+  prefersDark: boolean,
+): string {
+  const lightRaw = config.theme.light.bg?.trim();
+  const darkRaw = config.theme.dark.bg?.trim();
+  const lightBody = (lightRaw && safeHexColor(lightRaw)) || HOST_BACKDROP_LIGHT;
+  const darkBody = (darkRaw && safeHexColor(darkRaw)) || HOST_BACKDROP_DARK;
+  if (config.theme.colorScheme === "dark") return darkBody;
+  if (config.theme.colorScheme === "light") return lightBody;
+  return prefersDark ? darkBody : lightBody;
 }
 
 /**
  * Builds the widget.cssVars object for JS/React configs.
  * Exported so LivePreview can reuse without duplicating the logic.
  */
-export function buildCssVarsConfig(config: ConstructorConfig): Record<string, unknown> | undefined {
+export function buildCssVarsConfig(
+  config: ConstructorConfig,
+): Record<string, unknown> | undefined {
   const { theme } = config;
-  const radius = Number.isFinite(theme.radius) ? Math.max(0, Math.min(64, theme.radius)) : 12;
+  const radius = Number.isFinite(theme.radius)
+    ? Math.max(0, Math.min(64, theme.radius))
+    : 12;
 
   const vars: Record<string, unknown> = {};
 
@@ -197,7 +286,9 @@ export function buildCssVarsConfig(config: ConstructorConfig): Record<string, un
 /** Builds optional host CSS overrides for the widget container (for CSS snippet export). */
 export function buildStyleCss(config: ConstructorConfig): string | null {
   const { theme } = config;
-  const radius = Number.isFinite(theme.radius) ? Math.max(0, Math.min(64, theme.radius)) : 12;
+  const radius = Number.isFinite(theme.radius)
+    ? Math.max(0, Math.min(64, theme.radius))
+    : 12;
 
   const baseLines: string[] = [];
   if (radius !== 12) baseLines.push(`  --tc-radius: ${radius}px;`);
@@ -205,12 +296,18 @@ export function buildStyleCss(config: ConstructorConfig): string | null {
   if (theme.density !== "default") {
     const preset = WIDGET_DENSITY_PRESETS[theme.density];
     const densityVars = densityPresetToCssCustomProperties(preset);
-    for (const [k, v] of Object.entries(densityVars)) baseLines.push(`  ${k}: ${v};`);
+    for (const [k, v] of Object.entries(densityVars))
+      baseLines.push(`  ${k}: ${v};`);
   }
 
   const lightLines: string[] = [];
   if (theme.colorScheme !== "dark") {
-    appendPaletteCssVars(lightLines, theme.light, DEFAULT_LIGHT_COLORS, "light");
+    appendPaletteCssVars(
+      lightLines,
+      theme.light,
+      DEFAULT_LIGHT_COLORS,
+      "light",
+    );
   }
 
   const darkLines: string[] = [];
@@ -218,7 +315,8 @@ export function buildStyleCss(config: ConstructorConfig): string | null {
     appendPaletteCssVars(darkLines, theme.dark, DEFAULT_DARK_COLORS, "dark");
   }
 
-  const hasOverrides = baseLines.length > 0 || lightLines.length > 0 || darkLines.length > 0;
+  const hasOverrides =
+    baseLines.length > 0 || lightLines.length > 0 || darkLines.length > 0;
   if (!hasOverrides) return null;
 
   const out: string[] = [];
@@ -254,15 +352,21 @@ export function buildStyleCss(config: ConstructorConfig): string | null {
 }
 
 /** Shared helper — builds the widget options object from constructor config. */
-function buildWidgetOptions(config: ConstructorConfig): Record<string, unknown> {
+function buildWidgetOptions(
+  config: ConstructorConfig,
+): Record<string, unknown> {
   const opts: Record<string, unknown> = {};
   if (config.language) opts.language = config.language;
-  if (config.theme.colorScheme !== "light") opts.theme = config.theme.colorScheme;
+  if (config.theme.colorScheme !== "light")
+    opts.theme = config.theme.colorScheme;
   const cssVars = buildCssVarsConfig(config);
   if (cssVars) opts.cssVars = cssVars;
   opts.layout = buildLayoutConfig(config);
   if (config.referralAddress && config.referralPct > 0) {
-    opts.referral = { address: config.referralAddress, pct: config.referralPct };
+    opts.referral = {
+      address: config.referralAddress,
+      pct: config.referralPct,
+    };
   }
   if (config.languages.length > 0) opts.languages = config.languages;
   return opts;
@@ -270,21 +374,28 @@ function buildWidgetOptions(config: ConstructorConfig): Record<string, unknown> 
 
 export function buildIndexHtml(config: ConstructorConfig): string {
   // Match buildJsSnippet: empty domain would break TonConnect (invalid manifest URL).
-  const domain = (config.domain || "https://your-domain.com").replace(/\/$/, "");
+  const domain = (config.domain || "https://your-domain.com").replace(
+    /\/$/,
+    "",
+  );
   const widgetOptions = buildWidgetOptions(config);
   const widgetConfig: Record<string, unknown> = {
     tonconnect: { type: "standalone", options: { domain } },
   };
   const clientConfig = buildStandaloneClientConfig(config);
   if (clientConfig) widgetConfig.client = clientConfig;
-  if (Object.keys(widgetOptions).length > 0) widgetConfig.widget = widgetOptions;
+  if (Object.keys(widgetOptions).length > 0)
+    widgetConfig.widget = widgetOptions;
 
   const css = buildStyleCss(config);
 
   const isSystem = config.theme.colorScheme === "system";
   const isDark = config.theme.colorScheme === "dark";
-  const bodyBgLight = "#f8fafc";
-  const bodyBgDark = "#0f172a";
+  const lightRaw = config.theme.light.bg?.trim();
+  const darkRaw = config.theme.dark.bg?.trim();
+  const bodyBgLight =
+    (lightRaw && safeHexColor(lightRaw)) || HOST_BACKDROP_LIGHT;
+  const bodyBgDark = (darkRaw && safeHexColor(darkRaw)) || HOST_BACKDROP_DARK;
   const bodyBackground = isDark ? bodyBgDark : bodyBgLight;
   const systemDarkCss = isSystem
     ? `\n      @media (prefers-color-scheme: dark) {\n        body { background: ${bodyBgDark}; }\n      }`
@@ -340,7 +451,8 @@ export function buildJsSnippet(config: ConstructorConfig): string {
   };
   const clientConfig = buildStandaloneClientConfig(config);
   if (clientConfig) widgetConfig.client = clientConfig;
-  if (Object.keys(widgetOptions).length > 0) widgetConfig.widget = widgetOptions;
+  if (Object.keys(widgetOptions).length > 0)
+    widgetConfig.widget = widgetOptions;
 
   return `<div id="toncast-widget"></div>
 
