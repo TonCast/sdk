@@ -192,7 +192,7 @@ export function ThemeTab({ theme, onChange }: Props) {
         </p>
         <div className="space-y-2">
           {GRID_DEVICES.map(({ key, label }) => (
-            <div key={key} className="grid grid-cols-[64px_1fr] items-center gap-2">
+            <div key={key} className="grid grid-cols-[64px_minmax(0,1fr)] items-center gap-2">
               <span className="text-[11px] text-slate-500">{label}</span>
               <SegmentedButtonGroup
                 value={theme.grid[key]}

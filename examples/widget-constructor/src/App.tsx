@@ -89,7 +89,7 @@ export function App() {
   return (
     <div className="flex h-full overflow-hidden bg-slate-950 text-slate-200">
       {/* ── Left: settings panel ── */}
-      <aside className="w-72 shrink-0 flex flex-col border-r border-slate-800 bg-slate-950">
+      <aside className="w-88 shrink-0 flex flex-col border-r border-slate-800 bg-slate-950">
         {/* Header */}
         <div className="px-4 py-3 border-b border-slate-800">
           <div className="text-sm font-bold text-slate-100 leading-tight">
