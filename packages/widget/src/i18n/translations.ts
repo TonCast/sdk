@@ -12,6 +12,9 @@ const en = {
   "page.paris.loadFailed": "Failed to load: {error}",
   "page.paris.detail.back": "← Back",
   "page.paris.detail.failed": "Failed: {error}",
+  "page.paris.detail.myBetsTitle": "Your bets on this market",
+  "page.paris.detail.myBetsEmpty": "You have no bets on this market.",
+  "page.paris.detail.myBetsLoadFailed": "Failed to load bets: {error}",
 
   "error.somethingWentWrong": "Something went wrong.",
   "error.retry": "Retry",
@@ -122,6 +125,9 @@ const ru: Catalog = {
   "page.paris.loadFailed": "Ошибка загрузки: {error}",
   "page.paris.detail.back": "← Назад",
   "page.paris.detail.failed": "Ошибка: {error}",
+  "page.paris.detail.myBetsTitle": "Ваши ставки на этом рынке",
+  "page.paris.detail.myBetsEmpty": "У вас нет ставок на этом рынке.",
+  "page.paris.detail.myBetsLoadFailed": "Не удалось загрузить ставки: {error}",
 
   "error.somethingWentWrong": "Что-то пошло не так.",
   "error.retry": "Повторить",

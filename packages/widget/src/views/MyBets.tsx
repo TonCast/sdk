@@ -1,5 +1,6 @@
-import { type Bet, type BetStatus, pariCoverUrl } from "@toncast/sdk";
+import { type Bet, pariCoverUrl } from "@toncast/sdk";
 import { useInfiniteBets } from "@toncast/sdk-react";
+import { BetRowBadges, BetRowBetSummary } from "../components/bet/BetRowDisplay";
 import { ConnectButton } from "../components/ConnectButton";
 import { ConnectPromptCard } from "../components/ConnectPromptCard";
 import { Button } from "../components/ui/Button";
@@ -9,27 +10,9 @@ import { useT } from "../i18n/useT";
 import { useTcState } from "../tc-bridge";
 import { MAX_RENDERED_BETS } from "./myBetsState";
 
-const STATUS_CLASS: Record<BetStatus, string> = {
-  placed: "tc-badge-placed",
-  matched: "tc-badge-matched",
-  won: "tc-badge-won",
-  won_yes: "tc-badge-won",
-  won_no: "tc-badge-won",
-  lost: "tc-badge-lost",
-  cancelled: "tc-badge-cancelled",
-  refunded: "tc-badge-refunded",
-};
-
 function BetRow({ bet }: { bet: Bet }) {
-  const t = useT();
   const { navigate } = useNav();
   const thumb = pariCoverUrl(bet.pariImage, "w=128,h=128,fit=cover,format=webp,quality=80");
-  const amountTon = (bet.amount / 1e9).toFixed(2);
-  const date = new Date(bet.createdAt * 1000).toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
 
   return (
     <div className="tc-card">
@@ -47,14 +30,7 @@ function BetRow({ bet }: { bet: Bet }) {
             )}
           </button>
           <div className="tc-bet-row-body">
-            <div className="tc-bet-row-badges">
-              <span className={`tc-badge ${bet.isYes ? "tc-badge-yes" : "tc-badge-no"}`}>
-                {t(bet.isYes ? "side.yes" : "side.no")}
-              </span>
-              <span className={`tc-badge ${STATUS_CLASS[bet.status]}`}>
-                {t(`bet.status.${bet.status}`)}
-              </span>
-            </div>
+            <BetRowBadges bet={bet} />
             {bet.pariName ? (
               <button
                 type="button"
@@ -66,9 +42,7 @@ function BetRow({ bet }: { bet: Bet }) {
             ) : (
               <div className="tc-bet-row-meta tc-bet-row-meta-mono">{bet.pariAddress}</div>
             )}
-            <div className="tc-bet-row-meta">
-              {t("bet.ticketsCount", { n: bet.ticketsCount })} · {amountTon} TON · {date}
-            </div>
+            <BetRowBetSummary bet={bet} />
           </div>
         </div>
       </div>

@@ -8,6 +8,8 @@ import { Skeleton } from "../components/ui/Skeleton";
 import { DESCRIPTION_PREVIEW_CHARS } from "../constants";
 import { useEmitBet, useNav, type WidgetView } from "../context";
 import { useT } from "../i18n/useT";
+import { useTcState } from "../tc-bridge";
+import { PariDetailMyBets } from "./PariDetailMyBets";
 
 function isSettledOutcome(pari: Pari): boolean {
   const r = pari.result.trim().toLowerCase();
@@ -76,6 +78,7 @@ function OutcomeBanner({ pari }: { pari: Pari }) {
 export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "detail" }> }) {
   const t = useT();
   const { back } = useNav();
+  const { address } = useTcState();
   // Bridges BetCard's positional `onBetSent` signature into the public `bet`
   // event payload shape so hosts only ever see one schema.
   const emitBet = useEmitBet();
@@ -165,6 +168,8 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
           <BetCard pariId={view.pariId} initialSide={view.initialSide} onBetSent={onBet} />
         </div>
       )}
+
+      {address && snap?.pari ? <PariDetailMyBets pariId={view.pariId} userAddress={address} /> : null}
 
       {/* Chart */}
       <div className="tc-card tc-card-body">
