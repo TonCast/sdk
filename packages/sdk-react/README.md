@@ -2,7 +2,11 @@
 
 React hooks for [`@toncast/sdk`](../sdk) — built on top of [`@tanstack/react-query`](https://tanstack.com/query/latest). REST methods become `useQuery` queries. Live pari streams (`paris.streamList`, `paris.subscribe`) use `useSyncExternalStore` so post-initial WS errors and snapshots stay live instead of being modeled as settled promises; observable-style resources such as `betting.subscribeSummary` still use the Observable adapter.
 
+> **Status: 0.0.1 (pre–1.0.0).** Pin exact versions until `1.0.0`. See [CHANGELOG.md](../../CHANGELOG.md), [docs/PUBLIC_API.md](../../docs/PUBLIC_API.md), and repository [`AGENTS.md`](../../AGENTS.md) for betting and address handling.
+
 > Pattern lifted from [`@ston-fi/omniston-sdk-react`](https://github.com/ston-fi/omniston-sdk) — thin wrappers around TanStack Query, single Observable adapter for streaming endpoints.
+
+The SDK layer does not sign transactions; hooks surface errors from the client — do not swallow `ToncastError` / `ToncastApiError` / `ToncastWsError` in production UIs.
 
 ## Install
 

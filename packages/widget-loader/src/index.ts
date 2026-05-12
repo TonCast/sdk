@@ -90,8 +90,8 @@ export interface ToncastWidgetLoaderOptions {
 /** Major-versioned CDN base (`/v0/`, `/v1/`, …). */
 const CDN_VERSION_BASE = "https://widget.toncast.app/v0";
 
-/** Default widget script on CDN. */
-export const WIDGET_CDN_JS_URL = `${CDN_VERSION_BASE}/index.iife.js`;
+/** Default widget script on CDN. Exposed on the default export object. */
+const WIDGET_CDN_JS_URL = `${CDN_VERSION_BASE}/index.iife.js`;
 
 const CDN_URL = WIDGET_CDN_JS_URL;
 
@@ -256,5 +256,5 @@ function injectScript(
   });
 }
 
-const ToncastWidgetLoader = { load };
+const ToncastWidgetLoader = { load, WIDGET_CDN_JS_URL };
 export default ToncastWidgetLoader;

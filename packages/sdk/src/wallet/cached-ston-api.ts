@@ -36,7 +36,7 @@
 //     "small impact"; the real impact at confirm time will be authoritative).
 
 import { StonApiClient } from "@ston-fi/api";
-import { Address } from "@ton/ton";
+import { Address } from "@ton/core";
 
 type SimulateParams = Parameters<StonApiClient["simulateSwap"]>[0];
 type SimulateReverseParams = Parameters<StonApiClient["simulateReverseSwap"]>[0];

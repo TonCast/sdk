@@ -39,7 +39,6 @@ export default defineConfig({
       "@radix-ui/react-select",
       "@radix-ui/react-dialog",
       "@ton/core",
-      "@ton/ton",
       "@ston-fi/sdk",
       "@ston-fi/api",
       "@toncast/tx-sdk",

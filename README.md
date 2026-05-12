@@ -186,6 +186,8 @@ to disable all derivation, or use `deriveCssVars: { colors: false }` /
 
 - **Building anything?** Start with [`packages/sdk/README.md`](./packages/sdk/README.md) — full API surface, betting flow, advanced jetton discovery.
 - **Building a React UI?** Read [`packages/sdk-react/README.md`](./packages/sdk-react/README.md) — quick start + every hook in one page.
+- **Public API & versioning (pre–1.0.0):** [`docs/PUBLIC_API.md`](./docs/PUBLIC_API.md).
+- **Releases:** [`RELEASING.md`](./RELEASING.md) and [`CHANGELOG.md`](./CHANGELOG.md).
 - **Want to see it work?** Run the demo: `npm run dev --workspace @toncast/react-app-example`. Source in [`examples/react-app/`](./examples/react-app).
 
 ## License

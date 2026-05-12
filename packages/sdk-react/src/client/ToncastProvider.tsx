@@ -1,6 +1,6 @@
 import { hashKey, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ToncastClient } from "@toncast/sdk";
-import { type PropsWithChildren, useRef } from "react";
+import { type PropsWithChildren, useEffect, useRef } from "react";
 import { ToncastClientContext } from "./context";
 
 /**
@@ -59,6 +59,16 @@ export function ToncastProvider({
   // Always wrap with QueryClientProvider — relying on a higher one in the
   // tree silently breaks BigInt-safe hashing for the SDK's queries.
   const effective = queryClient ?? (internalRef.current as QueryClient);
+
+  /** When the SDK client instance changes, invalidate Toncast queries so hooks refetch with the new transport/user. */
+  const prevClientRef = useRef<ToncastClient | null>(null);
+  useEffect(() => {
+    if (prevClientRef.current !== null && prevClientRef.current !== client) {
+      void effective.invalidateQueries({ queryKey: ["toncast"] });
+    }
+    prevClientRef.current = client;
+  }, [client, effective]);
+
   return (
     <QueryClientProvider client={effective}>
       <ToncastClientContext.Provider value={client}>{children}</ToncastClientContext.Provider>

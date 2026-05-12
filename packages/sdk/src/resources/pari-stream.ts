@@ -1,4 +1,3 @@
-import { fromNano } from "@ton/core";
 import type { Logger } from "../client/config";
 import type { CoefficientHistoryPoint } from "../types/coefficient-history";
 import type { OddsState } from "../types/odds-state";
@@ -563,7 +562,7 @@ export class PariStream {
   }
 }
 
-/** Convert nanotons (number) to TON-units (number). Uses @ton/core's `fromNano` for accuracy. */
+/** Convert integer nanotons to TON float (UI volumes). Inlined to avoid pulling `@ton/core` into the `streams` entry (tree-shaken otherwise). */
 function nanoToTon(nano: number): number {
-  return Number(fromNano(BigInt(Math.trunc(nano))));
+  return Math.trunc(nano) / 1_000_000_000;
 }

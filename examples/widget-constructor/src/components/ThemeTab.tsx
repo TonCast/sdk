@@ -13,6 +13,15 @@ interface Props {
 
 const sectionLabelCls = "text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide";
 
+/** Matches row controls (`h-8` inputs) so action labels align vertically. */
+const colorRowActionCls =
+  "inline-flex h-8 shrink-0 items-center text-[10px] text-slate-500 hover:text-slate-300 transition-colors";
+
+/** Flex row + hex field: `min-w-0` lets the text input shrink so actions stay inside narrow sidebars. */
+const colorRowCls = "flex min-w-0 items-center gap-2";
+const colorHexInputCls =
+  "min-w-0 flex-1 h-8 px-2.5 rounded-md border border-slate-700 bg-slate-800 text-slate-200 text-xs font-mono focus:outline-none focus:border-sky-500/50";
+
 function ColorField({
   label,
   colorKey,
@@ -33,7 +42,7 @@ function ColorField({
         <span className="text-xs text-slate-400">{label}</span>
         <span className="font-mono text-[10px] text-slate-500">{current || "optional"}</span>
       </div>
-      <div className="flex items-center gap-2">
+      <div className={colorRowCls}>
         <input
           type="color"
           value={current || defaultValue}
@@ -47,13 +56,13 @@ function ColorField({
           onChange={(e) => onChange(colorKey, e.target.value)}
           placeholder={defaultValue}
           aria-label={`${label} hex color`}
-          className="flex-1 h-8 px-2.5 rounded-md border border-slate-700 bg-slate-800 text-slate-200 text-xs font-mono focus:outline-none focus:border-sky-500/50"
+          className={colorHexInputCls}
         />
         {current !== defaultValue && current !== "" && (
           <button
             type="button"
             onClick={() => onChange(colorKey, defaultValue)}
-            className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors"
+            className={colorRowActionCls}
           >
             Reset
           </button>
@@ -80,7 +89,7 @@ function ColorSetEditor({
   const set = (key: keyof ThemeColorSet, val: string) => onChange({ ...value, [key]: val });
 
   return (
-    <div className="rounded-lg border border-slate-700/60 bg-slate-900/40 p-3 space-y-3">
+    <div className="min-w-0 rounded-lg border border-slate-700/60 bg-slate-900/40 p-3 space-y-3">
       <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{label}</p>
 
       <ColorField
@@ -97,7 +106,7 @@ function ColorSetEditor({
           <span className="text-xs text-slate-400">Background</span>
           <span className="text-[10px] text-slate-600">optional</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className={colorRowCls}>
           <input
             type="color"
             value={value.bg || defaultBg}
@@ -111,14 +120,10 @@ function ColorSetEditor({
             onChange={(e) => set("bg", e.target.value)}
             placeholder={defaultBg}
             aria-label={`${label} background hex color`}
-            className="flex-1 h-8 px-2.5 rounded-md border border-slate-700 bg-slate-800 text-slate-200 text-xs font-mono focus:outline-none focus:border-sky-500/50"
+            className={colorHexInputCls}
           />
           {value.bg && (
-            <button
-              type="button"
-              onClick={() => set("bg", "")}
-              className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors"
-            >
+            <button type="button" onClick={() => set("bg", "")} className={colorRowActionCls}>
               Clear
             </button>
           )}

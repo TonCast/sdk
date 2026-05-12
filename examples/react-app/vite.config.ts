@@ -36,7 +36,6 @@ export default defineConfig({
       "@ston-fi/sdk",
       "@ston-fi/api",
       "@ton/core",
-      "@ton/ton",
       "@tanstack/react-query",
       "axios",
       "zod",
