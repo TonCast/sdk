@@ -140,40 +140,58 @@ describe("buildCssVarStyle", () => {
   });
 
   it("applies darker semantic alpha for success in dark effective theme", () => {
-    const dark = buildCssVarStyle(
-      { success: "#10b981" },
-      "dark",
-      undefined,
-    ) as Record<string, string>;
-    const light = buildCssVarStyle(
-      { success: "#10b981" },
-      "light",
-      undefined,
-    ) as Record<string, string>;
+    const dark = buildCssVarStyle({ success: "#10b981" }, "dark", undefined) as Record<
+      string,
+      string
+    >;
+    const light = buildCssVarStyle({ success: "#10b981" }, "light", undefined) as Record<
+      string,
+      string
+    >;
 
     expect(dark["--tc-success-bg"]).toMatch(/0\.16\)/);
     expect(light["--tc-success-bg"]).toMatch(/0\.1\)/);
   });
 
   it("does not set hex-derived accent tokens when accent is non-hex", () => {
-    const style = buildCssVarStyle(
-      { accent: "rgb(255, 0, 0)" },
-      "light",
-      undefined,
-    ) as Record<string, string>;
+    const style = buildCssVarStyle({ accent: "rgb(255, 0, 0)" }, "light", undefined) as Record<
+      string,
+      string
+    >;
 
     expect(style["--tc-accent"]).toBe("rgb(255, 0, 0)");
     expect(style["--tc-accent-bg"]).toBeUndefined();
   });
 
-  it("maps gridCols to --tc-grid-cols", () => {
+  it("maps responsive layout grid config to breakpoint CSS variables", () => {
+    const style = buildCssVarStyle(undefined, "light", undefined, {
+      grid: { mobile: 2, tablet: 3, desktop: 4 },
+    }) as Record<string, string>;
+
+    expect(style["--tc-grid-mobile"]).toBe("2");
+    expect(style["--tc-grid-tablet"]).toBe("3");
+    expect(style["--tc-grid-desktop"]).toBe("4");
+    expect(style["--tc-grid-cols"]).toBeUndefined();
+  });
+
+  it("clamps invalid responsive layout grid values to defaults", () => {
+    const style = buildCssVarStyle(undefined, "light", undefined, {
+      grid: { mobile: 0, tablet: 2.8, desktop: Number.NaN },
+    }) as Record<string, string>;
+
+    expect(style["--tc-grid-mobile"]).toBe("1");
+    expect(style["--tc-grid-tablet"]).toBe("2");
+    expect(style["--tc-grid-desktop"]).toBe("3");
+  });
+
+  it("ignores removed gridCols cssVar input", () => {
     const style = buildCssVarStyle(
-      { gridCols: "repeat(2, 1fr)" },
+      { gridCols: "repeat(2, 1fr)" } as never,
       "light",
       undefined,
     ) as Record<string, string>;
 
-    expect(style["--tc-grid-cols"]).toBe("repeat(2, 1fr)");
+    expect(style?.["--tc-grid-cols"]).toBeUndefined();
   });
 
   it("supports turning density derivation off", () => {

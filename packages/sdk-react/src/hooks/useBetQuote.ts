@@ -31,8 +31,8 @@ export type UseBetQuoteParams =
  *
  * Disabled when `params` is `null` (e.g. while waiting for `useBetSummary`
  * to resolve). The returned `BetQuote` keeps object identity inside
- * TanStack's cache, so `client.betting.confirmQuote(quote)` can recover
- * the original params via its internal WeakMap.
+ * TanStack's cache, so `client.betting.confirmQuote(quote, acknowledgedParams)`
+ * can verify the original quote before signing.
  */
 export function useBetQuote(
   params: UseBetQuoteParams | null,

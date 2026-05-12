@@ -5,22 +5,24 @@
 // and prints offerUnits side-by-side so we can confirm there is NO double
 // slippage cushion (preview ≈ wallet-side request).
 //
-// Run: npx tsx scripts/smoke-bet-cross-hop.ts
+// Run:
+//   TONCAST_FINANCIAL_RISK_ACK=1 USER_ADDRESS=... npx tsx scripts/smoke-bet-cross-hop.ts [userAddress]
 
 import { fromNano } from "@ton/core";
 import { createTonClient, TONCAST_PROXY_ADDRESS, ToncastClient } from "../src";
 import { findActivePariV3 } from "./_lib/find-pari-v3";
 import { tonkeeperDeeplink } from "./_lib/tonkeeper";
 
-const USER = "UQD7k4QZ7LtO3ZtCnoS1GIy84erPasgjiU70_rgRqNxQwIQN";
 const REFERRAL_PCT = 1;
 const REFERRAL = TONCAST_PROXY_ADDRESS;
 
 const ton = (n: bigint) => `${fromNano(n)} TON`;
 
 async function main() {
+  requireFinancialRiskAck();
+  const userAddress = process.argv[2] ?? requireEnv("USER_ADDRESS");
   const tonClient = createTonClient({ apiKey: process.env.TONCENTER_API_KEY });
-  const client = new ToncastClient({ tonClient, userAddress: USER });
+  const client = new ToncastClient({ tonClient, userAddress });
 
   const pari = await findActivePariV3(client);
   console.log(`▸ pari: ${pari.id}`);
@@ -49,7 +51,7 @@ async function main() {
   const budget = (cross.tonEquivalent * 30n) / 100n;
   console.log(`\n▸ quoteMarketBet budget: ${ton(budget)}`);
 
-  const quote = await client.betting.quoteMarketBet({
+  const quoteParams = {
     pariId: pari.id,
     isYes: true,
     source: cross.address,
@@ -59,7 +61,9 @@ async function main() {
     referral: REFERRAL,
     referralPct: REFERRAL_PCT,
     allowInsufficientBalance: true,
-  });
+    financialRiskAcknowledged: true as const,
+  };
+  const quote = await client.betting.quoteMarketBet(quoteParams);
   if (!quote.option.feasible) {
     throw new Error(`infeasible: ${quote.option.reason}`);
   }
@@ -69,7 +73,7 @@ async function main() {
   console.log(`  preview offerUnits (jetton, raw): ${previewOffer}n`);
   console.log(`  preview gas / swap fee:           ${ton(quote.option.breakdown.gas)}`);
 
-  const confirmed = await client.betting.confirmQuote(quote);
+  const confirmed = await client.betting.confirmQuote(quote, quoteParams);
   const confirmedOffer =
     confirmed.txs[0]?.body && "offerUnits" in (confirmed.txs[0] as object)
       ? // biome-ignore lint/suspicious/noExplicitAny: probing builder output
@@ -93,3 +97,17 @@ main().catch((err) => {
   console.error("FAILED:", err);
   process.exit(1);
 });
+
+function requireFinancialRiskAck(): void {
+  if (process.env.TONCAST_FINANCIAL_RISK_ACK !== "1") {
+    throw new Error(
+      "Set TONCAST_FINANCIAL_RISK_ACK=1 after acknowledging this script prepares signable mainnet transactions.",
+    );
+  }
+}
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing required env var ${name}`);
+  return value;
+}

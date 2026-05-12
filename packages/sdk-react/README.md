@@ -1,6 +1,6 @@
 # @toncast/sdk-react
 
-React hooks for [`@toncast/sdk`](../sdk) — built on top of [`@tanstack/react-query`](https://tanstack.com/query/latest). REST methods become `useQuery` queries; live WS streams (`paris.streamList`, `paris.subscribe`, `betting.subscribeSummary`) become `useObservableQuery` queries. Same cache, dedup, devtools, suspense, and mutations you'd get from any TanStack-Query app.
+React hooks for [`@toncast/sdk`](../sdk) — built on top of [`@tanstack/react-query`](https://tanstack.com/query/latest). REST methods become `useQuery` queries. Live pari streams (`paris.streamList`, `paris.subscribe`) use `useSyncExternalStore` so post-initial WS errors and snapshots stay live instead of being modeled as settled promises; observable-style resources such as `betting.subscribeSummary` still use the Observable adapter.
 
 > Pattern lifted from [`@ston-fi/omniston-sdk-react`](https://github.com/ston-fi/omniston-sdk) — thin wrappers around TanStack Query, single Observable adapter for streaming endpoints.
 
@@ -59,19 +59,20 @@ function ParisFeed() {
 | `useParis(params)` | `paris.list` | Single page (cursor-paginated). |
 | `usePari(id)` | `paris.get` | Disabled when `id` is falsy. |
 | `useBets(params)` | `bets.listForUser` / `listForPariByUser` | `pariId` optional → cross-pari history. |
-| `useCategories()` | `categories.list` | `staleTime: Infinity` — categories don't change at runtime. |
+| `useCategories()` | `categories.list` | Raw `{ id, title }` categories, `staleTime: Infinity`. |
+| `useCategoryFilters()` | `categories.listFilters` | UI-ready chips whose `param` goes into `useStreamList`. |
 | `useCoins(opts)` | `coins.list` | TON + jettons via toncenter v3. Requires `tonClient`. |
 | `useBetQuote(params \| null)` | `betting.quoteFixedBet/quoteLimitBet/quoteMarketBet` | Auto re-quotes on params change. |
 
 Pass any TanStack `UseQueryOptions` (`enabled`, `staleTime`, `select`, `refetchInterval`, …) as a second arg to any read hook.
 
-### Live (Observable → `useObservableQuery`)
-- **`useStreamList(params)`** — wraps `paris.streamList`. `data` is the latest `Pari[]` snapshot; updates on every WS broadcast (`pari_created`, `coefficient_update`, `volume_update`, `pari_paused`, `pari_result_set`).
-- **`useSubscribe(pariId)`** — wraps `paris.subscribe`. `data` is the latest `PariStreamSnapshot` (`{ pari, oddsState, coefficientHistory }`).
+### Live (`useSyncExternalStore`)
+- **`useStreamList(params)`** — wraps `paris.streamList`. `data` is the latest `Pari[]` snapshot; updates on every WS broadcast (`pari_created`, `coefficient_update`, `volume_update`, `pari_paused`, `pari_result_set`). Returns live `{ data, status, error, isLoading, isError, isSuccess, refetch }`.
+- **`useSubscribe(pariId)`** — wraps `paris.subscribe`. `data` is the latest `PariStreamSnapshot` (`{ pari, oddsState, coefficientHistory }`). Returns the same live state shape as `useStreamList`.
 - **`useBetSummary(pariId)`** — wraps `betting.subscribeSummary`. Emits two phases: TON-only (~200 ms) then full jetton pricing (STON.fi, warm: instant / cold: 3–8 s). Uses `useObservableQuery` internally, not a simple `useQuery`.
 
 ### Mutations
-- **`useConfirmBet()`** — TanStack `useMutation` for `betting.confirmQuote`. Trigger via `mutate({ quote })` or `mutateAsync({ quote })` right before the user signs.
+- **`useConfirmBet()`** — TanStack `useMutation` for `betting.confirmQuote`. Trigger right before signing and pass acknowledged params: `mutateAsync({ quote, params: { ...quoteParams, financialRiskAcknowledged: true } })`.
 
 ### TonConnect bridge (optional peer-dep)
 - **`useTonConnectClient(userAddress)`** — mirrors any wallet-bridge address into `client.userAddress`. With `@tonconnect/ui-react`:
@@ -106,7 +107,7 @@ function BetCard({ pariId }: { pariId: string }) {
     <button
       disabled={!bet.quote.isFeasible || bet.confirm.isPending}
       onClick={async () => {
-        const confirmed = await bet.confirmCurrent();
+        const confirmed = await bet.confirmCurrent({ financialRiskAcknowledged: true });
         if (!confirmed) return;
         await tc.sendTransaction({
           messages: confirmed.messages,

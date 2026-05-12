@@ -60,6 +60,7 @@ function Shell() {
  *  changes (but not on hash-only changes, which would break in-page anchors). */
 function ScrollToTopOnNavigate() {
   const { pathname } = useLocation();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: this effect intentionally runs on route path changes.
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
   }, [pathname]);

@@ -1,6 +1,5 @@
-import { type Bet, type BetStatus, type Cursor, pariCoverUrl } from "@toncast/sdk";
-import { useBets } from "@toncast/sdk-react";
-import { useEffect, useRef, useState } from "react";
+import { type Bet, type BetStatus, pariCoverUrl } from "@toncast/sdk";
+import { useInfiniteBets } from "@toncast/sdk-react";
 import { ConnectButton } from "../components/ConnectButton";
 import { Button } from "../components/ui/Button";
 import { Skeleton } from "../components/ui/Skeleton";
@@ -8,7 +7,7 @@ import { useNav } from "../context";
 import type { TranslationKey } from "../i18n/translations";
 import { useT } from "../i18n/useT";
 import { useTcState } from "../tc-bridge";
-import { appendBetsPage, cursorKey, MAX_RENDERED_BETS } from "./myBetsState";
+import { MAX_RENDERED_BETS } from "./myBetsState";
 
 const STATUS_CLASS: Record<BetStatus, string> = {
   placed: "tc-badge-placed",
@@ -79,8 +78,7 @@ function BetRow({ bet }: { bet: Bet }) {
               </div>
             )}
             <div className="tc-bet-row-meta">
-              {t("bet.ticketsCount", { n: bet.ticketsCount })} · {amountTon} TON ·{" "}
-              {date}
+              {t("bet.ticketsCount", { n: bet.ticketsCount })} · {amountTon} TON · {date}
             </div>
           </div>
         </div>
@@ -94,48 +92,14 @@ export function MyBetsView() {
   const { address } = useTcState();
   const { back, canGoBack } = useNav();
 
-  const [cursor, setCursor] = useState<Cursor | null>(null);
-  const [all, setAll] = useState<Bet[]>([]);
-  const [nextCursor, setNextCursor] = useState<Cursor | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const appendedRef = useRef(new Set<string>());
-  // Ref keeps latest `all` accessible in the pagination effect without being a dep,
-  // preventing an effect re-run (and potential double-append) on every state update.
-  const allRef = useRef<Bet[]>([]);
-  allRef.current = all;
-
   // userAddress must be part of the params so it is included in the TanStack Query
   // cache key — prevents stale data from a previous user flashing when a new wallet connects.
-  const query = useBets(
-    cursor !== null ? { cursor, userAddress: address } : { userAddress: address },
-    { enabled: Boolean(address) },
-  );
-
-  useEffect(() => {
-    if (!query.data) return;
-    const key = cursorKey(cursor);
-    if (appendedRef.current.has(key)) return;
-    appendedRef.current.add(key);
-    const { nextCursor: nc, items, hasMore: more } = query.data;
-    const next = appendBetsPage(allRef.current, items, { reset: cursor === null });
-    setNextCursor(nc);
-    setAll(next);
-    setHasMore(more && next.length < MAX_RENDERED_BETS);
-  }, [query.data, cursor]);
-
-  const prevAddrRef = useRef(address);
-  useEffect(() => {
-    if (prevAddrRef.current === address) return;
-    prevAddrRef.current = address;
-    setCursor(null);
-    setAll([]);
-    setNextCursor(null);
-    setHasMore(false);
-    appendedRef.current.clear();
-  }, [address]);
+  const query = useInfiniteBets({ userAddress: address }, { enabled: Boolean(address) });
+  const all = query.data?.pages.flatMap((page) => page.items).slice(0, MAX_RENDERED_BETS) ?? [];
+  const hasMore = Boolean(query.hasNextPage && all.length < MAX_RENDERED_BETS);
 
   const isInitialLoading = query.isLoading && all.length === 0;
-  const isLoadingMore = query.isFetching && all.length > 0;
+  const isLoadingMore = query.isFetchingNextPage;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -200,8 +164,8 @@ export function MyBetsView() {
             <div className="tc-load-more-row">
               <Button
                 variant="secondary"
-                onClick={() => setCursor(nextCursor)}
-                disabled={query.isFetching}
+                onClick={() => void query.fetchNextPage()}
+                disabled={query.isFetchingNextPage}
               >
                 {t("common.showMore")}
               </Button>

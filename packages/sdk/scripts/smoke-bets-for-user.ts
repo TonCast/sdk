@@ -1,11 +1,9 @@
 // Real-API smoke for `bets.listForUser` + cursor pagination across all paris.
-// Run: npx tsx scripts/smoke-bets-for-user.ts [userAddress] [maxPages]
+// Run: USER_ADDRESS=... npx tsx scripts/smoke-bets-for-user.ts [userAddress] [maxPages]
 import { ToncastClient } from "../src";
 
-const DEFAULT_USER = "UQD7k4QZ7LtO3ZtCnoS1GIy84erPasgjiU70_rgRqNxQwIQN";
-
 async function main() {
-  const userAddress = process.argv[2] ?? DEFAULT_USER;
+  const userAddress = process.argv[2] ?? requireEnv("USER_ADDRESS");
   const maxPages = Number(process.argv[3] ?? "5");
   const client = new ToncastClient({ language: "en", userAddress });
 
@@ -66,3 +64,9 @@ main().catch((err) => {
   console.error("FAILED:", err);
   process.exit(1);
 });
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing required env var ${name}`);
+  return value;
+}

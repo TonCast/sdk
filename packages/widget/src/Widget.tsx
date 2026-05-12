@@ -146,8 +146,8 @@ function WidgetShell() {
 /**
  * Isolated component that holds a single standalone ToncastClient.
  * Rendered with a `key` by ToncastLayer — React remounts it (and resets TanStack
- * Query cache) whenever client-critical config changes: endpoint, apiKey, network,
- * language, or referral. All other config changes (theme, cssVars, …) don't affect
+ * Query cache) whenever client-critical config changes: baseUrl, endpoint, apiKey,
+ * network, language, or referral. All other config changes (theme, cssVars, …) don't affect
  * the key, so the client survives cosmetic re-renders.
  */
 function StandaloneClientLayer({
@@ -162,6 +162,7 @@ function StandaloneClientLayer({
   const clientRef = useRef<ToncastClient | null>(null);
   if (!clientRef.current) {
     clientRef.current = new ToncastClient({
+      baseUrl: desc?.baseUrl,
       tonClient: createTonClient({
         endpoint: desc?.endpoint,
         apiKey: desc?.apiKey,
@@ -173,13 +174,10 @@ function StandaloneClientLayer({
   }
 
   // Clean up when this layer unmounts (key change = new client-critical config).
-  // ToncastClient has no dispose() today, but clearing userAddress prevents the
-  // old instance from being called back into if a ref escapes. When dispose() is
-  // added to the SDK, replace this with clientRef.current.dispose().
   useEffect(() => {
     return () => {
       clientRef.current?.clearUserAddress();
-      (clientRef.current as unknown as { dispose?: () => void })?.dispose?.();
+      clientRef.current?.dispose();
     };
   }, []);
 
@@ -212,6 +210,7 @@ function ToncastLayer({
   // and resetting TanStack Query cache (correct — the data source changed).
   const desc = config.client as ClientStandaloneDescriptor | undefined;
   const clientKey = [
+    desc?.baseUrl ?? "",
     desc?.endpoint ?? "",
     desc?.apiKey ?? "",
     desc?.network ?? "mainnet",
@@ -243,11 +242,17 @@ export function Widget({ config, className, style }: WidgetProps) {
 
   const themeClass = effectiveTheme === "dark" ? "tc-w tc-dark" : "tc-w";
   const cssVarsInput = config.widget?.cssVars;
+  const layoutInput = config.widget?.layout;
   const deriveCssVarsInput = config.widget?.deriveCssVars;
   // biome-ignore lint/correctness/useExhaustiveDependencies: deps use stableJsonStringify(...) so inline cssVars object identity does not force rebuild every render; see utils/stableJsonStringify.ts
   const cssVarStyle = useMemo(
-    () => buildCssVarStyle(cssVarsInput, effectiveTheme, deriveCssVarsInput),
-    [stableJsonStringify(cssVarsInput), effectiveTheme, stableJsonStringify(deriveCssVarsInput)],
+    () => buildCssVarStyle(cssVarsInput, effectiveTheme, deriveCssVarsInput, layoutInput),
+    [
+      stableJsonStringify(cssVarsInput),
+      effectiveTheme,
+      stableJsonStringify(deriveCssVarsInput),
+      stableJsonStringify(layoutInput),
+    ],
   );
 
   // Inject effectiveTheme into config so child components (e.g. WidgetHeader) can read it.

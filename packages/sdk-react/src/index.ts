@@ -16,12 +16,24 @@ export {
 export { type UseBetQuoteParams, useBetQuote } from "./hooks/useBetQuote";
 export { useBetSummary } from "./hooks/useBetSummary";
 // Read hooks (REST → TanStack useQuery)
-export { useBets } from "./hooks/useBets";
-export { useCategories } from "./hooks/useCategories";
+export {
+  type UseInfiniteBetsOptions,
+  type UseInfiniteBetsParams,
+  useBets,
+  useInfiniteBets,
+} from "./hooks/useBets";
+export { useCategories, useCategoryFilters } from "./hooks/useCategories";
 export { useCoins } from "./hooks/useCoins";
 export { useConfirmBet } from "./hooks/useConfirmBet";
-export { useMarketCapacity } from "./hooks/useMarketCapacity";
 // Generic Observable adapter (for custom Observables; bake your own hook on top)
+export {
+  type LiveQueryStatus,
+  type LiveStream,
+  type UseLiveStreamQueryOptions,
+  type UseLiveStreamQueryResult,
+  useLiveStreamQuery,
+} from "./hooks/useLiveStreamQuery";
+export { useMarketCapacity } from "./hooks/useMarketCapacity";
 export {
   type UseObservableQueryOptions,
   type UseObservableQueryResult,
@@ -29,7 +41,7 @@ export {
 } from "./hooks/useObservableQuery";
 export { usePari } from "./hooks/usePari";
 export { useParis } from "./hooks/useParis";
-// Live hooks (Observable → useObservableQuery)
+// Live hooks (stream snapshots → useSyncExternalStore)
 export { useStreamList } from "./hooks/useStreamList";
 export { useSubscribe } from "./hooks/useSubscribe";
 // TonConnect bridge (peer-dep)

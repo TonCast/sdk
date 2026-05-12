@@ -124,8 +124,7 @@ const ru: Catalog = {
   "pari.result.no": "Победа НЕТ",
   "pari.result.draw": "Ничья",
   "pari.result.unknown": "Исход: {result}",
-  "pari.result.pendingInactive":
-    "Рынок неактивен. Итог ещё не опубликован в сети.",
+  "pari.result.pendingInactive": "Рынок неактивен. Итог ещё не опубликован в сети.",
   "pari.bettingClosed": "Приём ставок закрыт — итог зафиксирован.",
 
   "bet.title": "Сделать ставку",

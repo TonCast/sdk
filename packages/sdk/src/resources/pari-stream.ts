@@ -48,6 +48,8 @@ export interface PariStreamDeps {
   paris: ParisResource;
   wsBaseUrl: string;
   logger: Logger;
+  streamIdleTimeoutMs: number | false;
+  onDispose?: () => void;
 }
 
 type PariListener = (pari: Pari) => void;
@@ -76,6 +78,8 @@ export class PariStream {
 
   private ws: WsClient | null = null;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private idleStopTimer: ReturnType<typeof setTimeout> | null = null;
+  private activeConsumers = 0;
   private stopped = false;
   /** sequenceId tracking. `null` = haven't seen any seq'd message yet (so 0 is a valid first value). */
   private lastSequenceId: number | null = null;
@@ -104,10 +108,15 @@ export class PariStream {
    * `pari_result_set`, `pari_paused`). Returns an unsubscribe function.
    */
   onPari(fn: PariListener): () => void {
+    this.retain();
+    let closed = false;
     this.pariListeners.add(fn);
     if (this.pari) fn(this.pari);
     return () => {
+      if (closed) return;
+      closed = true;
       this.pariListeners.delete(fn);
+      this.release();
     };
   }
 
@@ -117,10 +126,15 @@ export class PariStream {
    * broadcast. Returns an unsubscribe function.
    */
   onOddsState(fn: OddsStateListener): () => void {
+    this.retain();
+    let closed = false;
     this.oddsListeners.add(fn);
     if (this.oddsState) fn(this.oddsState);
     return () => {
+      if (closed) return;
+      closed = true;
       this.oddsListeners.delete(fn);
+      this.release();
     };
   }
 
@@ -130,11 +144,16 @@ export class PariStream {
    * Returns an unsubscribe function.
    */
   onCoefficientHistory(fn: HistoryListener): () => void {
+    this.retain();
+    let closed = false;
     this.historyListeners.add(fn);
     if (this.coefficientHistory.length > 0 || this.status !== "loading")
       fn([...this.coefficientHistory]);
     return () => {
+      if (closed) return;
+      closed = true;
       this.historyListeners.delete(fn);
+      this.release();
     };
   }
 
@@ -144,9 +163,14 @@ export class PariStream {
    * this is fire-and-forget — there's no "current value" to replay.
    */
   onBetEvent(fn: BetEventListener): () => void {
+    this.retain();
+    let closed = false;
     this.betEventListeners.add(fn);
     return () => {
+      if (closed) return;
+      closed = true;
       this.betEventListeners.delete(fn);
+      this.release();
     };
   }
 
@@ -156,10 +180,15 @@ export class PariStream {
    * unsubscribe function.
    */
   onStatus(fn: StatusListener): () => void {
+    this.retain();
+    let closed = false;
     this.statusListeners.add(fn);
     fn(this.status);
     return () => {
+      if (closed) return;
+      closed = true;
       this.statusListeners.delete(fn);
+      this.release();
     };
   }
 
@@ -176,10 +205,10 @@ export class PariStream {
    * relevant change (new pari data, oddsState update, history point added).
    *
    * Why a single multi-channel snapshot instead of separate observables per
-   * channel: `useObservableQuery` in the React layer expects a single
-   * Observable with one cache key. The integrator destructures the snapshot
-   * (`const { pari, oddsState, history } = data`) — same data exposed through
-   * `onPari`, `onOddsState`, `onCoefficientHistory`, just unified.
+   * channel: the React live adapter expects one snapshot source per hook. The
+   * integrator destructures the snapshot (`const { pari, oddsState, history } =
+   * data`) — same data exposed through `onPari`, `onOddsState`,
+   * `onCoefficientHistory`, just unified.
    *
    * `BetEvent`s are intentionally excluded — they're one-shot fire-and-forget
    * and don't fit a "current state snapshot" model. Use `onBetEvent` for those.
@@ -220,6 +249,10 @@ export class PariStream {
   stop(): void {
     if (this.stopped) return;
     this.stopped = true;
+    if (this.idleStopTimer) {
+      clearTimeout(this.idleStopTimer);
+      this.idleStopTimer = null;
+    }
     this.ws?.close();
     this.ws = null;
     this.stopPolling();
@@ -230,6 +263,11 @@ export class PariStream {
     this.historyListeners.clear();
     this.betEventListeners.clear();
     this.statusListeners.clear();
+    this.deps.onDispose?.();
+  }
+
+  dispose(): void {
+    this.stop();
   }
 
   /**
@@ -253,6 +291,36 @@ export class PariStream {
     // via the `error` status so they can show retry UI / unsubscribe.
     if (!ok) return;
     this.connectWs();
+  }
+
+  private retain(): void {
+    if (this.stopped) return;
+    this.activeConsumers++;
+    if (this.idleStopTimer) {
+      clearTimeout(this.idleStopTimer);
+      this.idleStopTimer = null;
+    }
+  }
+
+  private release(): void {
+    if (this.stopped) return;
+    this.activeConsumers = Math.max(0, this.activeConsumers - 1);
+    if (this.activeConsumers > 0) return;
+    this.scheduleIdleStop();
+  }
+
+  private scheduleIdleStop(): void {
+    const timeout = this.deps.streamIdleTimeoutMs;
+    if (timeout === false) return;
+    if (timeout <= 0) {
+      this.stop();
+      return;
+    }
+    if (this.idleStopTimer) return;
+    this.idleStopTimer = setTimeout(() => {
+      this.idleStopTimer = null;
+      if (this.activeConsumers === 0) this.stop();
+    }, timeout);
   }
 
   /** Returns true on success, false on failure (status transitioned to "error"). */

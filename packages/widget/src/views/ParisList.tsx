@@ -1,5 +1,5 @@
-import { ALL_CATEGORY_FILTER, type Category } from "@toncast/sdk";
-import { useCategories, useStreamList } from "@toncast/sdk-react";
+import { ALL_CATEGORY_FILTER, type CategoryFilter } from "@toncast/sdk";
+import { useCategoryFilters, useStreamList } from "@toncast/sdk-react";
 import { useEffect, useState } from "react";
 import { PariCard } from "../components/PariCard";
 import { Button } from "../components/ui/Button";
@@ -8,14 +8,15 @@ import { useT } from "../i18n/useT";
 
 export function ParisListView() {
   const t = useT();
-  const categories = useCategories();
-  const [active, setActive] = useState<Category | null>(null);
+  const categories = useCategoryFilters();
+  const [active, setActive] = useState<CategoryFilter | null>(null);
 
   // If categories are refetched and the selected category no longer exists
   // (e.g. removed server-side), reset so the user isn't stuck on a ghost filter.
   useEffect(() => {
     if (!active || !categories.data) return;
-    const stillExists = categories.data.some((c) => c.param === active.param);
+    const activeKey = JSON.stringify(active.param);
+    const stillExists = categories.data.some((c) => JSON.stringify(c.param) === activeKey);
     if (!stillExists) setActive(null);
   }, [categories.data, active]);
 
@@ -47,9 +48,7 @@ export function ParisListView() {
             />
           ))
         ) : categories.isError ? (
-          <span className="tc-text-sm tc-text-muted">
-            {t("category.loadFailed")}
-          </span>
+          <span className="tc-text-sm tc-text-muted">{t("category.loadFailed")}</span>
         ) : (
           categories.data?.map((c) => (
             <Button
@@ -60,9 +59,7 @@ export function ParisListView() {
               onClick={() => setActive(c)}
               style={{ whiteSpace: "nowrap", flexShrink: 0 }}
             >
-              {c.param === ALL_CATEGORY_FILTER.param
-                ? t("category.all")
-                : c.name}
+              {c.name === ALL_CATEGORY_FILTER.name ? t("category.all") : c.name}
             </Button>
           ))
         )}

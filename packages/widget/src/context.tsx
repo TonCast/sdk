@@ -63,11 +63,7 @@ export function NavProvider({ children }: { children: ReactNode }) {
     [view, navigate, back, canGoBack],
   );
 
-  return (
-    <NavContext.Provider value={value}>
-      {children}
-    </NavContext.Provider>
-  );
+  return <NavContext.Provider value={value}>{children}</NavContext.Provider>;
 }
 
 // ─── Widget config context ───

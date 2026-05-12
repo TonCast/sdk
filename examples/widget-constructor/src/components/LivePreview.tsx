@@ -37,11 +37,17 @@ export function LivePreview({ config, deviceMode }: LivePreviewProps) {
       type: "standalone" as const,
       options: { domain },
     },
+    ...(config.apiBaseUrl
+      ? { client: { type: "standalone" as const, baseUrl: config.apiBaseUrl } }
+      : {}),
     widget: {
       ...(config.theme.colorScheme !== "light"
         ? { theme: config.theme.colorScheme as "light" | "dark" | "system" }
         : {}),
       ...(cssVars ? { cssVars } : {}),
+      layout: {
+        grid: config.theme.grid,
+      },
       ...(config.language ? { language: config.language as SupportedLanguage } : {}),
       ...(config.referralAddress && config.referralPct > 0
         ? { referral: { address: config.referralAddress, pct: config.referralPct } }

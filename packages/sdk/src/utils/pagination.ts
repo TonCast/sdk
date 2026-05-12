@@ -5,11 +5,11 @@ import { z } from "zod";
  * (e.g. `{ sortValue, address }` for /v1/paris). Treat as opaque on the
  * caller side and pass it back unchanged.
  */
-export type Cursor = string | Record<string, unknown>;
+export type Cursor = string | object;
 
-export interface Page<T> {
+export interface Page<T, TCursor extends Cursor = Cursor> {
   items: T[];
-  nextCursor: Cursor | null;
+  nextCursor: TCursor | null;
   hasMore: boolean;
 }
 

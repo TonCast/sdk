@@ -25,6 +25,15 @@ export const toncastQueryKeys = {
         params?.pariId ? "byPari" : "byUser",
         serializeKey(params),
       ] as const,
+    infiniteBets: (params?: { pariId?: string } & Record<string, unknown>) =>
+      [
+        "toncast",
+        "betting",
+        "bets",
+        params?.pariId ? "byPari" : "byUser",
+        "infinite",
+        serializeKey(params),
+      ] as const,
   },
   paris: {
     list: (params: unknown) => ["toncast", "paris", "list", serializeKey(params)] as const,

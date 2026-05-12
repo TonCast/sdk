@@ -1,4 +1,4 @@
-import { ToncastApiError } from "../errors";
+import { ToncastApiError, ToncastValidationError } from "../errors";
 
 export interface RetryOptions {
   /** Total attempts INCLUDING the first one. Default 3 (1 initial + 2 retries). */
@@ -7,6 +7,8 @@ export interface RetryOptions {
   delayMs?: number;
   /** Multiplier on top of `delayMs` when the previous failure was 429 / 5xx. Default 3. */
   rateLimitBackoffMultiplier?: number;
+  /** Optional cancellation signal for retry sleeps. */
+  signal?: AbortSignal;
 }
 
 /**
@@ -28,17 +30,41 @@ export async function withRetry<T>(fn: () => Promise<T>, opts: RetryOptions = {}
       return await fn();
     } catch (err) {
       lastErr = err;
-      // AbortError means the caller cancelled the request intentionally (e.g. component
-      // unmount). Retrying would fire more requests that also get aborted — bail immediately.
-      if (err instanceof Error && err.name === "AbortError") break;
+      if (!shouldRetry(err)) break;
       if (attempt === maxAttempts - 1) break;
 
       const baseDelay = delayMs * 2 ** attempt;
       const isThrottle =
         err instanceof ToncastApiError && (err.status === 429 || err.status >= 500);
       const wait = isThrottle ? baseDelay * rateLimitBackoffMultiplier : baseDelay;
-      await new Promise((r) => setTimeout(r, wait));
+      await sleep(wait, opts.signal);
     }
   }
   throw lastErr;
+}
+
+function shouldRetry(err: unknown): boolean {
+  if (err instanceof Error && err.name === "AbortError") return false;
+  if (err instanceof ToncastValidationError) return false;
+  if (err instanceof ToncastApiError) {
+    return err.status === 408 || err.status === 425 || err.status === 429 || err.status >= 500;
+  }
+  // Fetch network failures are usually TypeError/DOMException. Retry unknown
+  // transport failures, but SDK domain errors above opt out explicitly.
+  return true;
+}
+
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) return Promise.reject(new DOMException("Aborted", "AbortError"));
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        reject(new DOMException("Aborted", "AbortError"));
+      },
+      { once: true },
+    );
+  });
 }

@@ -52,6 +52,9 @@
   --tc-header-padding-x: 12px;
   --tc-nav-padding-y: 10px;
   --tc-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --tc-grid-mobile: 1;
+  --tc-grid-tablet: 2;
+  --tc-grid-desktop: 3;
 
   font-family:
     system-ui,
@@ -65,7 +68,9 @@
   color: var(--tc-fg);
   background: transparent;
   width: 100%;
-  min-width: 320px;
+  min-width: 0;
+  max-width: 100%;
+  container-type: inline-size;
 }
 
 .tc-w *,
@@ -95,15 +100,17 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 480px;
+  min-height: min(460px, 100dvh);
   background: var(--tc-bg);
   border-radius: var(--tc-radius);
   overflow: hidden;
   border: 1px solid var(--tc-border);
+  max-width: 100%;
 }
 
 .tc-content {
   flex: 1;
+  min-width: 0;
   overflow-y: auto;
   padding: var(--tc-content-padding);
   scrollbar-width: thin;
@@ -598,6 +605,8 @@
   border-radius: var(--tc-radius);
   overflow: hidden;
   cursor: pointer;
+  min-width: 0;
+  height: 100%;
   transition:
     box-shadow 0.15s,
     transform 0.1s;
@@ -609,15 +618,18 @@
 
 .tc-pari-cover {
   width: 100%;
-  aspect-ratio: 1;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
   background: var(--tc-bg-muted);
   display: block;
 }
 .tc-pari-cover-placeholder {
   width: 100%;
-  aspect-ratio: 1;
-  background: var(--tc-bg-muted);
+  aspect-ratio: 1 / 1;
+  background:
+    linear-gradient(135deg, transparent 0 42%, var(--tc-bg-hover) 42% 58%, transparent 58%),
+    var(--tc-bg-muted);
+  display: block;
 }
 
 .tc-pari-body {
@@ -626,6 +638,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 .tc-pari-name {
   font-size: 13px;
@@ -636,16 +649,29 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 3.6em;
-  line-height: 1.4;
+  min-height: calc(3 * 1.35em);
+  line-height: 1.35;
 }
 .tc-pari-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   font-size: 11px;
   color: var(--tc-fg-muted);
   margin-top: auto;
+  min-width: 0;
+}
+.tc-pari-meta-item {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tc-pari-meta-volume {
+  flex-shrink: 0;
 }
 .tc-pari-meta svg {
   width: 12px;
@@ -665,15 +691,34 @@
   gap: 6px;
   padding: 0 10px 10px;
 }
+.tc-pari-btns .tc-btn {
+  min-width: 0;
+  padding: 0 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ===== PARI LIST ===== */
 .tc-pari-grid {
   display: grid;
   gap: var(--tc-card-gap);
-  grid-template-columns: var(
-    --tc-grid-cols,
-    repeat(auto-fill, minmax(180px, 1fr))
-  );
+  grid-template-columns: repeat(var(--tc-grid-mobile), minmax(0, 1fr));
+}
+
+@container (min-width: 480px) {
+  .tc-pari-grid {
+    grid-template-columns: repeat(var(--tc-grid-tablet), minmax(0, 1fr));
+  }
+}
+
+@container (min-width: 760px) {
+  .tc-shell {
+    min-height: min(560px, 100dvh);
+  }
+
+  .tc-pari-grid {
+    grid-template-columns: repeat(var(--tc-grid-desktop), minmax(0, 1fr));
+  }
 }
 
 .tc-category-bar {

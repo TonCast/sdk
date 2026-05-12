@@ -8,6 +8,10 @@ import { Widget } from "./Widget";
 
 const STYLE_ID = "toncast-widget-styles";
 
+/** Present on `<link rel="stylesheet">` when layout CSS is supplied by the host ZIP/page. */
+const CDN_STYLESHEET_ATTR = "data-toncast-widget-css";
+const CDN_STYLESHEET_LOADED_ATTR = "data-toncast-widget-css-loaded";
+
 /**
  * Derive a version tag from the CSS content so the injected <style> tag is
  * automatically replaced whenever widget.css changes — no manual bump needed.
@@ -25,6 +29,15 @@ const STYLE_VERSION = cssHash(widgetCss as unknown as string);
 let mountedCount = 0;
 
 function injectStyles(): void {
+  const cdnStylesheet = document.querySelector<HTMLLinkElement>(
+    `link[rel="stylesheet"][${CDN_STYLESHEET_ATTR}]`,
+  );
+  if (
+    cdnStylesheet &&
+    (cdnStylesheet.getAttribute(CDN_STYLESHEET_LOADED_ATTR) === "true" || cdnStylesheet.sheet)
+  ) {
+    return;
+  }
   const existing = document.getElementById(STYLE_ID);
   if (existing) {
     // Same version already injected — nothing to do.

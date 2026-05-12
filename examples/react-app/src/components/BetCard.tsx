@@ -6,10 +6,11 @@
 // renders. `bare` mode is used inside `BetDialog` to avoid stacking two glass
 // surfaces.
 
+import { useQueryClient } from "@tanstack/react-query";
 import { formatBetQuoteReason, parseUnits, TON_ADDRESS } from "@toncast/sdk";
 import { type BetMode, useBet } from "@toncast/sdk-react";
 import { useIsConnectionRestored, useTonAddress, useTonConnectUI } from "@tonconnect/ui-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -39,6 +40,7 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
   const userAddress = useTonAddress();
   const [tc] = useTonConnectUI();
   const connectionRestored = useIsConnectionRestored();
+  const queryClient = useQueryClient();
 
   const bet = useBet({
     pariId: userAddress ? pariId : null,
@@ -54,6 +56,15 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
   const sourceDecimals = sourcePriced?.decimals ?? 9;
 
   const [amountDraft, setAmountDraft] = useState<string>("");
+  const refreshTimerRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => {
+    return () => {
+      for (const timer of refreshTimerRefs.current) clearTimeout(timer);
+      refreshTimerRefs.current = [];
+    };
+  }, []);
+
   useEffect(() => {
     if (bet.mode !== "market" || !bet.source) return;
     setAmountDraft(formatRaw(bet.sourceAmount, sourceDecimals, 4));
@@ -70,7 +81,7 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
 
   const handleConfirm = async () => {
     try {
-      const confirmed = await bet.confirmCurrent();
+      const confirmed = await bet.confirmCurrent({ financialRiskAcknowledged: true });
       if (!confirmed) return;
       await tc.sendTransaction({
         messages: confirmed.messages,
@@ -80,9 +91,19 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
       // Wallet balance changes once the on-chain tx settles. Refresh a few
       // times over the next ~30s so the UI catches the new state without
       // hammering toncenter.
+      void queryClient.invalidateQueries({ queryKey: ["toncast", "betting", "bets"] });
       void bet.refresh();
-      setTimeout(() => void bet.refresh(), 8_000);
-      setTimeout(() => void bet.refresh(), 30_000);
+      for (const timer of refreshTimerRefs.current) clearTimeout(timer);
+      refreshTimerRefs.current = [
+        setTimeout(() => {
+          void queryClient.invalidateQueries({ queryKey: ["toncast", "betting", "bets"] });
+          void bet.refresh();
+        }, 8_000),
+        setTimeout(() => {
+          void queryClient.invalidateQueries({ queryKey: ["toncast", "betting", "bets"] });
+          void bet.refresh();
+        }, 30_000),
+      ];
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err));
     }

@@ -1,5 +1,5 @@
-import { ALL_CATEGORY_FILTER, type Category, type Pari } from "@toncast/sdk";
-import { useCategories, useStreamList } from "@toncast/sdk-react";
+import { ALL_CATEGORY_FILTER, type CategoryFilter, type Pari } from "@toncast/sdk";
+import { useCategoryFilters, useStreamList } from "@toncast/sdk-react";
 import { useState } from "react";
 import { BetDialog } from "@/components/BetDialog";
 import { PariCard } from "@/components/PariCard";
@@ -16,8 +16,8 @@ interface PickedSide {
 
 export function ParisListPage() {
   const t = useT();
-  const categories = useCategories();
-  const [active, setActive] = useState<Category | null>(null);
+  const categories = useCategoryFilters();
+  const [active, setActive] = useState<CategoryFilter | null>(null);
   const current = active ?? categories.data?.[0] ?? ALL_CATEGORY_FILTER;
   const { data, isLoading, isError, error } = useStreamList(current.param);
   const [picked, setPicked] = useState<PickedSide | null>(null);

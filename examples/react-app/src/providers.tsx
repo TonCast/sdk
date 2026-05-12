@@ -76,9 +76,7 @@ const tonClient = createTonClient({
 const toncastClient = new ToncastClient({
   tonClient,
   referral:
-    referralAddress && referralPct > 0
-      ? { address: referralAddress, pct: referralPct }
-      : undefined,
+    referralAddress && referralPct > 0 ? { address: referralAddress, pct: referralPct } : undefined,
 });
 
 /** Bridge between TonConnect's address and `client.userAddress`. */

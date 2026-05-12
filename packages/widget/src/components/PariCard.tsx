@@ -1,6 +1,6 @@
 import type { Pari } from "@toncast/sdk";
 import { ODDS_MAX, ODDS_MIN, pariCoverUrl, yesOddsToDecimalOdds } from "@toncast/sdk";
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { useNav } from "../context";
 import { useT } from "../i18n/useT";
 import { formatTimeLeft } from "../utils/format";
@@ -56,6 +56,8 @@ export function PariCard({ pari }: { pari: Pari }) {
   const t = useT();
   const { navigate } = useNav();
   const img = pariCoverUrl(pari.image);
+  const [failedImage, setFailedImage] = useState<string | null>(null);
+  const showImage = Boolean(img && failedImage !== img);
 
   useMinuteTick();
 
@@ -76,19 +78,27 @@ export function PariCard({ pari }: { pari: Pari }) {
   return (
     <div className="tc-pari-card">
       <button type="button" onClick={goDetail} style={{ all: "unset", display: "contents" }}>
-        {img ? (
-          <img src={img} alt="" loading="lazy" className="tc-pari-cover" />
+        {showImage ? (
+          <img
+            src={img ?? ""}
+            alt=""
+            loading="lazy"
+            className="tc-pari-cover"
+            onError={() => setFailedImage(img)}
+          />
         ) : (
           <div className="tc-pari-cover-placeholder" />
         )}
         <div className="tc-pari-body">
           <div className="tc-pari-name">{pari.name}</div>
           <div className="tc-pari-meta">
-            <span style={{ display: "inline-flex", alignItems: "center" }}>
+            <span className="tc-pari-meta-item">
               <ClockIcon />
               {timeLeft}
             </span>
-            <span>{(pari.yesVolume + pari.noVolume).toFixed(1)} TON</span>
+            <span className="tc-pari-meta-item tc-pari-meta-volume">
+              {(pari.yesVolume + pari.noVolume).toFixed(1)} TON
+            </span>
           </div>
         </div>
       </button>

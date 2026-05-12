@@ -1,12 +1,12 @@
 // Real-API smoke test for one full pari (all endpoints).
-// Run: npx tsx scripts/smoke-pari-detail.ts
+// Run: USER_ADDRESS=... npx tsx scripts/smoke-pari-detail.ts
 import { ToncastClient } from "../src";
 
 const PARI_ID = "EQCi1hBngahzphH1L0wknVCUJBVs7a_2LfHzoUwsoJ9biEIK";
-const USER_ADDRESS = "UQD7k4QZ7LtO3ZtCnoS1GIy84erPasgjiU70_rgRqNxQwIQN";
 
 async function main() {
-  const client = new ToncastClient({ language: "en", userAddress: USER_ADDRESS });
+  const userAddress = requireEnv("USER_ADDRESS");
+  const client = new ToncastClient({ language: "en", userAddress });
 
   console.log(`▸ paris.get(${PARI_ID.slice(0, 12)}…)`);
   const pari = await client.paris.get(PARI_ID);
@@ -74,3 +74,9 @@ main().catch((err) => {
   console.error("FAILED:", err);
   process.exit(1);
 });
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing required env var ${name}`);
+  return value;
+}

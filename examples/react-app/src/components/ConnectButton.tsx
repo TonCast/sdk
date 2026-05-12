@@ -15,8 +15,8 @@
 //                  swap for a popover if you want copy-address / network UI).
 
 import { useTonAddress, useTonConnectUI } from "@tonconnect/ui-react";
-import { useT } from "@/lib/i18n/useT";
 import { shortAddr } from "@/lib/format";
+import { useT } from "@/lib/i18n/useT";
 
 export function ConnectButton() {
   const t = useT();

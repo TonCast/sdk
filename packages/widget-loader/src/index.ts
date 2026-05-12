@@ -4,7 +4,8 @@
  * Lightweight npm package that downloads the Toncast widget CDN bundle at
  * runtime and returns the `ToncastWidget` constructor.
  *
- * Types are re-exported from `@toncast/widget` so they stay aligned with the npm/CDN bundle.
+ * Public widget types are declared locally so this loader can typecheck and build before
+ * the `@toncast/widget` package has emitted its `dist/*.d.ts` files.
  *
  * Usage (React + integrated TonConnect):
  * ```tsx
@@ -34,7 +35,7 @@
  * ```
  */
 
-import type { ToncastWidgetConfig, ToncastWidgetEventMap } from "@toncast/widget";
+import type { ToncastWidgetConfig, ToncastWidgetEventMap } from "./widgetTypes";
 
 export type {
   SupportedLanguage,
@@ -44,7 +45,7 @@ export type {
   ToncastWidgetDensity,
   ToncastWidgetDerivedCssVarsOptions,
   ToncastWidgetEventMap,
-} from "@toncast/widget";
+} from "./widgetTypes";
 
 export type ToncastWidgetConstructor = new (config: ToncastWidgetConfig) => ToncastWidgetInstance;
 
@@ -55,7 +56,7 @@ export interface ToncastWidgetInstance {
   unmount(): void;
   /**
    * Re-render the widget with an updated config without unmounting.
-   * Changes to `endpoint`, `apiKey`, `network`, `language`, or `referral` will
+   * Changes to `baseUrl`, `endpoint`, `apiKey`, `network`, `language`, or `referral` will
    * create a fresh ToncastClient — a brief loading state will appear.
    * Purely visual changes (theme, cssVars, …) are applied instantly.
    * Safe to call before `mount()`.
@@ -86,8 +87,13 @@ export interface ToncastWidgetLoaderOptions {
   nonce?: string;
 }
 
-/** CDN URL template — major-versioned for non-breaking auto-updates. */
-const CDN_URL = "https://widget.toncast.app/v0/index.iife.js";
+/** Major-versioned CDN base (`/v0/`, `/v1/`, …). */
+const CDN_VERSION_BASE = "https://widget.toncast.app/v0";
+
+/** Default widget script on CDN. */
+export const WIDGET_CDN_JS_URL = `${CDN_VERSION_BASE}/index.iife.js`;
+
+const CDN_URL = WIDGET_CDN_JS_URL;
 
 /** Attribute storing the loader cache key so duplicate URLs with different SRI/nonce do not reuse the wrong script. */
 const LOADER_KEY_ATTR = "data-tc-widget-loader-key";

@@ -33,7 +33,8 @@ export function ConfigTab({ config, onChange }: Props) {
     const next = current.includes(code) ? current.filter((l) => l !== code) : [...current, code];
     // If the current default language is no longer in the allowed set, clear it
     // so the <select> doesn't become uncontrolled (unmatched controlled value).
-    const defaultStillValid = !config.language || next.length === 0 || next.includes(config.language);
+    const defaultStillValid =
+      !config.language || next.length === 0 || next.includes(config.language);
     onChange({
       ...config,
       languages: next,
@@ -59,24 +60,49 @@ export function ConfigTab({ config, onChange }: Props) {
           placeholder="https://your-app.com"
           className={inputCls}
         />
-        {config.domain && (() => {
-          let valid = false;
-          try { const u = new URL(config.domain); valid = u.protocol === "https:" || u.protocol === "http:"; } catch { /* invalid */ }
-          return valid ? (
-            <div className="mt-1.5 text-[10px] text-slate-500 bg-slate-800/50 rounded px-2 py-1 font-mono break-all">
-              {config.domain.replace(/\/$/, "")}/tonconnect-manifest.json
-            </div>
-          ) : (
-            <p className="mt-1 text-[10px] text-red-400">
-              Must be an absolute URL, e.g. <span className="font-mono">https://your-app.com</span>
-            </p>
-          );
-        })()}
+        {config.domain &&
+          (() => {
+            let valid = false;
+            try {
+              const u = new URL(config.domain);
+              valid = u.protocol === "https:" || u.protocol === "http:";
+            } catch {
+              /* invalid */
+            }
+            return valid ? (
+              <div className="mt-1.5 text-[10px] text-slate-500 bg-slate-800/50 rounded px-2 py-1 font-mono break-all">
+                {config.domain.replace(/\/$/, "")}/tonconnect-manifest.json
+              </div>
+            ) : (
+              <p className="mt-1 text-[10px] text-red-400">
+                Must be an absolute URL, e.g.{" "}
+                <span className="font-mono">https://your-app.com</span>
+              </p>
+            );
+          })()}
         {!config.domain && (
           <p className="mt-1 text-[10px] text-slate-600">
             Leave empty — preview uses Toncast dev manifest.
           </p>
         )}
+      </div>
+
+      {/* Toncast API base URL */}
+      <div>
+        <label htmlFor="tc-api-base-url" className={labelCls}>
+          Toncast API base URL
+        </label>
+        <input
+          id="tc-api-base-url"
+          type="url"
+          value={config.apiBaseUrl}
+          onChange={(e) => set("apiBaseUrl", e.target.value)}
+          placeholder="https://api.toncast.app"
+          className={inputCls}
+        />
+        <p className="mt-1 text-[10px] text-slate-600">
+          Optional. Use only for staging or a custom Toncast API deployment.
+        </p>
       </div>
 
       {/* App name */}
@@ -172,13 +198,14 @@ export function ConfigTab({ config, onChange }: Props) {
           className="w-full h-9 px-3 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-xs focus:outline-none focus:border-sky-500/50"
         >
           <option value="">Auto-detect (navigator.language)</option>
-          {(config.languages.length > 0 ? LANGUAGES.filter((l) => config.languages.includes(l.code)) : LANGUAGES).map(
-            (l) => (
-              <option key={l.code} value={l.code}>
-                {l.label} ({l.code})
-              </option>
-            ),
-          )}
+          {(config.languages.length > 0
+            ? LANGUAGES.filter((l) => config.languages.includes(l.code))
+            : LANGUAGES
+          ).map((l) => (
+            <option key={l.code} value={l.code}>
+              {l.label} ({l.code})
+            </option>
+          ))}
         </select>
       </div>
 

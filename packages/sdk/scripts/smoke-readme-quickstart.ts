@@ -1,13 +1,17 @@
 // Real-API smoke test executing the README Quick start scenario verbatim.
-// No signing — just reads + builds the quote and confirms.
+// No signing — just reads + builds the quote and confirms. Confirming returns
+// signable transaction material, so explicit financial-risk acknowledgement is
+// still required.
 //
-// Run: npx tsx scripts/smoke-readme-quickstart.ts
+// Run:
+//   TONCAST_FINANCIAL_RISK_ACK=1 USER_ADDRESS=... npx tsx scripts/smoke-readme-quickstart.ts
 import { TON_ADDRESS, TonClient, ToncastClient } from "../src";
 
-const TEST_USER = "UQD7k4QZ7LtO3ZtCnoS1GIy84erPasgjiU70_rgRqNxQwIQN";
 const TEST_PARI = "EQCi1hBngahzphH1L0wknVCUJBVs7a_2LfHzoUwsoJ9biEIK"; // active pari with odds
 
 async function main() {
+  requireFinancialRiskAck();
+  const userAddress = requireEnv("USER_ADDRESS");
   console.log("▸ Phase 1 — public reads, no wallet");
 
   const tonClient = new TonClient({
@@ -15,10 +19,11 @@ async function main() {
     apiKey: process.env.TONCENTER_API_KEY,
   });
 
+  const referralAddress = process.env.REFERRAL_ADDRESS;
   const client = new ToncastClient({
     tonClient,
     // Use a DIFFERENT address than the user — referral must not equal beneficiary.
-    referral: { address: "UQAREREREREREREREREREREREREREREREREREREREREREbvW", pct: 5 },
+    referral: referralAddress ? { address: referralAddress, pct: 5 } : undefined,
   });
 
   // Use a known active pari instead of "first from list" since list ordering may
@@ -27,7 +32,7 @@ async function main() {
   console.log(`  using pari ${pariId.slice(0, 12)}…\n`);
 
   console.log("▸ Phase 2 — wallet known");
-  client.setUserAddress(TEST_USER);
+  client.setUserAddress(userAddress);
 
   console.log("▸ Step 2 — betting.summary()");
   const t0 = Date.now();
@@ -54,6 +59,7 @@ async function main() {
     source: picked.source.address,
     pricedCoins: summary.pricedCoins,
     oddsState: summary.oddsState,
+    financialRiskAcknowledged: true as const,
   };
 
   const quote = await client.betting.quoteMarketBet(quoteParams);
@@ -86,8 +92,8 @@ async function main() {
     `  Win if YES wins (README formula): ${totalWinNano}n  (${Number(totalWinNano) / 1e9} TON)`,
   );
 
-  console.log("\n▸ Step 4 — confirmQuote(quote) — params auto-tracked");
-  const confirmed = await client.betting.confirmQuote(quote);
+  console.log("\n▸ Step 4 — confirmQuote(quote, acknowledged params)");
+  const confirmed = await client.betting.confirmQuote(quote, quoteParams);
   console.log(
     `  confirmed.txs=${confirmed.txs.length}  confirmed.messages=${confirmed.messages.length}`,
   );
@@ -105,3 +111,17 @@ main().catch((err) => {
   console.error("FAILED:", err);
   process.exit(1);
 });
+
+function requireFinancialRiskAck(): void {
+  if (process.env.TONCAST_FINANCIAL_RISK_ACK !== "1") {
+    throw new Error(
+      "Set TONCAST_FINANCIAL_RISK_ACK=1 after acknowledging this script prepares signable mainnet transactions.",
+    );
+  }
+}
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing required env var ${name}`);
+  return value;
+}

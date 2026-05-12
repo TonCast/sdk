@@ -11,8 +11,7 @@ interface Props {
   onChange: (t: ThemeConfig) => void;
 }
 
-const sectionLabelCls =
-  "text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide";
+const sectionLabelCls = "text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide";
 
 function ColorField({
   label,
@@ -32,9 +31,7 @@ function ColorField({
     <div>
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-xs text-slate-400">{label}</span>
-        <span className="font-mono text-[10px] text-slate-500">
-          {current || "optional"}
-        </span>
+        <span className="font-mono text-[10px] text-slate-500">{current || "optional"}</span>
       </div>
       <div className="flex items-center gap-2">
         <input
@@ -80,14 +77,11 @@ function ColorSetEditor({
   defaultBg: string;
   defaults: ThemeColorSet;
 }) {
-  const set = (key: keyof ThemeColorSet, val: string) =>
-    onChange({ ...value, [key]: val });
+  const set = (key: keyof ThemeColorSet, val: string) => onChange({ ...value, [key]: val });
 
   return (
     <div className="rounded-lg border border-slate-700/60 bg-slate-900/40 p-3 space-y-3">
-      <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-        {label}
-      </p>
+      <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{label}</p>
 
       <ColorField
         label="Accent"
@@ -159,11 +153,11 @@ function ColorSetEditor({
 export function ThemeTab({ theme, onChange }: Props) {
   const set = <K extends keyof ThemeConfig>(key: K, value: ThemeConfig[K]) =>
     onChange({ ...theme, [key]: value });
+  const setGrid = (key: keyof ThemeConfig["grid"], value: number) =>
+    set("grid", { ...theme.grid, [key]: value });
 
-  const showLight =
-    theme.colorScheme === "light" || theme.colorScheme === "system";
-  const showDark =
-    theme.colorScheme === "dark" || theme.colorScheme === "system";
+  const showLight = theme.colorScheme === "light" || theme.colorScheme === "system";
+  const showDark = theme.colorScheme === "dark" || theme.colorScheme === "system";
 
   return (
     <div className="space-y-5">
@@ -230,9 +224,7 @@ export function ThemeTab({ theme, onChange }: Props) {
           className="flex items-center justify-between text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide"
         >
           Border radius
-          <span className="font-mono text-slate-500 normal-case">
-            {theme.radius}px
-          </span>
+          <span className="font-mono text-slate-500 normal-case">{theme.radius}px</span>
         </label>
         <div className="flex gap-1.5 mb-2">
           {[
@@ -267,48 +259,50 @@ export function ThemeTab({ theme, onChange }: Props) {
           onChange={(e) => set("radius", Number(e.target.value))}
           className="w-full accent-sky-500"
         />
-        <p className="mt-1.5 text-[10px] text-slate-600">
-          0–64 px (matches export clamp).
-        </p>
+        <p className="mt-1.5 text-[10px] text-slate-600">0–64 px (matches export clamp).</p>
       </div>
 
-      {/* Grid columns */}
+      {/* Responsive grid columns */}
       <div>
         <p className="flex items-center justify-between text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">
-          Grid columns
+          Responsive grid
           <span className="text-slate-500 normal-case font-normal">
-            {theme.columns === 0 ? "auto" : `${theme.columns} col`}
+            {theme.grid.mobile}/{theme.grid.tablet}/{theme.grid.desktop}
           </span>
         </p>
-        <div className="flex gap-1.5">
-          {[
-            { v: 0, label: "Auto" },
-            { v: 1, label: "1" },
-            { v: 2, label: "2" },
-            { v: 3, label: "3" },
-            { v: 4, label: "4" },
-          ].map(({ v, label }) => (
-            <button
-              key={v}
-              type="button"
-              aria-label={
-                v === 0 ? "Grid columns automatic" : `Grid columns ${v}`
-              }
-              aria-pressed={theme.columns === v}
-              onClick={() => set("columns", v)}
-              className={`flex-1 py-1.5 text-xs rounded border font-medium transition-all ${
-                theme.columns === v
-                  ? "bg-sky-500/20 text-sky-300 border-sky-500/50"
-                  : "bg-slate-800 text-slate-500 border-slate-700 hover:border-slate-500"
-              }`}
-            >
-              {label}
-            </button>
+        <div className="space-y-2">
+          {(
+            [
+              { key: "mobile", label: "Mobile" },
+              { key: "tablet", label: "Tablet" },
+              { key: "desktop", label: "Desktop" },
+            ] as const
+          ).map(({ key, label }) => (
+            <div key={key} className="grid grid-cols-[64px_1fr] items-center gap-2">
+              <span className="text-[11px] text-slate-500">{label}</span>
+              <div className="flex gap-1.5">
+                {[1, 2, 3, 4, 5, 6].map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    aria-label={`${label} grid ${v} columns`}
+                    aria-pressed={theme.grid[key] === v}
+                    onClick={() => setGrid(key, v)}
+                    className={`flex-1 py-1.5 text-xs rounded border font-medium transition-all ${
+                      theme.grid[key] === v
+                        ? "bg-sky-500/20 text-sky-300 border-sky-500/50"
+                        : "bg-slate-800 text-slate-500 border-slate-700 hover:border-slate-500"
+                    }`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
         <p className="mt-1.5 text-[10px] text-slate-600">
-          Auto adapts to container width. Fixed columns override responsive
-          layout.
+          Used at &lt;480px, 480–759px, and 760px+ respectively.
         </p>
       </div>
 
@@ -316,9 +310,7 @@ export function ThemeTab({ theme, onChange }: Props) {
       <div>
         <p className="flex items-center justify-between text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">
           Density
-          <span className="text-slate-500 normal-case font-normal">
-            {theme.density}
-          </span>
+          <span className="text-slate-500 normal-case font-normal">{theme.density}</span>
         </p>
         <div className="flex gap-1.5">
           {(
@@ -351,8 +343,8 @@ export function ThemeTab({ theme, onChange }: Props) {
 
       {/* Width note */}
       <div className="rounded-lg bg-sky-900/20 border border-sky-800/40 px-3 py-2.5 text-xs text-sky-400">
-        <strong>Width:</strong> responsive by default (<code>100%</code>, min
-        320px). Constrain via the container you pass to <code>mount()</code>.
+        <strong>Width:</strong> responsive by default (<code>100%</code>, min 0). Constrain via the
+        container you pass to <code>mount()</code>.
       </div>
     </div>
   );

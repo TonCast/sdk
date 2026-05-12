@@ -56,7 +56,7 @@ export class ParisListSocket {
   constructor(
     private readonly deps: ParisListSocketDeps,
     /** Idle window before tearing down the WS after the last `release()`. */
-    private readonly idleTimeoutMs = 30_000,
+    private readonly idleTimeoutMs: number | false = 30_000,
   ) {}
 
   /**
@@ -199,6 +199,11 @@ export class ParisListSocket {
   }
 
   private scheduleIdleStop(): void {
+    if (this.idleTimeoutMs === false) return;
+    if (this.idleTimeoutMs <= 0) {
+      if (this.refCount === 0) this.shutdownTransport();
+      return;
+    }
     if (this.idleStopTimer) return;
     this.idleStopTimer = setTimeout(() => {
       this.idleStopTimer = null;
@@ -221,6 +226,16 @@ export class ParisListSocket {
     this.statusListeners.clear();
     this.resyncListeners.clear();
     this.status = "connecting";
+  }
+
+  /** Force-close the shared transport and clear all listeners/handles. */
+  dispose(): void {
+    if (this.idleStopTimer) {
+      clearTimeout(this.idleStopTimer);
+      this.idleStopTimer = null;
+    }
+    this.refCount = 0;
+    this.shutdownTransport();
   }
 }
 

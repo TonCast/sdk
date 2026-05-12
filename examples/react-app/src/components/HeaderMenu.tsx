@@ -16,10 +16,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { shortAddr } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { useT } from "@/lib/i18n/useT";
 import { useTheme } from "@/lib/theme";
-import { shortAddr } from "@/lib/format";
 
 const LANGUAGE_LABELS: Record<SupportedLanguage, string> = {
   en: "English",
@@ -60,7 +60,7 @@ function ConnectPill({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-10 items-center gap-2 rounded-full bg-gradient-to-b from-[#0098EA] to-[#0087D4] pl-3 pr-4 text-white shadow-[0_8px_24px_-8px_rgba(0,152,234,0.55)] transition-all duration-200 ease-out hover:brightness-110 active:scale-[0.98]"
+      className="inline-flex h-10 items-center gap-2 rounded-full bg-linear-to-b from-[#0098EA] to-[#0087D4] pl-3 pr-4 text-white shadow-[0_8px_24px_-8px_rgba(0,152,234,0.55)] transition-all duration-200 ease-out hover:brightness-110 active:scale-[0.98]"
     >
       <TonDiamond />
       <span className="text-[15px] leading-[18px]" style={{ fontWeight: 590 }}>
@@ -225,13 +225,7 @@ function LanguageDialog({
   );
 }
 
-function Item({
-  children,
-  onSelect,
-}: {
-  children: React.ReactNode;
-  onSelect?: () => void;
-}) {
+function Item({ children, onSelect }: { children: React.ReactNode; onSelect?: () => void }) {
   return (
     <DropdownMenu.Item
       onSelect={onSelect}

@@ -19,6 +19,27 @@ function config(overrides: Partial<ConstructorConfig>): ConstructorConfig {
 }
 
 describe("widget export snippets", () => {
+  it("keeps CDN JS-only and uses ZIP-local IIFE CSS in generated html", () => {
+    const c = config({});
+    const html = buildIndexHtml(c);
+    expect(html).toContain('href="index.iife.css"');
+    expect(html).toContain("data-toncast-widget-css");
+    expect(html).not.toContain("https://widget.toncast.app/v0/index.iife.css");
+    expect(html.indexOf("index.iife.css")).toBeLessThan(html.indexOf("index.iife.js"));
+
+    const snippet = buildJsSnippet(c);
+    expect(snippet).toContain("https://widget.toncast.app/v0/index.iife.js");
+    expect(snippet).not.toContain("index.iife.css");
+    expect(snippet).not.toContain("data-toncast-widget-css");
+  });
+
+  it("emits standalone Toncast API baseUrl when configured", () => {
+    const c = config({ apiBaseUrl: "https://api.staging.toncast.test" });
+
+    expect(buildIndexHtml(c)).toContain('"baseUrl": "https://api.staging.toncast.test"');
+    expect(buildJsSnippet(c)).toContain('"baseUrl": "https://api.staging.toncast.test"');
+  });
+
   it("does not emit raw script-closing tags from config values", () => {
     const maliciousConfig = config({
       domain: "https://safe.example/'</script><script>alert(1)</script>",
@@ -68,19 +89,44 @@ describe("widget export snippets", () => {
     expect(snippet).not.toContain("successBg");
   });
 
-  it("exports fixed grid columns as responsive max-columns", () => {
+  it("exports responsive grid columns through widget layout config", () => {
     const gridConfig = config({
       theme: {
         ...DEFAULT_CONFIG.theme,
-        columns: 3,
+        grid: {
+          mobile: 1,
+          tablet: 2,
+          desktop: 4,
+        },
       },
     });
 
     const snippet = buildJsSnippet(gridConfig);
 
-    expect(snippet).toContain("repeat(auto-fit");
-    expect(snippet).toContain("minmax(max(180px, calc((100% - 20px) / 3)), 1fr)");
-    expect(snippet).not.toContain("repeat(3, 1fr)");
+    expect(snippet).toContain('"layout": {');
+    expect(snippet).toContain('"grid": {');
+    expect(snippet).toContain('"mobile": 1');
+    expect(snippet).toContain('"tablet": 2');
+    expect(snippet).toContain('"desktop": 4');
+    expect(snippet).not.toContain("--tc-grid-cols");
+    expect(snippet).not.toContain("gridCols");
+  });
+
+  it("does not emit removed grid CSS variables in style.css", () => {
+    const gridConfig = config({
+      theme: {
+        ...DEFAULT_CONFIG.theme,
+        grid: {
+          mobile: 1,
+          tablet: 2,
+          desktop: 3,
+        },
+      },
+    });
+
+    const css = buildStyleCss(gridConfig);
+
+    expect(css ?? "").not.toContain("--tc-grid-cols");
   });
 
   it("emits derived CSS-only variables for themed fills and chrome", () => {

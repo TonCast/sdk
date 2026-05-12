@@ -41,6 +41,7 @@ export {
   type BetSummary,
   type CoinCapacity,
   type ConfirmedQuote,
+  type ConfirmQuoteParams,
   type MarketCapacity,
   type PriceCoinsOptions,
   type QuoteCommon,
@@ -102,6 +103,10 @@ export type {
   StreamListParams,
 } from "./resources/paris-stream";
 export * from "./types";
+export {
+  parseTonAddress,
+  type TonAddressString,
+} from "./utils/address";
 export {
   firstValue,
   fromPromise,

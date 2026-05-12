@@ -44,11 +44,16 @@ function englishTimeLeft(
   vars?: Record<string, number>,
 ): string {
   switch (key) {
-    case "time.ended": return "ended";
-    case "time.daysHours": return `${vars?.d ?? 0}d ${vars?.h ?? 0}h`;
-    case "time.hoursMinutes": return `${vars?.h ?? 0}h ${vars?.m ?? 0}m`;
-    case "time.minutes": return `${vars?.m ?? 0}m`;
-    case "time.lessThanMinute": return "< 1m";
+    case "time.ended":
+      return "ended";
+    case "time.daysHours":
+      return `${vars?.d ?? 0}d ${vars?.h ?? 0}h`;
+    case "time.hoursMinutes":
+      return `${vars?.h ?? 0}h ${vars?.m ?? 0}m`;
+    case "time.minutes":
+      return `${vars?.m ?? 0}m`;
+    case "time.lessThanMinute":
+      return "< 1m";
   }
 }
 

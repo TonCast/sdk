@@ -81,7 +81,7 @@ describe("paris.list", () => {
     expect(collected).toHaveLength(1);
   });
 
-  it("includeInactive=true sends the flag and parses object cursor + finished result", async () => {
+  it("feed=finished maps to includeInactive and parses object cursor + finished result", async () => {
     const inactiveSample = {
       data: [
         {

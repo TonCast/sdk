@@ -11,10 +11,28 @@ type Tab = "theme" | "config" | "export";
 const VALID_DENSITIES: ThemeConfig["density"][] = ["compact", "default", "comfortable"];
 const VALID_SCHEMES: ThemeConfig["colorScheme"][] = ["light", "dark", "system"];
 
+function normalizeGridColumn(raw: unknown, fallback: number): number {
+  const n = Number(raw);
+  return Number.isFinite(n) ? Math.min(6, Math.max(1, Math.round(n))) : fallback;
+}
+
 /** Normalizes constructor domain: trim, require absolute http(s) URL or empty. */
 function normalizeDomain(raw: unknown): string {
   if (typeof raw !== "string") return DEFAULT_CONFIG.domain;
   const s = raw.trim();
+  if (!s) return "";
+  try {
+    const u = new URL(s);
+    return u.protocol === "http:" || u.protocol === "https:" ? s : "";
+  } catch {
+    return "";
+  }
+}
+
+/** Normalizes optional Toncast API base URL: trim, require absolute http(s) URL or empty. */
+function normalizeApiBaseUrl(raw: unknown): string {
+  if (typeof raw !== "string") return DEFAULT_CONFIG.apiBaseUrl;
+  const s = raw.trim().replace(/\/+$/, "");
   if (!s) return "";
   try {
     const u = new URL(s);
@@ -44,6 +62,7 @@ function normalizeConfig(parsed: Partial<ConstructorConfig>): ConstructorConfig 
     ...parsed,
     // Ensure array fields are actually arrays (null/undefined from corrupt storage crashes .length)
     languages: Array.isArray(parsed.languages) ? parsed.languages : DEFAULT_CONFIG.languages,
+    apiBaseUrl: normalizeApiBaseUrl(parsed.apiBaseUrl),
     referralPct: Number.isFinite(Number(parsed.referralPct))
       ? Math.min(7, Math.max(0, Number(parsed.referralPct)))
       : DEFAULT_CONFIG.referralPct,
@@ -61,9 +80,11 @@ function normalizeConfig(parsed: Partial<ConstructorConfig>): ConstructorConfig 
       radius: Number.isFinite(Number(t?.radius))
         ? Math.min(64, Math.max(0, Number(t?.radius)))
         : DEFAULT_CONFIG.theme.radius,
-      columns: Number.isFinite(Number(t?.columns))
-        ? Math.min(4, Math.max(0, Math.round(Number(t?.columns))))
-        : DEFAULT_CONFIG.theme.columns,
+      grid: {
+        mobile: normalizeGridColumn(t?.grid?.mobile, DEFAULT_CONFIG.theme.grid.mobile),
+        tablet: normalizeGridColumn(t?.grid?.tablet, DEFAULT_CONFIG.theme.grid.tablet),
+        desktop: normalizeGridColumn(t?.grid?.desktop, DEFAULT_CONFIG.theme.grid.desktop),
+      },
       light: { ...DEFAULT_CONFIG.theme.light, ...(t?.light ?? {}) },
       dark: { ...DEFAULT_CONFIG.theme.dark, ...(t?.dark ?? {}) },
     },
@@ -87,10 +108,10 @@ const DEVICES: { id: Device; label: string; width: string; icon: string; preview
     },
     {
       id: "tablet",
-      label: "768px",
-      width: "768px",
+      label: "640px",
+      width: "640px",
       icon: "📟",
-      previewLabel: "Tablet, 768 pixels wide",
+      previewLabel: "Tablet, 640 pixels wide",
     },
     { id: "desktop", label: "100%", width: "100%", icon: "🖥", previewLabel: "Desktop, full width" },
   ];

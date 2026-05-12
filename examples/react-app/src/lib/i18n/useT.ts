@@ -3,8 +3,8 @@
 // Falls back to English when the active locale is missing the key.
 
 import { useCallback } from "react";
-import { EN_CATALOG, TRANSLATIONS, type TranslationKey } from "./translations";
 import { useI18n } from "./I18nProvider";
+import { EN_CATALOG, TRANSLATIONS, type TranslationKey } from "./translations";
 
 type TParams = Record<string, string | number>;
 

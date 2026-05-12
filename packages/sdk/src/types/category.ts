@@ -1,17 +1,19 @@
 import { z } from "zod";
 import type { StreamListParams } from "../resources/paris-stream";
 
-/** Internal schema used only to parse the server response. */
 export const ServerCategorySchema = z.object({
   id: z.number().int(),
   title: z.string(),
 });
 
+/** Localised category returned by the Toncast API. */
+export type Category = z.infer<typeof ServerCategorySchema>;
+
 /**
- * A filter entry returned by `client.categories.list()`.
+ * A UI-ready filter entry returned by `client.categories.listFilters()`.
  * Pass `category.param` directly to `paris.streamList()`.
  */
-export interface Category {
+export interface CategoryFilter {
   name: string;
   param: StreamListParams;
 }

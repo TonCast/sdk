@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { formatBetQuoteReason, parseUnits, TON_ADDRESS, ToncastError } from "@toncast/sdk";
 import { type BetMode, useBet, useTonConnectClient } from "@toncast/sdk-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -80,6 +81,7 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
   const t = useT();
   const { address, restored, connect, instance: tc } = useTcState();
   const connected = Boolean(address);
+  const queryClient = useQueryClient();
 
   const bet = useBet({
     pariId: connected ? pariId : null,
@@ -123,16 +125,20 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
     setSendError(null);
     setSending(true);
     try {
-      const confirmed = await bet.confirmCurrent();
+      const confirmed = await bet.confirmCurrent({ financialRiskAcknowledged: true });
       if (!confirmed) return;
       await tc.sendTransaction({
         messages: confirmed.messages,
         validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
       });
       onBetSent?.(pariId, bet.quote.totalCost, bet.side);
+      void queryClient.invalidateQueries({ queryKey: ["toncast", "betting", "bets"] });
       void bet.refresh();
       if (refreshTimerRef.current !== null) clearTimeout(refreshTimerRef.current);
-      refreshTimerRef.current = setTimeout(() => void bet.refresh(), 8_000);
+      refreshTimerRef.current = setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: ["toncast", "betting", "bets"] });
+        void bet.refresh();
+      }, 8_000);
     } catch (err) {
       setSendError(formatBetSendError(err));
     } finally {

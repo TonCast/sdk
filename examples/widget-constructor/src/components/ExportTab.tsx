@@ -94,6 +94,7 @@ export function ExportTab({ config }: { config: ConstructorConfig }) {
         <p className="text-xs text-slate-500 mb-3">
           Deploy to Cloudflare Pages or any static host —{" "}
           <code className="text-slate-400">index.html</code> +{" "}
+          <code className="text-slate-400">index.iife.css</code> +{" "}
           <code className="text-slate-400">tonconnect-manifest.json</code>
           {cssContent && (
             <>
@@ -128,7 +129,9 @@ export function ExportTab({ config }: { config: ConstructorConfig }) {
         <p className="text-xs text-slate-600 mb-2">
           Host at{" "}
           <code className="text-slate-500">
-            {config.domain ? `${config.domain}/tonconnect-manifest.json` : "https://your-domain.com/…"}
+            {config.domain
+              ? `${config.domain}/tonconnect-manifest.json`
+              : "https://your-domain.com/…"}
           </code>
         </p>
         <CodeBlock title="tonconnect-manifest.json" code={buildManifestJson(config)} />

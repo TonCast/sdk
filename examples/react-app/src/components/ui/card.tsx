@@ -6,7 +6,11 @@ export const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDi
     // `glass` = translucent + backdrop-blur + subtle highlight edge.
     // The Apple "liquid glass" look in one utility class, defined in
     // index.css and theme-aware (light/dark variants).
-    <div ref={ref} className={cn("glass rounded-[22px] text-card-foreground", className)} {...props} />
+    <div
+      ref={ref}
+      className={cn("glass rounded-[22px] text-card-foreground", className)}
+      {...props}
+    />
   ),
 );
 Card.displayName = "Card";

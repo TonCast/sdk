@@ -7,11 +7,13 @@ import { BetsResource } from "../resources/bets";
 import { CategoriesResource } from "../resources/categories";
 import { CoinsResource } from "../resources/coins";
 import { ParisResource } from "../resources/paris";
+import { parseTonAddress } from "../utils/address";
 import { noopLogger } from "../utils/logger";
 import {
   DEFAULT_BASE_URL,
   DEFAULT_WS_URL,
   type Logger,
+  type PrefetchConfig,
   type ReferralConfig,
   type TonClient,
   type ToncastClientOptions,
@@ -35,12 +37,14 @@ export class ToncastClient {
   private readonly tonClient: TonClient | undefined;
   private readonly logger: Logger;
   private readonly http: HttpClient;
-  private readonly prefetchEnabled: boolean;
+  private readonly prefetch: Required<PrefetchConfig>;
   private readonly languageStorageKey: string | null;
   private readonly languageListeners = new Set<(lang: SupportedLanguage) => void>();
 
   constructor(options: ToncastClientOptions = {}) {
-    this.userAddress = options.userAddress;
+    this.userAddress = options.userAddress
+      ? parseTonAddress(options.userAddress, "userAddress")
+      : undefined;
     this.languageStorageKey = resolveLanguageStorageKey(options.persistLanguage);
     // Resolution order: explicit `language` option → persisted localStorage → env auto-detect.
     const persisted = readPersistedLanguage(this.languageStorageKey);
@@ -55,6 +59,7 @@ export class ToncastClient {
       logger: this.logger,
       maxAttempts: options.maxAttempts ?? 3,
       retryDelayMs: options.retryDelayMs ?? 1000,
+      requestTimeoutMs: options.requestTimeoutMs ?? 15_000,
     });
 
     const getUserAddress = (): string | undefined => this.userAddress;
@@ -68,6 +73,7 @@ export class ToncastClient {
       wsBaseUrl: options.wsUrl ?? DEFAULT_WS_URL,
       getLanguage: () => this.language,
       logger: this.logger,
+      streamIdleTimeoutMs: options.streamIdleTimeoutMs ?? 30_000,
     });
     this.bets = new BetsResource({ http: this.http, getUserAddress });
     this.coins = new CoinsResource({
@@ -85,7 +91,7 @@ export class ToncastClient {
       logger: this.logger,
     });
 
-    this.prefetchEnabled = options.prefetch ?? true;
+    this.prefetch = resolvePrefetchConfig(options.prefetch);
     this.prefetchStatic();
   }
 
@@ -111,9 +117,8 @@ export class ToncastClient {
    * holds at least one jetton.
    */
   private prefetchStatic(): void {
-    if (!this.prefetchEnabled) return;
-    this.prefetchCategoriesOnly();
-    this.prefetchCoins();
+    if (this.prefetch.categories) this.prefetchCategoriesOnly();
+    if (this.prefetch.coins) this.prefetchCoins();
   }
 
   /**
@@ -122,7 +127,7 @@ export class ToncastClient {
    * prefetch (which costs 4 MB on STON.fi) would be wasteful.
    */
   private prefetchCategoriesOnly(): void {
-    if (!this.prefetchEnabled) return;
+    if (!this.prefetch.categories) return;
     // Failures are logged through the user's logger (default no-op) so an
     // integrator wiring `console` / pino sees what's happening without the
     // SDK throwing on construction. The next real call retries through the
@@ -146,7 +151,7 @@ export class ToncastClient {
    * when there's no `userAddress` to query against.
    */
   private prefetchCoins(): void {
-    if (!this.prefetchEnabled) return;
+    if (!this.prefetch.coins) return;
     if (!this.userAddress) return;
     if (!this.tonClient) return;
     void this.coins
@@ -158,7 +163,8 @@ export class ToncastClient {
         // pre-warm so the first jetton-funded `priceCoins` doesn't block.
         const hasJetton = coins.some((c) => c.address !== TON_ADDRESS);
         if (!hasJetton) return;
-        return this.betting.prefetchSwapMarkets().catch((err) => {
+        if (!this.prefetch.swapMarkets) return;
+        return this.betting.prefetchSwapMarkets(coins).catch((err) => {
           this.logger.warn("prefetch swap markets failed", err);
         });
       })
@@ -176,11 +182,12 @@ export class ToncastClient {
    * is enabled.
    */
   setUserAddress(address: string): void {
+    const parsed = parseTonAddress(address, "userAddress");
     if (this.userAddress === address) return;
     // Drop ALL cached balances — we don't want to keep a stale entry for
     // the previous user lying around in memory either.
     this.coins.invalidate();
-    this.userAddress = address;
+    this.userAddress = parsed;
     this.prefetchCoins();
   }
 
@@ -244,6 +251,28 @@ export class ToncastClient {
   getReferral(): ReferralConfig | undefined {
     return this.referral;
   }
+
+  /** Stop live streams, sockets, timers, and language listeners owned by this client. */
+  dispose(): void {
+    this.paris.dispose();
+    this.languageListeners.clear();
+  }
+}
+
+function resolvePrefetchConfig(
+  prefetch: ToncastClientOptions["prefetch"],
+): Required<PrefetchConfig> {
+  if (prefetch === true) {
+    return { categories: true, coins: true, swapMarkets: true };
+  }
+  if (!prefetch) {
+    return { categories: false, coins: false, swapMarkets: false };
+  }
+  return {
+    categories: prefetch.categories ?? false,
+    coins: prefetch.coins ?? false,
+    swapMarkets: prefetch.swapMarkets ?? false,
+  };
 }
 
 const DEFAULT_LANGUAGE_STORAGE_KEY = "toncast.language";
@@ -290,5 +319,6 @@ function validateReferral(r: ReferralConfig | undefined): ReferralConfig | undef
       "INVALID_REFERRAL",
     );
   }
+  if (r.address) parseTonAddress(r.address, "referral.address");
   return r;
 }

@@ -11,6 +11,26 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "import": "./dist/core.js",
+      "require": "./dist/core.cjs"
+    },
+    "./betting": {
+      "types": "./dist/betting.d.ts",
+      "import": "./dist/betting.js",
+      "require": "./dist/betting.cjs"
+    },
+    "./streams": {
+      "types": "./dist/streams.d.ts",
+      "import": "./dist/streams.js",
+      "require": "./dist/streams.cjs"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js",
+      "require": "./dist/types.cjs"
     }
   },
   "files": [
@@ -29,7 +49,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "keywords": [
     "toncast",
@@ -41,11 +61,11 @@
   "license": "MIT",
   "author": "Toncast",
   "dependencies": {
-    "@ston-fi/api": "^0.32.0",
-    "@ston-fi/sdk": "^2.7.0",
-    "@ton/core": "^0.63.1",
-    "@ton/ton": "^16.2.4",
-    "@toncast/tx-sdk": "^0.1.4",
-    "zod": "^4.3.6"
+    "@ston-fi/api": "0.32.0",
+    "@ston-fi/sdk": "2.7.0",
+    "@ton/core": "0.63.1",
+    "@ton/ton": "16.2.4",
+    "@toncast/tx-sdk": "0.1.4",
+    "zod": "4.3.6"
   }
 }

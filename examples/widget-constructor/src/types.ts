@@ -10,11 +10,17 @@ export interface ThemeColorSet {
   warn: string;
 }
 
+export interface ThemeGridConfig {
+  mobile: number;
+  tablet: number;
+  desktop: number;
+}
+
 export interface ThemeConfig {
   colorScheme: "light" | "dark" | "system";
   radius: number;
-  /** Grid columns: 0 = auto (responsive), 1–4 = fixed count */
-  columns: number;
+  /** Responsive market-card grid columns. */
+  grid: ThemeGridConfig;
   density: "compact" | "default" | "comfortable";
   /** Colors applied in light mode */
   light: ThemeColorSet;
@@ -32,6 +38,8 @@ export interface ConstructorConfig {
   language: SupportedLanguage | "";
   /** Languages available in the widget's in-app picker. Empty = show all. */
   languages: SupportedLanguage[];
+  /** Optional Toncast REST API base URL for staging/self-hosted API environments. */
+  apiBaseUrl: string;
   referralAddress: string;
   referralPct: number;
   theme: ThemeConfig;
@@ -59,12 +67,17 @@ export const DEFAULT_CONFIG: ConstructorConfig = {
   iconUrl: "",
   language: "",
   languages: [],
+  apiBaseUrl: "",
   referralAddress: "",
   referralPct: 0,
   theme: {
     colorScheme: "light",
     radius: 12,
-    columns: 0,
+    grid: {
+      mobile: 1,
+      tablet: 2,
+      desktop: 3,
+    },
     density: "default",
     light: DEFAULT_LIGHT_COLORS,
     dark: DEFAULT_DARK_COLORS,

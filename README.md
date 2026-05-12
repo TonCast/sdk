@@ -142,7 +142,8 @@ For visual setup and exported snippets, use [`examples/widget-constructor/`](./e
 
 ## Widget white-label theming
 
-`@toncast/widget` accepts `widget.cssVars` for per-instance visual customization.
+`@toncast/widget` accepts `widget.cssVars` for per-instance visual customization and
+`widget.layout.grid` for responsive market-card columns.
 Source tokens such as `accent`, `bg`, `success`, `danger`, `warn`, and `density`
 are resolved into readable foregrounds, subtle backgrounds, hover/active states,
 surface/chrome colors, order-book fills, shadows, borders, and spacing variables.
@@ -163,6 +164,13 @@ const widget = new ToncastWidget({
       density: "compact",
       light: { bg: "#ffffff" },
       dark: { bg: "#0b1020" },
+    },
+    layout: {
+      grid: {
+        mobile: 1,
+        tablet: 2,
+        desktop: 3,
+      },
     },
   },
 });

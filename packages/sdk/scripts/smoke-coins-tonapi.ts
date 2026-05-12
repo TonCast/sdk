@@ -5,13 +5,11 @@
 // with the same API key. Missing `decimals` are filled per TEP-74 spec
 // (default 9) so output is consistent across all jettons.
 //
-// Run: npx tsx scripts/smoke-coins-tonapi.ts [userAddress]
+// Run: USER_ADDRESS=... npx tsx scripts/smoke-coins-tonapi.ts [userAddress]
 import { TonClient, ToncastClient } from "../src";
 
-const DEFAULT_USER = "UQD7k4QZ7LtO3ZtCnoS1GIy84erPasgjiU70_rgRqNxQwIQN";
-
 async function main() {
-  const userAddress = process.argv[2] ?? DEFAULT_USER;
+  const userAddress = process.argv[2] ?? requireEnv("USER_ADDRESS");
 
   const tonClient = new TonClient({
     endpoint: "https://toncenter.com/api/v2/jsonRPC",
@@ -49,3 +47,9 @@ main().catch((err) => {
   console.error("FAILED:", err);
   process.exit(1);
 });
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing required env var ${name}`);
+  return value;
+}

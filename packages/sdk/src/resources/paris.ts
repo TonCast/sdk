@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Logger } from "../client/config";
-import { ToncastApiError, ToncastError } from "../errors";
+import { ToncastApiError } from "../errors";
 import { Endpoints } from "../http/endpoints";
 import type { HttpClient } from "../http/HttpClient";
 import type { SupportedLanguage } from "../i18n/languages";
@@ -12,7 +12,7 @@ import {
 import { type OddsState, OddsStateResponseSchema } from "../types/odds-state";
 import { type Pari, PariSchema } from "../types/pari";
 import { type PariWinner, PariWinnerSchema } from "../types/winner";
-import { type Cursor, envelopeSchema, iteratePages, type Page } from "../utils/pagination";
+import { envelopeSchema, type Page } from "../utils/pagination";
 import {
   type PariStream,
   PariStream as PariStreamImpl,
@@ -27,6 +27,11 @@ export interface ParisCursor {
   address: string;
 }
 
+const ParisCursorSchema = z.object({
+  sortValue: z.number(),
+  address: z.string(),
+});
+
 /**
  * Which slice of paris to return. Each value is mutually exclusive
  * (the backend feeds don't overlap):
@@ -40,13 +45,15 @@ export interface ParisCursor {
 export type ParisFeed = "active" | "finished" | "pending";
 
 /** All valid feed identifiers in display order. */
-export const PARIS_FEEDS = ["active", "pending", "finished"] as const satisfies readonly ParisFeed[];
+export const PARIS_FEEDS = [
+  "active",
+  "pending",
+  "finished",
+] as const satisfies readonly ParisFeed[];
 
 export interface ListParisParams {
-  /** Return resolved paris. Equivalent to `?includeInactive=true`. */
-  includeInactive?: boolean;
-  /** Return paris past `endTime` but not yet resolved. Equivalent to `?showPendingResults=true`. */
-  showPendingResults?: boolean;
+  /** Which mutually-exclusive feed to return. Default: `"active"`. */
+  feed?: ParisFeed;
   /** Filter by category id (see `client.categories.list()`). */
   categoryId?: number;
   /** Free-text search query, ≤ 100 characters. */
@@ -58,7 +65,7 @@ export interface ListParisParams {
    * The resource splits the `{sortValue, address}` shape into the
    * `cursorSortValue` / `cursorAddress` query params expected by the API.
    */
-  cursor?: Cursor | null;
+  cursor?: ParisCursor | null;
   signal?: AbortSignal;
 }
 
@@ -78,6 +85,7 @@ export interface ParisResourceDeps {
   wsBaseUrl: string;
   getLanguage: () => SupportedLanguage;
   logger: Logger;
+  streamIdleTimeoutMs: number | false;
 }
 
 /**
@@ -116,30 +124,25 @@ export class ParisResource {
 
   constructor(private readonly deps: ParisResourceDeps) {
     this.http = deps.http;
-    this.listSocket = new ParisListSocket({
-      wsBaseUrl: deps.wsBaseUrl,
-      logger: deps.logger,
-    });
+    this.listSocket = new ParisListSocket(
+      {
+        wsBaseUrl: deps.wsBaseUrl,
+        logger: deps.logger,
+      },
+      deps.streamIdleTimeoutMs,
+    );
   }
 
-  async list(params: ListParisParams = {}): Promise<Page<Pari>> {
-    // /v1/paris always returns object cursors. Reject string cursors with a clear
-    // error instead of silently dropping them and serving page 1 again.
-    if (typeof params.cursor === "string") {
-      throw new ToncastError(
-        "paris.list expects an object cursor (`{sortValue, address}`), got a string. " +
-          "Pass `Page.nextCursor` from a previous paris.list() call unchanged.",
-        "INVALID_CURSOR",
-      );
-    }
-    const cursor = params.cursor as ParisCursor | null | undefined;
+  async list(params: ListParisParams = {}): Promise<Page<Pari, ParisCursor>> {
+    const cursor = params.cursor;
+    const feedQuery = parisFeedQuery(params.feed);
     const page = await this.http.request({
       path: Endpoints.paris.list,
       query: {
         categoryId: params.categoryId,
         search: params.search,
-        includeInactive: params.includeInactive || undefined,
-        showPendingResults: params.showPendingResults || undefined,
+        includeInactive: feedQuery.includeInactive,
+        showPendingResults: feedQuery.showPendingResults,
         limit: params.limit,
         cursorSortValue: cursor?.sortValue,
         cursorAddress: cursor?.address,
@@ -147,7 +150,11 @@ export class ParisResource {
       schema: ParisPageSchema,
       signal: params.signal,
     });
-    return { ...page, items: page.items.filter(isPariVisible) };
+    return {
+      ...page,
+      items: page.items.filter(isPariVisible),
+      nextCursor: parseParisCursor(page.nextCursor),
+    };
   }
 
   /** Fetch a single pari by its on-chain address. */
@@ -199,8 +206,18 @@ export class ParisResource {
   }
 
   /** Lazy iterator over every page of `list()`. Stops when `signal` aborts. */
-  iterate(params: ListParisParams = {}): AsyncGenerator<Pari> {
-    return iteratePages((cursor) => this.list({ ...params, cursor }), params.signal);
+  async *iterate(params: ListParisParams = {}): AsyncGenerator<Pari> {
+    let cursor: ParisCursor | null = params.cursor ?? null;
+    while (true) {
+      if (params.signal?.aborted) return;
+      const page = await this.list({ ...params, cursor });
+      for (const pari of page.items) {
+        if (params.signal?.aborted) return;
+        yield pari;
+      }
+      if (!page.hasMore || page.nextCursor === null) return;
+      cursor = page.nextCursor;
+    }
   }
 
   /**
@@ -212,11 +229,9 @@ export class ParisResource {
    * polling fallback, and `pari_created` localization (via `client.language`).
    *
    * **Pooled by params**: calling `streamList(p)` twice with the same `p`
-   * returns the SAME stream object — no duplicate fetch, no extra socket
-   * traffic. Streams live for the lifetime of the `ToncastClient`; each one
-   * is just an in-memory `Pari[]` snapshot kept fresh by the shared
-   * `/ws/pari-list` connection. To free a stream early call `.stop()` — the
-   * pool then forgets it on the next `streamList(sameParams)` call.
+   * returns the same active stream object — no duplicate fetch, no extra socket
+   * traffic. Streams stop after the idle timeout when the last consumer
+   * unsubscribes, or immediately when `.stop()` / `client.dispose()` is called.
    *
    * Note: when `search` is set, polling is used instead of WS — the broadcast
    * stream doesn't carry search-filtered events.
@@ -225,12 +240,17 @@ export class ParisResource {
     const key = streamKey(params);
     const existing = this.listStreams.get(key);
     if (existing && !existing.isStopped()) return existing;
-    const stream = new ParisListStream(
+    let stream: ParisListStream;
+    stream = new ParisListStream(
       {
         paris: this,
         socket: this.listSocket,
         getLanguage: this.deps.getLanguage,
         logger: this.deps.logger,
+        streamIdleTimeoutMs: this.deps.streamIdleTimeoutMs,
+        onDispose: () => {
+          if (this.listStreams.get(key) === stream) this.listStreams.delete(key);
+        },
       },
       params,
     );
@@ -258,8 +278,9 @@ export class ParisResource {
    * then the per-pari WS connects and pushes incremental updates.
    *
    * **Pooled by `pariId + params`**: re-subscribing to the same target returns
-   * the same stream — zero duplicate fetch, zero extra WS. Streams live for
-   * the lifetime of the `ToncastClient`; call `.stop()` explicitly to release.
+   * the same active stream — zero duplicate fetch, zero extra WS. Streams stop
+   * after the idle timeout when the last consumer unsubscribes, or immediately
+   * when `.stop()` / `client.dispose()` is called.
    *
    * Subscribe to whichever channels you need: `onPari`, `onOddsState`,
    * `onCoefficientHistory`, `onBetEvent`, `onStatus`. Stop with `.stop()`.
@@ -271,17 +292,50 @@ export class ParisResource {
     const key = `${pariId}|${streamKey(params)}`;
     const existing = this.pariStreams.get(key);
     if (existing && !existing.isStopped()) return existing;
-    const stream = new PariStreamImpl(
+    let stream: PariStream;
+    stream = new PariStreamImpl(
       {
         paris: this,
         wsBaseUrl: this.deps.wsBaseUrl,
         logger: this.deps.logger,
+        streamIdleTimeoutMs: this.deps.streamIdleTimeoutMs,
+        onDispose: () => {
+          if (this.pariStreams.get(key) === stream) this.pariStreams.delete(key);
+        },
       },
       pariId,
       params,
     );
     this.pariStreams.set(key, stream);
     return stream;
+  }
+
+  /** Stop every pooled stream and the shared list socket. Idempotent. */
+  dispose(): void {
+    for (const stream of this.listStreams.values()) stream.stop();
+    for (const stream of this.pariStreams.values()) stream.stop();
+    this.listStreams.clear();
+    this.pariStreams.clear();
+    this.listSocket.dispose();
+  }
+}
+
+function parseParisCursor(cursor: unknown): ParisCursor | null {
+  if (cursor === null || cursor === undefined) return null;
+  return ParisCursorSchema.parse(cursor);
+}
+
+export function parisFeedQuery(feed: ParisFeed | undefined): {
+  includeInactive?: true;
+  showPendingResults?: true;
+} {
+  switch (feed ?? "active") {
+    case "finished":
+      return { includeInactive: true };
+    case "pending":
+      return { showPendingResults: true };
+    case "active":
+      return {};
   }
 }
 

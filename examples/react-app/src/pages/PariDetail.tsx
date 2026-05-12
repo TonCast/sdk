@@ -1,4 +1,4 @@
-import { DEFAULT_PARI_CHART_PARAMS, pariCoverUrl, type Pari } from "@toncast/sdk";
+import { DEFAULT_PARI_CHART_PARAMS, type Pari, pariCoverUrl } from "@toncast/sdk";
 import { useSubscribe } from "@toncast/sdk-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -21,11 +21,12 @@ function ExpandableDescription({ text }: { text: string }) {
     <div>
       <p className="whitespace-pre-line text-muted-foreground">
         {needsTruncation && !expanded
-          ? text.slice(0, DESCRIPTION_PREVIEW_LENGTH).trimEnd() + "…"
+          ? `${text.slice(0, DESCRIPTION_PREVIEW_LENGTH).trimEnd()}…`
           : text}
       </p>
       {needsTruncation && (
         <button
+          type="button"
           onClick={() => setExpanded((v) => !v)}
           className="mt-1 text-xs text-primary hover:underline"
         >
@@ -48,7 +49,8 @@ function PariOutcomeBanner({ pari }: { pari: Pari }) {
   const r = raw === "" ? "pending" : raw.toLowerCase();
 
   if (r === "yes" || r === "no" || r === "draw") {
-    const label = r === "yes" ? t("pari.result.yes") : r === "no" ? t("pari.result.no") : t("pari.result.draw");
+    const label =
+      r === "yes" ? t("pari.result.yes") : r === "no" ? t("pari.result.no") : t("pari.result.draw");
     const cls =
       r === "yes"
         ? "border-success/45 bg-success/10 text-success"
@@ -160,7 +162,7 @@ export function PariDetailPage() {
                 <div className="flex flex-col min-w-0">
                   <CardHeader>
                     <div className="flex items-start justify-between gap-4">
-                      <CardTitle className="text-xl break-words min-w-0">
+                      <CardTitle className="text-xl wrap-break-word min-w-0">
                         {snap.pari.name}
                       </CardTitle>
                       <Badge variant="outline" className="shrink-0">

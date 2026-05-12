@@ -58,4 +58,3 @@ export function formatTimeLeft(endTime: number, now: number = Date.now()): strin
   if (h > 0) return `${h}h ${m}m`;
   return `${m}m`;
 }
-

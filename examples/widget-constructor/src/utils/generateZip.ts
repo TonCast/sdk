@@ -3,6 +3,7 @@ import {
   densityPresetToCssCustomProperties,
   WIDGET_DENSITY_PRESETS,
 } from "@toncast/widget/density-presets";
+import widgetIifeCss from "../../../../packages/widget/src/styles/widget.css?raw";
 import {
   type ConstructorConfig,
   DEFAULT_DARK_COLORS,
@@ -10,7 +11,7 @@ import {
   type ThemeColorSet,
 } from "../types";
 
-const WIDGET_CDN_URL = "https://widget.toncast.app/v0/index.iife.js";
+const WIDGET_CDN_JS_URL = "https://widget.toncast.app/v0/index.iife.js";
 
 function escapeHtml(value: string): string {
   return value
@@ -139,12 +140,24 @@ function colorSetVars(
   return Object.keys(vars).length > 0 ? vars : null;
 }
 
-/** Returns gridCols CSS value for the selected column count (null = auto/default). */
-function gridColsValue(columns: number): string | null {
-  if (!columns || columns < 1) return null;
-  const safeColumns = Math.max(1, Math.min(4, Math.trunc(columns)));
-  const totalDefaultGap = Math.max(0, safeColumns - 1) * 10;
-  return `repeat(auto-fit, minmax(max(180px, calc((100% - ${totalDefaultGap}px) / ${safeColumns})), 1fr))`;
+function normalizeGridColumn(value: number, fallback: number): number {
+  return Number.isFinite(value) ? Math.max(1, Math.min(6, Math.round(value))) : fallback;
+}
+
+function buildLayoutConfig(config: ConstructorConfig): Record<string, unknown> {
+  return {
+    grid: {
+      mobile: normalizeGridColumn(config.theme.grid.mobile, 1),
+      tablet: normalizeGridColumn(config.theme.grid.tablet, 2),
+      desktop: normalizeGridColumn(config.theme.grid.desktop, 3),
+    },
+  };
+}
+
+function buildStandaloneClientConfig(config: ConstructorConfig): Record<string, unknown> | null {
+  const baseUrl = config.apiBaseUrl.trim().replace(/\/+$/, "");
+  if (!baseUrl) return null;
+  return { type: "standalone", baseUrl };
 }
 
 /**
@@ -154,15 +167,12 @@ function gridColsValue(columns: number): string | null {
 export function buildCssVarsConfig(config: ConstructorConfig): Record<string, unknown> | undefined {
   const { theme } = config;
   const radius = Number.isFinite(theme.radius) ? Math.max(0, Math.min(64, theme.radius)) : 12;
-  const gridCols = gridColsValue(theme.columns);
 
   const vars: Record<string, unknown> = {};
 
   // Base radius (applies to both themes)
   if (radius !== 12) vars.radius = `${radius}px`;
 
-  // Grid columns (applies globally)
-  if (gridCols) vars.gridCols = gridCols;
   if (theme.density !== "default") vars.density = theme.density;
 
   // Per-theme color overrides
@@ -188,11 +198,9 @@ export function buildCssVarsConfig(config: ConstructorConfig): Record<string, un
 export function buildStyleCss(config: ConstructorConfig): string | null {
   const { theme } = config;
   const radius = Number.isFinite(theme.radius) ? Math.max(0, Math.min(64, theme.radius)) : 12;
-  const gridCols = gridColsValue(theme.columns);
 
   const baseLines: string[] = [];
   if (radius !== 12) baseLines.push(`  --tc-radius: ${radius}px;`);
-  if (gridCols) baseLines.push(`  --tc-grid-cols: ${gridCols};`);
   // Emit density spacing tokens (same presets as @toncast/widget WIDGET_DENSITY_PRESETS).
   if (theme.density !== "default") {
     const preset = WIDGET_DENSITY_PRESETS[theme.density];
@@ -252,6 +260,7 @@ function buildWidgetOptions(config: ConstructorConfig): Record<string, unknown> 
   if (config.theme.colorScheme !== "light") opts.theme = config.theme.colorScheme;
   const cssVars = buildCssVarsConfig(config);
   if (cssVars) opts.cssVars = cssVars;
+  opts.layout = buildLayoutConfig(config);
   if (config.referralAddress && config.referralPct > 0) {
     opts.referral = { address: config.referralAddress, pct: config.referralPct };
   }
@@ -266,6 +275,8 @@ export function buildIndexHtml(config: ConstructorConfig): string {
   const widgetConfig: Record<string, unknown> = {
     tonconnect: { type: "standalone", options: { domain } },
   };
+  const clientConfig = buildStandaloneClientConfig(config);
+  if (clientConfig) widgetConfig.client = clientConfig;
   if (Object.keys(widgetOptions).length > 0) widgetConfig.widget = widgetOptions;
 
   const css = buildStyleCss(config);
@@ -279,9 +290,9 @@ export function buildIndexHtml(config: ConstructorConfig): string {
     ? `\n      @media (prefers-color-scheme: dark) {\n        body { background: ${bodyBgDark}; }\n      }`
     : "";
 
-  // style.css (when non-empty) is written as a separate file in the ZIP and
-  // referenced via <link> so integrators can locate and edit it in one place.
-  const cssLink = css ? `\n    <link rel="stylesheet" href="style.css" />` : "";
+  const iifeCssLink =
+    '\n    <link rel="stylesheet" href="index.iife.css" data-toncast-widget-css data-toncast-widget-css-loaded="true" />';
+  const cssLink = `${iifeCssLink}${css ? `\n    <link rel="stylesheet" href="style.css" />` : ""}`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -295,21 +306,20 @@ export function buildIndexHtml(config: ConstructorConfig): string {
         font-family: system-ui, -apple-system, sans-serif;
         min-height: 100vh;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
-        padding: 16px;
+        padding: 24px 16px;
         background: ${bodyBackground};
       }${systemDarkCss}
       #toncast-widget {
-        width: 100%;
-        max-width: 480px;
+        width: min(100%, 920px);
       }
     </style>
   </head>
   <body>
     <div id="toncast-widget"></div>
 
-    <script src="${WIDGET_CDN_URL}"></script>
+    <script src="${WIDGET_CDN_JS_URL}"></script>
     <script>
       const widget = new window.ToncastWidget.ToncastWidget(${stringifyForScript(widgetConfig, 6).replace(/^/gm, "      ").trimStart()});
       widget.mount(document.getElementById('toncast-widget'));
@@ -328,11 +338,13 @@ export function buildJsSnippet(config: ConstructorConfig): string {
       options: { domain },
     },
   };
+  const clientConfig = buildStandaloneClientConfig(config);
+  if (clientConfig) widgetConfig.client = clientConfig;
   if (Object.keys(widgetOptions).length > 0) widgetConfig.widget = widgetOptions;
 
   return `<div id="toncast-widget"></div>
 
-<script src="${WIDGET_CDN_URL}"></script>
+<script src="${WIDGET_CDN_JS_URL}"></script>
 <script>
   const widget = new window.ToncastWidget.ToncastWidget(${stringifyForScript(widgetConfig, 4).replace(/\n/g, "\n  ")});
   widget.mount(document.getElementById('toncast-widget'));
@@ -341,10 +353,14 @@ export function buildJsSnippet(config: ConstructorConfig): string {
 
 export function buildReactSnippet(config: ConstructorConfig): string {
   const widgetOptions = buildWidgetOptions(config);
+  const clientConfig = buildStandaloneClientConfig(config);
   const widgetPart =
     Object.keys(widgetOptions).length > 0
       ? `,\n        widget: ${stringifyForScript(widgetOptions, 8).replace(/\n/g, "\n        ")}`
       : "";
+  const clientPart = clientConfig
+    ? `,\n          client: ${stringifyForScript(clientConfig, 10).replace(/\n/g, "\n          ")}`
+    : "";
 
   return `// NOTE: ToncastBettingWidget must be rendered inside a TonConnectUIProvider.
 // See https://docs.ton.org/develop/dapps/ton-connect/web for setup instructions.
@@ -363,7 +379,7 @@ function ToncastBettingWidget() {
       .then((Widget) => {
         if (!active || !ref.current) return;
         widgetRef.current = new Widget({
-          tonconnect: { type: 'integrated', instance: tonconnect }${widgetPart},
+          tonconnect: { type: 'integrated', instance: tonconnect }${clientPart}${widgetPart},
         });
         widgetRef.current.mount(ref.current);
       })
@@ -382,6 +398,7 @@ export async function downloadZip(config: ConstructorConfig): Promise<void> {
   if (!folder) throw new Error("Failed to create zip folder");
 
   folder.file("index.html", buildIndexHtml(config));
+  folder.file("index.iife.css", widgetIifeCss);
   folder.file("tonconnect-manifest.json", buildManifestJson(config));
 
   const css = buildStyleCss(config);
