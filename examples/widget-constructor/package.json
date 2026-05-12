@@ -21,6 +21,7 @@
     "@toncast/sdk": "*",
     "@toncast/sdk-react": "*",
     "@toncast/widget": "*",
+    "@toncast/widget-loader": "*",
     "@tonconnect/ui-react": "^2.0.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.468.0",

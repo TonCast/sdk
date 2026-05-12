@@ -6,7 +6,7 @@ import { CoefficientChart } from "../components/CoefficientChart";
 import { OrderBook } from "../components/OrderBook";
 import { Skeleton } from "../components/ui/Skeleton";
 import { DESCRIPTION_PREVIEW_CHARS } from "../constants";
-import { useNav, useOnBet, type WidgetView } from "../context";
+import { useEmitBet, useNav, type WidgetView } from "../context";
 import { useT } from "../i18n/useT";
 
 function isSettledOutcome(pari: Pari): boolean {
@@ -76,7 +76,12 @@ function OutcomeBanner({ pari }: { pari: Pari }) {
 export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "detail" }> }) {
   const t = useT();
   const { back } = useNav();
-  const onBet = useOnBet();
+  // Bridges BetCard's positional `onBetSent` signature into the public `bet`
+  // event payload shape so hosts only ever see one schema.
+  const emitBet = useEmitBet();
+  const onBet = emitBet
+    ? (pariId: string, amount: bigint, side: "yes" | "no") => emitBet({ pariId, amount, side })
+    : undefined;
   const {
     data: snap,
     isLoading,

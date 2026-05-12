@@ -28,6 +28,7 @@
       "@toncast/widget/constants": ["../../packages/widget/src/constants.ts"],
       "@toncast/widget/styles/widget.css": ["../../packages/widget/src/styles/widget.css"],
       "@toncast/widget/*": ["../../packages/widget/src/*"],
+      "@toncast/widget-loader": ["../../packages/widget-loader/src/index.ts"],
       "@toncast/sdk-react": ["../../packages/sdk-react/src/index.ts"],
       "@toncast/sdk": ["../../packages/sdk/src/index.ts"]
     }

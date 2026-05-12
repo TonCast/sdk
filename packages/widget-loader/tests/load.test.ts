@@ -207,6 +207,87 @@ describe("ToncastWidgetLoader.load", () => {
     await expect(loaded).resolves.toBe(Widget);
   });
 
+  it("rejects synchronously with a clear message when document is undefined (SSR)", async () => {
+    vi.unstubAllGlobals();
+    vi.stubGlobal("document", undefined);
+    const loader = await importFreshLoader();
+    await expect(loader.load("https://cdn.example/widget.js")).rejects.toThrowError(
+      /requires a browser environment/,
+    );
+  });
+
+  it("defaults crossOrigin to 'anonymous' when integrity is set without explicit crossOrigin", async () => {
+    const doc = installFakeDocument();
+    class Widget {}
+    vi.stubGlobal("ToncastWidget", { ToncastWidget: Widget });
+    const loader = await importFreshLoader();
+
+    const loaded = loader.load("https://cdn.example/widget.js", { integrity: "sha384-abc" });
+    expect(doc.scripts).toHaveLength(1);
+    expect(doc.scripts[0]?.integrity).toBe("sha384-abc");
+    expect(doc.scripts[0]?.crossOrigin).toBe("anonymous");
+    doc.scripts[0]?.onload?.();
+    await expect(loaded).resolves.toBe(Widget);
+  });
+
+  it("accepts a CDN bundle that exposes window.ToncastWidget directly as the constructor", async () => {
+    const doc = installFakeDocument();
+    class Widget {}
+    vi.stubGlobal("ToncastWidget", Widget);
+    const loader = await importFreshLoader();
+
+    const loaded = loader.load("https://cdn.example/widget.js");
+    doc.scripts[0]?.onload?.();
+    await expect(loaded).resolves.toBe(Widget);
+  });
+
+  it("rejects when window.ToncastWidget is set but is not a constructor", async () => {
+    const doc = installFakeDocument();
+    vi.stubGlobal("ToncastWidget", { ToncastWidget: 42 });
+    const loader = await importFreshLoader();
+
+    const loaded = loader.load("https://cdn.example/widget.js");
+    doc.scripts[0]?.onload?.();
+    await expect(loaded).rejects.toThrowError(/is not a constructor/);
+  });
+
+  it("rejects with a timeout error and removes the script tag when timeoutMs elapses", async () => {
+    vi.useFakeTimers();
+    try {
+      const doc = installFakeDocument();
+      const loader = await importFreshLoader();
+
+      const loaded = loader.load("https://cdn.example/widget.js", { timeoutMs: 250 });
+      expect(doc.scripts).toHaveLength(1);
+      const failure = loaded.catch((err: unknown) => err);
+      vi.advanceTimersByTime(250);
+      const err = await failure;
+      expect(err).toBeInstanceOf(Error);
+      expect((err as Error).message).toMatch(/Timed out after 250ms/);
+      expect(doc.scripts).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("clears the timeout timer when the script loads before the deadline", async () => {
+    vi.useFakeTimers();
+    try {
+      const doc = installFakeDocument();
+      class Widget {}
+      vi.stubGlobal("ToncastWidget", { ToncastWidget: Widget });
+      const loader = await importFreshLoader();
+
+      const loaded = loader.load("https://cdn.example/widget.js", { timeoutMs: 1_000 });
+      doc.scripts[0]?.onload?.();
+      await expect(loaded).resolves.toBe(Widget);
+      vi.advanceTimersByTime(5_000);
+      expect(doc.scripts).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("replaces the script tag when integrity changes for the same URL and keeps separate ctor caches", async () => {
     const doc = installFakeDocument();
     const url = "https://cdn.example/widget.js";

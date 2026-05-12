@@ -45,6 +45,8 @@ export type {
   ToncastWidgetDensity,
   ToncastWidgetDerivedCssVarsOptions,
   ToncastWidgetEventMap,
+  ToncastWidgetGridLayout,
+  ToncastWidgetLayout,
 } from "./widgetTypes";
 
 export type ToncastWidgetConstructor = new (config: ToncastWidgetConfig) => ToncastWidgetInstance;
@@ -85,13 +87,24 @@ export interface ToncastWidgetLoaderOptions {
   crossOrigin?: "" | "anonymous" | "use-credentials";
   /** CSP nonce to attach to the injected script element. */
   nonce?: string;
+  /**
+   * Reject the load promise after this many milliseconds if the script never
+   * fires `load` or `error` (DNS hangs, captive portals, broken CDN). The
+   * injected `<script>` is removed on timeout so a retry can re-inject it.
+   * Omit or set ≤ 0 to wait indefinitely.
+   */
+  timeoutMs?: number;
 }
 
 /** Major-versioned CDN base (`/v0/`, `/v1/`, …). */
 const CDN_VERSION_BASE = "https://widget.toncast.app/v0";
 
-/** Default widget script on CDN. Exposed on the default export object. */
-const WIDGET_CDN_JS_URL = `${CDN_VERSION_BASE}/index.iife.js`;
+/**
+ * Default widget script on CDN. Single source of truth — re-exported as a
+ * named export so host apps and tooling never hardcode the URL.
+ * Also exposed on the default export object for `ToncastWidgetLoader.WIDGET_CDN_JS_URL`.
+ */
+export const WIDGET_CDN_JS_URL = `${CDN_VERSION_BASE}/index.iife.js`;
 
 const CDN_URL = WIDGET_CDN_JS_URL;
 
@@ -106,6 +119,8 @@ function makeLoaderCacheKey(cdnUrl: string, options: ToncastWidgetLoaderOptions)
   const integrity = options.integrity ?? "";
   const crossOrigin = normalizeCrossOrigin(options.crossOrigin);
   const nonce = options.nonce ?? "";
+  // `timeoutMs` is intentionally NOT part of the cache key — it controls a
+  // single load attempt, not the identity of the loaded constructor.
   return `${cdnUrl}\n${integrity}\n${crossOrigin}\n${nonce}`;
 }
 
@@ -194,6 +209,12 @@ async function load(
   cdnUrl: string = CDN_URL,
   options: ToncastWidgetLoaderOptions = {},
 ): Promise<ToncastWidgetConstructor> {
+  if (typeof document === "undefined") {
+    throw new Error(
+      "[ToncastWidgetLoader] load() requires a browser environment (document is undefined). " +
+        "Call it from client-side code only — gate behind useEffect / a `typeof window !== 'undefined'` check in SSR frameworks.",
+    );
+  }
   const cacheKey = makeLoaderCacheKey(cdnUrl, options);
   const cached = ctorCache.get(cacheKey);
   if (cached) return cached;
@@ -230,9 +251,11 @@ function injectScript(
       return;
     }
     let settled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const finish = (fn: () => void) => {
       if (settled) return;
       settled = true;
+      if (timer !== undefined) clearTimeout(timer);
       fn();
     };
     const el = document.createElement("script");
@@ -252,6 +275,15 @@ function injectScript(
       el.remove();
       finish(() => reject(new Error(`[ToncastWidgetLoader] Failed to load bundle from ${src}`)));
     };
+    if (typeof options.timeoutMs === "number" && options.timeoutMs > 0) {
+      const ms = options.timeoutMs;
+      timer = setTimeout(() => {
+        el.remove();
+        finish(() =>
+          reject(new Error(`[ToncastWidgetLoader] Timed out after ${ms}ms loading ${src}`)),
+        );
+      }, ms);
+    }
     document.head.appendChild(el);
   });
 }

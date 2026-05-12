@@ -1,4 +1,7 @@
 import type { SupportedLanguage } from "@toncast/sdk";
+
+export type { SupportedLanguage };
+
 import { RADIUS_DEFAULT } from "@toncast/widget/constants";
 
 export type Device = "mobile" | "tablet" | "desktop";

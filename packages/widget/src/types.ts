@@ -224,8 +224,6 @@ export interface ToncastWidgetConfig {
      * Pass an empty array [] to hide the picker entirely.
      */
     languages?: SupportedLanguage[];
-    /** Called when the user successfully sends a bet transaction. */
-    onBet?: (pariId: string, amount: bigint, side: "yes" | "no") => void;
   };
 }
 

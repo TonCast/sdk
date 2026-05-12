@@ -58,24 +58,6 @@ function removeStyles(): void {
 
 type EventListener<T> = T extends void ? () => void : (payload: T) => void;
 
-/**
- * Returns a copy of `config` with an `onBet` bridge that fires both the
- * supplied `emit` callback and any user-provided `widget.onBet`.
- *
- * Exported for unit testing — production code uses ToncastWidget#mount/update.
- */
-export function composeOnBetBridge(
-  config: ToncastWidgetConfig,
-  emit: (e: { pariId: string; amount: bigint; side: "yes" | "no" }) => void,
-): ToncastWidgetConfig {
-  const userOnBet = config.widget?.onBet;
-  const onBet = (pariId: string, amount: bigint, side: "yes" | "no") => {
-    emit({ pariId, amount, side });
-    userOnBet?.(pariId, amount, side);
-  };
-  return { ...config, widget: { ...config.widget, onBet } };
-}
-
 export class ToncastWidget {
   private config: ToncastWidgetConfig;
   private root: Root | null = null;
@@ -87,9 +69,12 @@ export class ToncastWidget {
     this.config = config;
   }
 
-  /** Composes current config with an `onBet` bridge that re-emits via this instance. */
-  private buildConfig(): ToncastWidgetConfig {
-    return composeOnBetBridge(this.config, (payload) => this.emit("bet", payload));
+  /** React element with the bet-event bridge wired into Widget's `onBet` prop. */
+  private renderElement() {
+    return createElement(Widget, {
+      config: this.config,
+      onBet: (payload) => this.emit("bet", payload),
+    });
   }
 
   mount(container: Element): void {
@@ -101,7 +86,7 @@ export class ToncastWidget {
     injectStyles();
     mountedCount++;
     this.root = createRoot(container);
-    this.root.render(createElement(Widget, { config: this.buildConfig() }));
+    this.root.render(this.renderElement());
     this.emit("mount", { container } as ToncastWidgetEventMap["mount"]);
   }
 
@@ -117,7 +102,7 @@ export class ToncastWidget {
   update(config: ToncastWidgetConfig): void {
     this.config = config;
     if (!this.root) return;
-    this.root.render(createElement(Widget, { config: this.buildConfig() }));
+    this.root.render(this.renderElement());
   }
 
   unmount(): void {
@@ -136,7 +121,7 @@ export class ToncastWidget {
    * Subscribe to lifecycle and bridge events from this host instance.
    *
    * - `mount` / `unmount` — widget attached to or removed from the DOM.
-   * - `bet` — user placed a bet (fires alongside `widget.onBet` in config).
+   * - `bet` — user placed a bet (sole subscription channel).
    * - `error` — emitted only when **another listener** you registered on this
    *   instance throws (for example your `bet` handler). Not all SDK/UI failures.
    */

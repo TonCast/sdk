@@ -1,4 +1,13 @@
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useReducer } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+} from "react";
 
 import { NAV_INITIAL_STATE, navReducer, type WidgetView } from "./navReducer";
 import type { ToncastWidgetConfig } from "./types";
@@ -50,13 +59,6 @@ export function useWidgetConfig(): ToncastWidgetConfig {
   return ctx;
 }
 
-/** Returns the onBet callback from widget config, or undefined if not set. */
-export function useOnBet():
-  | ((pariId: string, amount: bigint, side: "yes" | "no") => void)
-  | undefined {
-  return useWidgetConfig().widget?.onBet;
-}
-
 export function ConfigProvider({
   config,
   children,
@@ -65,4 +67,41 @@ export function ConfigProvider({
   children: ReactNode;
 }) {
   return <ConfigContext.Provider value={config}>{children}</ConfigContext.Provider>;
+}
+
+// ─── Bet emitter context ───
+// Sole channel for surfacing successful bets to the host:
+// `<Widget onBet={...} />` → BetEmitterProvider → useEmitBet() → BetCard.
+// `ToncastWidget` wires its `bet` event listener through this same prop.
+
+export type BetEmitterPayload = { pariId: string; amount: bigint; side: "yes" | "no" };
+export type BetEmitter = (payload: BetEmitterPayload) => void;
+
+const BetEmitterContext = createContext<BetEmitter | null>(null);
+
+/**
+ * Provides a **stable** bet-emitter to descendants.
+ *
+ * Hosts often pass an inline arrow as `<Widget onBet={(p) => …}>` — naive
+ * forwarding would change the context value on every render and force every
+ * `useEmitBet()` consumer to re-render. We stash the latest callback in a ref
+ * and expose a memoised wrapper whose identity only flips when the host
+ * toggles between providing and not providing a callback.
+ */
+export function BetEmitterProvider({ emit, children }: { emit?: BetEmitter; children: ReactNode }) {
+  const ref = useRef<BetEmitter | undefined>(emit);
+  useEffect(() => {
+    ref.current = emit;
+  }, [emit]);
+  const enabled = Boolean(emit);
+  const stable = useMemo<BetEmitter | null>(
+    () => (enabled ? (payload) => ref.current?.(payload) : null),
+    [enabled],
+  );
+  return <BetEmitterContext.Provider value={stable}>{children}</BetEmitterContext.Provider>;
+}
+
+/** Returns the bet emitter when a host has subscribed via `<Widget onBet={…} />`. */
+export function useEmitBet(): BetEmitter | null {
+  return useContext(BetEmitterContext);
 }

@@ -102,4 +102,15 @@ describe("ToncastWidget lifecycle", () => {
     w.unmount();
     link.remove();
   });
+
+  it("type contract: config.widget.onBet is removed — only widget.on('bet', …) remains", () => {
+    // The deprecated callback was removed in favour of the imperative event
+    // bus; this assertion fails the build if it is ever re-introduced.
+    const _bad: ToncastWidgetConfig = {
+      ...baseConfig,
+      // @ts-expect-error - widget.onBet is intentionally removed; subscribe via widget.on('bet', …) instead
+      widget: { onBet: () => undefined },
+    };
+    expect(_bad).toBeDefined();
+  });
 });

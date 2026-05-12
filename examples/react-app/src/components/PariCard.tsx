@@ -59,9 +59,7 @@ export function PariCard({ pari, onPickSide }: PariCardProps) {
           <div className="w-full aspect-square shrink-0 bg-muted" />
         )}
         <div className="flex flex-1 flex-col p-3 space-y-2">
-          <div className="text-sm font-medium leading-snug line-clamp-3 min-h-15">
-            {pari.name}
-          </div>
+          <div className="text-sm font-medium leading-snug line-clamp-3 min-h-15">{pari.name}</div>
           <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-auto">
             <span className="inline-flex items-center gap-1">
               <Clock className="size-3" />

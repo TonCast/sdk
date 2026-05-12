@@ -12,7 +12,7 @@ import {
 } from "react";
 import { NavBar } from "./components/NavBar";
 import { WidgetHeader } from "./components/WidgetHeader";
-import { ConfigProvider, NavProvider, useNav } from "./context";
+import { BetEmitterProvider, ConfigProvider, NavProvider, useNav } from "./context";
 import { I18nProvider } from "./i18n/I18nProvider";
 import { useT } from "./i18n/useT";
 import {
@@ -214,9 +214,15 @@ export interface WidgetProps {
   className?: string;
   /** Inline styles merged onto the widget root element (after cssVars). */
   style?: CSSProperties;
+  /**
+   * Called when the user successfully sends a bet transaction. Mirror of the
+   * `bet` event on the imperative `ToncastWidget` class — pick whichever entry
+   * point matches your integration.
+   */
+  onBet?: (payload: { pariId: string; amount: bigint; side: "yes" | "no" }) => void;
 }
 
-export function Widget({ config, className, style }: WidgetProps) {
+export function Widget({ config, className, style, onBet }: WidgetProps) {
   const prefersDark = usePrefersColorSchemeDark();
   const configTheme = config.widget?.theme;
   const effectiveTheme: "light" | "dark" =
@@ -246,16 +252,18 @@ export function Widget({ config, className, style }: WidgetProps) {
   const inner = (
     <ToncastLayer config={config}>
       <ConfigProvider config={configWithTheme}>
-        <NavProvider>
-          <div
-            className={cn(themeClass, className)}
-            style={cssVarStyle || style ? { ...cssVarStyle, ...style } : undefined}
-          >
-            <WidgetErrorBoundary>
-              <WidgetShell />
-            </WidgetErrorBoundary>
-          </div>
-        </NavProvider>
+        <BetEmitterProvider emit={onBet}>
+          <NavProvider>
+            <div
+              className={cn(themeClass, className)}
+              style={cssVarStyle || style ? { ...cssVarStyle, ...style } : undefined}
+            >
+              <WidgetErrorBoundary>
+                <WidgetShell />
+              </WidgetErrorBoundary>
+            </div>
+          </NavProvider>
+        </BetEmitterProvider>
       </ConfigProvider>
     </ToncastLayer>
   );

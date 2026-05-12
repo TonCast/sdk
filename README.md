@@ -140,6 +140,15 @@ Wrap your tree in `TonConnectUIProvider` with a valid manifest URL for your doma
 
 For visual setup and exported snippets, use [`examples/widget-constructor/`](./examples/widget-constructor/).
 
+### Subscribing to `bet` events
+
+The successful-bet event is exposed identically through both surfaces:
+
+- **Class:** `widget.on("bet", ({ pariId, amount, side }) => …)` (and matching `off`).
+- **React:** `<Widget onBet={({ pariId, amount, side }) => …} />` from `@toncast/widget/react`.
+
+Both deliver the same payload and fire after the wallet send call resolves. See [`packages/widget/README.md`](./packages/widget/README.md#subscribing-to-bet-events) for the full snippets.
+
 ## Widget white-label theming
 
 `@toncast/widget` accepts `widget.cssVars` for per-instance visual customization and

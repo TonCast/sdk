@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type ConstructorConfig, DEFAULT_CONFIG } from "../src/types";
+import { type ConstructorConfig, DEFAULT_CONFIG, type SupportedLanguage } from "../src/types";
 import {
   buildCssVarsConfig,
   buildIndexHtml,
@@ -18,6 +18,11 @@ function config(overrides: Partial<ConstructorConfig>): ConstructorConfig {
       ...overrides.theme,
     },
   };
+}
+
+/** Typed escape hatch for XSS payloads that aren't valid SupportedLanguage values. */
+function unsafeLang(value: string): SupportedLanguage {
+  return value as SupportedLanguage;
 }
 
 describe("widget export snippets", () => {
@@ -46,8 +51,8 @@ describe("widget export snippets", () => {
     const maliciousConfig = config({
       domain: "https://safe.example/'</script><script>alert(1)</script>",
       appName: "Bad </script><script>alert(2)</script>",
-      language: "en</script><script>alert(3)</script>" as never,
-      languages: ["en</script><script>alert(4)</script>" as never],
+      language: unsafeLang("en</script><script>alert(3)</script>"),
+      languages: [unsafeLang("en</script><script>alert(4)</script>")],
       referralAddress: "UQ_FAKE</script><script>alert(5)</script>",
       referralPct: 3,
       theme: {

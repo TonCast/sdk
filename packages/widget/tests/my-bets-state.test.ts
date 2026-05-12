@@ -2,8 +2,9 @@ import type { Bet } from "@toncast/sdk";
 import { describe, expect, it } from "vitest";
 import { appendBetsPage } from "../src/views/myBetsState";
 
+/** Stub: only `id` is read by `appendBetsPage`; cast through unknown to satisfy `Bet`. */
 function bet(id: string): Bet {
-  return { id } as Bet;
+  return { id } as unknown as Bet;
 }
 
 describe("appendBetsPage", () => {

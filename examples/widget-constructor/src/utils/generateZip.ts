@@ -7,6 +7,7 @@ import {
   WIDGET_DENSITY_PRESETS,
 } from "@toncast/widget/density-presets";
 import { stripTrailingSlashes } from "@toncast/widget/url";
+import { WIDGET_CDN_JS_URL } from "@toncast/widget-loader";
 import widgetIifeCss from "../../../../packages/widget/src/styles/widget.css?raw";
 import {
   type ConstructorConfig,
@@ -16,8 +17,6 @@ import {
 } from "../types";
 import { buildWidgetConfig } from "./buildWidgetConfig";
 import { clampRadius } from "./normalizeConfig";
-
-const WIDGET_CDN_JS_URL = "https://widget.toncast.app/v0/index.iife.js";
 
 /** Shown in export UI when no app domain is set; used in generated HTML/JS placeholders. */
 export const PLACEHOLDER_DOMAIN = "https://your-domain.com";
