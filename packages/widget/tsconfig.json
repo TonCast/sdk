@@ -8,15 +8,12 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "sourceMap": true,
-    "outDir": "dist",
-    "rootDir": "src",
     "isolatedModules": true,
     "resolveJsonModule": true,
     "jsx": "react-jsx",
+    "noEmit": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
-  "include": ["src/**/*"],
+  "include": ["src", "tests"],
   "exclude": ["node_modules", "dist"]
 }

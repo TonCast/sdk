@@ -5,7 +5,7 @@
  * externally-provided TonConnectUI instance into React state.
  */
 
-import type { TonConnectUI } from "@tonconnect/ui-react";
+import type { Theme, TonConnectUI } from "@tonconnect/ui-react";
 import {
   TonConnectUIProvider,
   useIsConnectionRestored,
@@ -14,6 +14,7 @@ import {
 } from "@tonconnect/ui-react";
 import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 import { tryTonConnectManifestUrl } from "./domain";
+import { tonConnectThemeFromWidget } from "./tonconnectTheme";
 
 interface TcState {
   address: string;
@@ -37,6 +38,15 @@ export function useTcState(): TcState {
   const ctx = useContext(TcBridgeCtx);
   if (!ctx) throw new Error("useTcState must be used within TcProvider");
   return ctx;
+}
+
+/** Keeps TonConnect UI theme in sync (TonConnectUI is a global singleton). */
+function TonConnectThemeSync({ theme }: { theme: Theme }) {
+  const [tc] = useTonConnectUI();
+  useEffect(() => {
+    tc.uiOptions = { uiPreferences: { theme } };
+  }, [tc, theme]);
+  return null;
 }
 
 // ─── Standalone provider: creates its own TonConnect inside widget tree ───
@@ -69,8 +79,18 @@ function BrokenStandaloneBridge({ children }: { children: ReactNode }) {
   return <TcBridgeCtx.Provider value={state}>{children}</TcBridgeCtx.Provider>;
 }
 
-export function StandaloneProvider({ domain, children }: { domain: string; children: ReactNode }) {
+export function StandaloneProvider({
+  domain,
+  widgetTheme,
+  children,
+}: {
+  domain: string;
+  /** Mirrors `config.widget.theme` — drives TonConnect modal appearance. */
+  widgetTheme?: "light" | "dark" | "system";
+  children: ReactNode;
+}) {
   const manifestUrl = tryTonConnectManifestUrl(domain);
+  const tonTheme = tonConnectThemeFromWidget(widgetTheme);
   if (!manifestUrl) {
     return (
       <StandaloneManifestOkCtx.Provider value={false}>
@@ -80,7 +100,12 @@ export function StandaloneProvider({ domain, children }: { domain: string; child
   }
   return (
     <StandaloneManifestOkCtx.Provider value={true}>
-      <TonConnectUIProvider manifestUrl={manifestUrl} analytics={{ mode: "off" }}>
+      <TonConnectUIProvider
+        manifestUrl={manifestUrl}
+        analytics={{ mode: "off" }}
+        uiPreferences={{ theme: tonTheme }}
+      >
+        <TonConnectThemeSync theme={tonTheme} />
         <StandaloneBridge>{children}</StandaloneBridge>
       </TonConnectUIProvider>
     </StandaloneManifestOkCtx.Provider>
@@ -91,9 +116,11 @@ export function StandaloneProvider({ domain, children }: { domain: string; child
 
 export function IntegratedProvider({
   instance,
+  widgetTheme,
   children,
 }: {
   instance: TonConnectUI;
+  widgetTheme?: "light" | "dark" | "system";
   children: ReactNode;
 }) {
   const [address, setAddress] = useState(() => instance.account?.address ?? "");
@@ -109,6 +136,10 @@ export function IntegratedProvider({
     setRestored(true);
     return unsubscribe;
   }, [instance]);
+
+  useEffect(() => {
+    instance.uiOptions = { uiPreferences: { theme: tonConnectThemeFromWidget(widgetTheme) } };
+  }, [instance, widgetTheme]);
 
   const state: TcState = {
     address,

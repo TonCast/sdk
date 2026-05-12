@@ -1,11 +1,7 @@
-import { keepPreviousData } from "@tanstack/react-query";
 import type { Pari, StreamListParams } from "@toncast/sdk";
 import { useToncastClient } from "../client/useToncastClient";
-import {
-  type UseObservableQueryOptions,
-  type UseObservableQueryResult,
-  useObservableQuery,
-} from "./useObservableQuery";
+import { toncastQueryKeys } from "../queryKeys";
+import { type UseLiveStreamQueryResult, useLiveStreamQuery } from "./useLiveStreamQuery";
 
 /**
  * Live, paginated paris feed via WS. Returns the latest `Pari[]` snapshot
@@ -20,13 +16,13 @@ import {
  */
 export function useStreamList(
   params: StreamListParams = {},
-  options?: Omit<UseObservableQueryOptions<Pari[]>, "queryKey" | "requestFn">,
-): UseObservableQueryResult<Pari[]> {
+  options?: { enabled?: boolean; keepPreviousData?: boolean },
+): UseLiveStreamQueryResult<Pari[]> {
   const client = useToncastClient();
-  return useObservableQuery<Pari[]>({
-    placeholderData: keepPreviousData,
+  return useLiveStreamQuery<Pari[]>({
+    keepPreviousData: true,
     ...options,
-    queryKey: ["toncast", "paris", "streamList", params],
+    queryKey: toncastQueryKeys.paris.streamList(params),
     requestFn: () => client.paris.streamList(params),
   });
 }

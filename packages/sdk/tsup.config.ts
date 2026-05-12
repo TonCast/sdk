@@ -14,7 +14,13 @@ const externalDeps = [
 ];
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  entry: {
+    index: "src/index.ts",
+    core: "src/core.ts",
+    betting: "src/betting.ts",
+    streams: "src/streams.ts",
+    types: "src/public-types.ts",
+  },
   format: ["esm", "cjs"],
   dts: true,
   sourcemap: true,

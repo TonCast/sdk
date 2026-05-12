@@ -2,7 +2,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { ToncastClient } from "@toncast/sdk";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ToncastProvider, useCategories } from "../src";
+import { ToncastProvider, useCategories, useCategoryFilters } from "../src";
 
 describe("useCategories", () => {
   afterEach(() => {
@@ -29,11 +29,35 @@ describe("useCategories", () => {
     expect(result.current.isLoading).toBe(true);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual([
-      { name: "All", param: {} },
-      { name: "Sport", param: { categoryId: 1 } },
-      { name: "Crypto", param: { categoryId: 3 } },
-      { name: "Pending result", param: { showPendingResults: true } },
-      { name: "Finished", param: { includeInactive: true } },
+      { id: 1, title: "Sport" },
+      { id: 3, title: "Crypto" },
+    ]);
+  });
+
+  it("loads UI-ready category filters separately from raw categories", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify([
+            { id: 1, title: "Sport" },
+            { id: 3, title: "Crypto" },
+          ]),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+    );
+    const client = new ToncastClient({ prefetch: false });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <ToncastProvider client={client}>{children}</ToncastProvider>
+    );
+    const { result } = renderHook(() => useCategoryFilters(), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual([
+      { name: "All", param: { feed: "active" } },
+      { name: "Sport", param: { feed: "active", categoryId: 1 } },
+      { name: "Crypto", param: { feed: "active", categoryId: 3 } },
+      { name: "Pending result", param: { feed: "pending" } },
+      { name: "Finished", param: { feed: "finished" } },
     ]);
   });
 

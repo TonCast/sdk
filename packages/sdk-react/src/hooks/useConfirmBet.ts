@@ -3,13 +3,13 @@ import {
   type UseMutationResult,
   useMutation,
 } from "@tanstack/react-query";
-import type { BetQuote, ConfirmedQuote, QuoteCommon } from "@toncast/sdk";
+import type { BetQuote, ConfirmedQuote, ConfirmQuoteParams } from "@toncast/sdk";
 import { useToncastClient } from "../client/useToncastClient";
 
 interface ConfirmBetVariables {
   quote: BetQuote;
   /** Override the original quote params (rare — only when the quote was built manually with tx-sdk). */
-  params?: QuoteCommon;
+  params?: ConfirmQuoteParams;
 }
 
 /**

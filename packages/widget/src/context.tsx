@@ -1,14 +1,18 @@
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+} from "react";
 
+import { NAV_INITIAL_STATE, navReducer, type WidgetView } from "./navReducer";
 import type { ToncastWidgetConfig } from "./types";
 
-const NAV_MAX_DEPTH = 20;
-// ─── Navigation ───
-
-export type WidgetView =
-  | { name: "list" }
-  | { name: "detail"; pariId: string; initialSide?: "yes" | "no" }
-  | { name: "bets" };
+export type { WidgetView };
 
 interface NavContextValue {
   view: WidgetView;
@@ -26,48 +30,23 @@ export function useNav(): NavContextValue {
 }
 
 export function NavProvider({ children }: { children: ReactNode }) {
-  const [history, setHistory] = useState<WidgetView[]>([{ name: "list" }]);
+  const [history, dispatch] = useReducer(navReducer, NAV_INITIAL_STATE);
   const view = history[history.length - 1] ?? { name: "list" };
 
   const navigate = useCallback((to: WidgetView) => {
-    setHistory((h) => {
-      const current = h[h.length - 1];
-      if (!current) return [...h, to];
-      // Skip duplicate for tab-level views (list, bets).
-      if (current.name === to.name && !("pariId" in to)) return h;
-      // Skip duplicate for detail view with same pariId AND same initialSide.
-      // If initialSide differs (e.g. YES→NO pre-selection), allow the push so
-      // the detail view can update its default bet side.
-      if (
-        current.name === "detail" &&
-        to.name === "detail" &&
-        current.pariId === to.pariId &&
-        current.initialSide === to.initialSide
-      )
-        return h;
-      // Keep at most NAV_MAX_DEPTH entries to prevent unbounded memory growth.
-      return [...h, to].slice(-NAV_MAX_DEPTH);
-    });
+    dispatch({ type: "navigate", view: to });
   }, []);
-
-  const back = useCallback(() => {
-    setHistory((h) => (h.length > 1 ? h.slice(0, -1) : h));
-  }, []);
-
+  const back = useCallback(() => dispatch({ type: "back" }), []);
   const canGoBack = history.length > 1;
 
-  // Stabilize the context object so consumers don't re-render on unrelated
-  // NavProvider renders. navigate and back are already stable (useCallback).
+  // Stabilise context value to avoid spurious consumer re-renders when only
+  // unrelated state changes upstream.
   const value = useMemo(
     () => ({ view, navigate, back, canGoBack }),
     [view, navigate, back, canGoBack],
   );
 
-  return (
-    <NavContext.Provider value={value}>
-      {children}
-    </NavContext.Provider>
-  );
+  return <NavContext.Provider value={value}>{children}</NavContext.Provider>;
 }
 
 // ─── Widget config context ───
@@ -80,13 +59,6 @@ export function useWidgetConfig(): ToncastWidgetConfig {
   return ctx;
 }
 
-/** Returns the onBet callback from widget config, or undefined if not set. */
-export function useOnBet():
-  | ((pariId: string, amount: bigint, side: "yes" | "no") => void)
-  | undefined {
-  return useWidgetConfig().widget?.onBet;
-}
-
 export function ConfigProvider({
   config,
   children,
@@ -95,4 +67,41 @@ export function ConfigProvider({
   children: ReactNode;
 }) {
   return <ConfigContext.Provider value={config}>{children}</ConfigContext.Provider>;
+}
+
+// ─── Bet emitter context ───
+// Sole channel for surfacing successful bets to the host:
+// `<Widget onBet={...} />` → BetEmitterProvider → useEmitBet() → BetCard.
+// `ToncastWidget` wires its `bet` event listener through this same prop.
+
+export type BetEmitterPayload = { pariId: string; amount: bigint; side: "yes" | "no" };
+export type BetEmitter = (payload: BetEmitterPayload) => void;
+
+const BetEmitterContext = createContext<BetEmitter | null>(null);
+
+/**
+ * Provides a **stable** bet-emitter to descendants.
+ *
+ * Hosts often pass an inline arrow as `<Widget onBet={(p) => …}>` — naive
+ * forwarding would change the context value on every render and force every
+ * `useEmitBet()` consumer to re-render. We stash the latest callback in a ref
+ * and expose a memoised wrapper whose identity only flips when the host
+ * toggles between providing and not providing a callback.
+ */
+export function BetEmitterProvider({ emit, children }: { emit?: BetEmitter; children: ReactNode }) {
+  const ref = useRef<BetEmitter | undefined>(emit);
+  useEffect(() => {
+    ref.current = emit;
+  }, [emit]);
+  const enabled = Boolean(emit);
+  const stable = useMemo<BetEmitter | null>(
+    () => (enabled ? (payload) => ref.current?.(payload) : null),
+    [enabled],
+  );
+  return <BetEmitterContext.Provider value={stable}>{children}</BetEmitterContext.Provider>;
+}
+
+/** Returns the bet emitter when a host has subscribed via `<Widget onBet={…} />`. */
+export function useEmitBet(): BetEmitter | null {
+  return useContext(BetEmitterContext);
 }

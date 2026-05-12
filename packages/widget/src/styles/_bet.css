@@ -1,0 +1,123 @@
+/* ===== CONNECT BUTTON ===== */
+.tc-connect-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  height: 40px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    var(--tc-accent) 0%,
+    var(--tc-accent-hover) 100%
+  );
+  color: var(--tc-accent-fg);
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 590;
+  transition: filter 0.15s;
+  box-shadow: var(--tc-accent-shadow);
+}
+.tc-connect-btn:hover {
+  filter: brightness(1.1);
+}
+.tc-connect-btn:active {
+  transform: scale(0.98);
+}
+.tc-connect-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* ===== BET CARD ===== */
+.tc-bet-card {
+  padding: var(--tc-card-padding);
+  display: flex;
+  flex-direction: column;
+  gap: var(--tc-form-gap);
+}
+
+.tc-mode-tabs {
+  display: flex;
+  border: 1px solid var(--tc-border);
+  border-radius: calc(var(--tc-radius) - 4px);
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 500;
+}
+.tc-mode-tab {
+  flex: 1;
+  padding: 6px 4px;
+  text-align: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--tc-fg-muted);
+  font-family: inherit;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+.tc-mode-tab.tc-active {
+  background: var(--tc-accent);
+  color: var(--tc-accent-fg);
+}
+.tc-mode-tab:not(.tc-active):hover {
+  background: var(--tc-bg-hover);
+  color: var(--tc-fg);
+}
+
+.tc-stepper-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tc-stepper-row .tc-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.tc-quote-box {
+  background: var(--tc-bg-muted);
+  border: 1px solid var(--tc-border);
+  border-radius: calc(var(--tc-radius) - 2px);
+  padding: 10px 12px;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tc-quote-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.tc-quote-row-label {
+  color: var(--tc-fg-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tc-quote-row-value {
+  font-family: monospace;
+  color: var(--tc-fg);
+  white-space: nowrap;
+}
+.tc-quote-row-accent {
+  font-weight: 600;
+}
+.tc-quote-row-success {
+  color: var(--tc-success-fg);
+  font-weight: 600;
+}
+.tc-quote-row-warn {
+  color: var(--tc-warn-fg);
+}
+.tc-quote-divider {
+  border: none;
+  border-top: 1px solid var(--tc-border);
+  margin: 4px 0;
+}

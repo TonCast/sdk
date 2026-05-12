@@ -5,7 +5,8 @@ import { BetCard } from "../components/BetCard";
 import { CoefficientChart } from "../components/CoefficientChart";
 import { OrderBook } from "../components/OrderBook";
 import { Skeleton } from "../components/ui/Skeleton";
-import { useNav, useOnBet, type WidgetView } from "../context";
+import { DESCRIPTION_PREVIEW_CHARS } from "../constants";
+import { useEmitBet, useNav, type WidgetView } from "../context";
 import { useT } from "../i18n/useT";
 
 function isSettledOutcome(pari: Pari): boolean {
@@ -17,14 +18,15 @@ const descId = "tc-detail-desc-body";
 
 function ExpandableDescription({ text }: { text: string }) {
   const t = useT();
-  const PREVIEW = 160;
   const [expanded, setExpanded] = useState(false);
-  const needsTruncation = text.length > PREVIEW;
+  const needsTruncation = text.length > DESCRIPTION_PREVIEW_CHARS;
 
   return (
     <div>
       <p id={descId} className="tc-detail-desc">
-        {needsTruncation && !expanded ? `${text.slice(0, PREVIEW).trimEnd()}…` : text}
+        {needsTruncation && !expanded
+          ? `${text.slice(0, DESCRIPTION_PREVIEW_CHARS).trimEnd()}…`
+          : text}
       </p>
       {needsTruncation && (
         <button
@@ -59,18 +61,12 @@ function OutcomeBanner({ pari }: { pari: Pari }) {
   }
 
   if (r === "pending" && pari.status === "inactive") {
-    return (
-      <div className="tc-outcome-muted" style={{ fontSize: 12 }}>
-        {t("pari.result.pendingInactive")}
-      </div>
-    );
+    return <div className="tc-outcome-muted tc-text-sm">{t("pari.result.pendingInactive")}</div>;
   }
 
   if (r !== "pending") {
     return (
-      <div className="tc-outcome-muted" style={{ fontSize: 12 }}>
-        {t("pari.result.unknown", { result: raw })}
-      </div>
+      <div className="tc-outcome-muted tc-text-sm">{t("pari.result.unknown", { result: raw })}</div>
     );
   }
 
@@ -80,7 +76,12 @@ function OutcomeBanner({ pari }: { pari: Pari }) {
 export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "detail" }> }) {
   const t = useT();
   const { back } = useNav();
-  const onBet = useOnBet();
+  // Bridges BetCard's positional `onBetSent` signature into the public `bet`
+  // event payload shape so hosts only ever see one schema.
+  const emitBet = useEmitBet();
+  const onBet = emitBet
+    ? (pariId: string, amount: bigint, side: "yes" | "no") => emitBet({ pariId, amount, side })
+    : undefined;
   const {
     data: snap,
     isLoading,
@@ -108,7 +109,7 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
     : null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--tc-form-gap, 12px)" }}>
+    <div className="tc-form-col">
       <button type="button" className="tc-back-btn" onClick={back}>
         {t("page.paris.detail.back")}
       </button>
@@ -124,20 +125,10 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
               <img src={img} alt="" loading="eager" className="tc-detail-img" />
             </div>
           )}
-          <div
-            className="tc-card-body"
-            style={{ display: "flex", flexDirection: "column", gap: 10 }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                justifyContent: "space-between",
-                gap: 12,
-              }}
-            >
+          <div className="tc-card-body tc-detail-card-body">
+            <div className="tc-detail-header-row">
               <h2 className="tc-detail-title">{snap.pari.name}</h2>
-              <span className="tc-badge tc-badge-default" style={{ flexShrink: 0 }}>
+              <span className="tc-badge tc-badge-default tc-detail-meta-badge">
                 {t(`pari.status.${snap.pari.status}` as Parameters<typeof t>[0]) ||
                   snap.pari.status}
               </span>

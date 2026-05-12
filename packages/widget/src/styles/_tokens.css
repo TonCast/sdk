@@ -1,0 +1,93 @@
+/* ===== TOKENS =====
+   Scoped under .tc-w to avoid conflicts with the host page.
+   CSS custom properties allow per-instance theming. */
+.tc-w {
+  height: 100%;
+  /* Default light theme */
+  --tc-accent: #0098ea;
+  --tc-accent-fg: #ffffff;
+  --tc-accent-bg: rgba(0, 152, 234, 0.1);
+  --tc-accent-hover: #0087d4;
+  --tc-accent-shadow: 0 8px 24px -8px rgba(0, 152, 234, 0.55);
+  --tc-bg: #ffffff;
+  --tc-bg-chrome: #f8fafc;
+  --tc-bg-card: #f8fafc;
+  --tc-bg-muted: #f1f5f9;
+  --tc-bg-hover: rgba(0, 0, 0, 0.04);
+  --tc-fg: #1e293b;
+  --tc-fg-muted: #64748b;
+  --tc-border: #e2e8f0;
+  --tc-radius: 12px;
+  --tc-success: #16a34a;
+  --tc-success-fg: #15803d;
+  --tc-success-bg: rgba(22, 163, 74, 0.1);
+  --tc-success-border: rgba(22, 163, 74, 0.25);
+  --tc-success-hover-bg: rgba(22, 163, 74, 0.18);
+  --tc-success-active-bg: rgba(22, 163, 74, 0.22);
+  --tc-success-active-border: rgba(22, 163, 74, 0.4);
+  --tc-success-active-shadow: 0 4px 12px -4px rgba(22, 163, 74, 0.35);
+  --tc-success-fill-bg: rgba(22, 163, 74, 0.35);
+  --tc-danger: #dc2626;
+  --tc-danger-fg: #b91c1c;
+  --tc-danger-bg: rgba(220, 38, 38, 0.1);
+  --tc-danger-border: rgba(220, 38, 38, 0.25);
+  --tc-danger-hover-bg: rgba(220, 38, 38, 0.18);
+  --tc-danger-active-bg: rgba(220, 38, 38, 0.22);
+  --tc-danger-active-border: rgba(220, 38, 38, 0.4);
+  --tc-danger-active-shadow: 0 4px 12px -4px rgba(220, 38, 38, 0.35);
+  --tc-danger-fill-bg: rgba(220, 38, 38, 0.35);
+  --tc-warn: #d97706;
+  --tc-warn-fg: #d97706;
+  --tc-warn-bg: rgba(217, 119, 6, 0.1);
+  --tc-warn-border: rgba(217, 119, 6, 0.25);
+  /* Density (`cssVars.density`): these seven tokens adjust shell spacing. Many inner
+     layouts (pari cards, dialogs, steppers) still use fixed px — see components. */
+  --tc-content-padding: 12px;
+  --tc-card-padding: 14px;
+  --tc-card-gap: 10px;
+  --tc-form-gap: 12px;
+  --tc-header-padding-y: 8px;
+  --tc-header-padding-x: 12px;
+  --tc-nav-padding-y: 10px;
+  --tc-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --tc-grid-mobile: 1;
+  --tc-grid-tablet: 2;
+  --tc-grid-desktop: 3;
+
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--tc-fg);
+  background: transparent;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  container-type: inline-size;
+}
+
+.tc-w *,
+.tc-w *::before,
+.tc-w *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Dark theme */
+.tc-w.tc-dark {
+  --tc-bg: #0f172a;
+  --tc-bg-chrome: #1b2638;
+  --tc-bg-card: #1e293b;
+  --tc-bg-muted: #131d2e;
+  --tc-bg-hover: rgba(255, 255, 255, 0.06);
+  --tc-fg: #e2e8f0;
+  --tc-fg-muted: #94a3b8;
+  --tc-border: #2d3f55;
+  --tc-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+}

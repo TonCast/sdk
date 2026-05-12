@@ -15,4 +15,6 @@ export type {
   ToncastWidgetDensity,
   ToncastWidgetDerivedCssVarsOptions,
   ToncastWidgetEventMap,
+  ToncastWidgetGridLayout,
+  ToncastWidgetLayout,
 } from "./types";

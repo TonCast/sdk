@@ -1,0 +1,32 @@
+/* ===== LAYOUT ===== */
+.tc-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: min(460px, 100dvh);
+  background: var(--tc-bg);
+  border-radius: var(--tc-radius);
+  overflow: hidden;
+  border: 1px solid var(--tc-border);
+  max-width: 100%;
+}
+
+.tc-content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: var(--tc-content-padding);
+  scrollbar-width: thin;
+  scrollbar-color: var(--tc-border) transparent;
+}
+
+.tc-content::-webkit-scrollbar {
+  width: 4px;
+}
+.tc-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.tc-content::-webkit-scrollbar-thumb {
+  background: var(--tc-border);
+  border-radius: 2px;
+}

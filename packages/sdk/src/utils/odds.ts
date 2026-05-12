@@ -108,9 +108,7 @@ export function oddsLiquidity(
  * Includes empty buckets — filter with
  * `.filter(r => r.yesDepth > 0 || r.noDepth > 0)` if the UI hides them.
  */
-export function orderBookLadder(
-  oddsState: OddsState,
-): {
+export function orderBookLadder(oddsState: OddsState): {
   yesOdds: number;
   yesDepth: number;
   noDepth: number;
@@ -150,10 +148,7 @@ export function orderBookLadder(
  * Returns `null` when there are no same-side orders either — caller
  * decides on a final fallback (typically the middle of the range).
  */
-export function sameSideMedianYesOdds(
-  oddsState: OddsState,
-  isYes: boolean,
-): number | null {
+export function sameSideMedianYesOdds(oddsState: OddsState, isYes: boolean): number | null {
   // For YES bets we walk Yes[] (existing YES orders); for NO bets we walk
   // No[] (existing NO orders). Index i ↔ "their yesOdds" = (i+1)*ODDS_STEP
   // for YES, but for NO orders the array is indexed by noOdds — convert
@@ -178,11 +173,7 @@ export function sameSideMedianYesOdds(
  * at 0. Use as the hard cap for +/− steppers and free-form ticket inputs
  * in Fixed-mode bet builders.
  */
-export function fixedTicketsForBudget(
-  maxBetTon: bigint,
-  yesOdds: number,
-  isYes: boolean,
-): number {
+export function fixedTicketsForBudget(maxBetTon: bigint, yesOdds: number, isYes: boolean): number {
   const perTicket = ticketCost(yesOdds, isYes);
   if (perTicket <= 0n) return 0;
   const room = maxBetTon - PARI_EXECUTION_FEE;

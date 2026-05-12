@@ -3,14 +3,12 @@ import type { SupportedLanguage } from "../i18n/languages";
 import type { Pari } from "../types/pari";
 import type { Observer, Subscription } from "../utils/observable";
 import { localisePariCreated, type PariListIncomingMessage } from "../ws/pari-list-protocol";
-import type { ParisResource } from "./paris";
+import type { ParisFeed, ParisResource } from "./paris";
 import type { ParisListSocket, SocketHandle } from "./paris-list-socket";
 
 export interface StreamListParams {
-  /** Return resolved paris (`?includeInactive=true`). Mutually exclusive with `showPendingResults`. */
-  includeInactive?: boolean;
-  /** Return paris past `endTime` but not yet resolved (`?showPendingResults=true`). Mutually exclusive with `includeInactive`. */
-  showPendingResults?: boolean;
+  /** Which mutually-exclusive feed to return. Default: `"active"`. */
+  feed?: ParisFeed;
   /** Filter by category. Default: all. */
   categoryId?: number;
   /** Free-text search. **Forces polling-only mode** (broadcast doesn't carry search-filtered events). */
@@ -39,6 +37,8 @@ export interface ParisStreamDeps {
   socket: ParisListSocket;
   getLanguage: () => SupportedLanguage;
   logger: Logger;
+  streamIdleTimeoutMs: number | false;
+  onDispose?: () => void;
 }
 
 /** Active subscription for `onSnapshot`. */
@@ -63,6 +63,8 @@ export class ParisListStream {
   private socketOffStatus: (() => void) | null = null;
   private socketOffResync: (() => void) | null = null;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private idleStopTimer: ReturnType<typeof setTimeout> | null = null;
+  private activeConsumers = 0;
   private stopped = false;
   private inflightLoadMore: Promise<void> | null = null;
 
@@ -77,11 +79,16 @@ export class ParisListStream {
 
   /** Subscribe to snapshot updates. Returns an unsubscribe fn. */
   onSnapshot(listener: Listener): () => void {
+    this.retain();
+    let closed = false;
     this.listeners.add(listener);
     // Always emit the current state synchronously so the integrator gets a baseline.
     if (this.items.length > 0 || this.status !== "loading") listener([...this.items]);
     return () => {
+      if (closed) return;
+      closed = true;
       this.listeners.delete(listener);
+      this.release();
     };
   }
 
@@ -90,8 +97,8 @@ export class ParisListStream {
    * `complete()`s during normal operation (the stream is long-lived); errors
    * surface through `getError()` + status `"error"` rather than `error()`.
    *
-   * This is what `useObservableQuery` in `@toncast/sdk-react` consumes —
-   * works as a drop-in for any rxjs-style adapter expecting `subscribe(observer)`.
+   * This powers `useStreamList` in `@toncast/sdk-react` and also works as a
+   * drop-in for any rxjs-style adapter expecting `subscribe(observer)`.
    */
   subscribe(observer: Observer<Pari[]> = {}): Subscription {
     let closed = false;
@@ -113,10 +120,15 @@ export class ParisListStream {
 
   /** Subscribe to status changes (`loading | live | polling | stopped`). */
   onStatus(listener: (s: ParisStreamStatus) => void): () => void {
+    this.retain();
+    let closed = false;
     this.statusListeners.add(listener);
     listener(this.status);
     return () => {
+      if (closed) return;
+      closed = true;
       this.statusListeners.delete(listener);
+      this.release();
     };
   }
 
@@ -157,11 +169,20 @@ export class ParisListStream {
   stop(): void {
     if (this.stopped) return;
     this.stopped = true;
+    if (this.idleStopTimer) {
+      clearTimeout(this.idleStopTimer);
+      this.idleStopTimer = null;
+    }
     this.detachFromSocket();
     this.stopPolling();
     this.setStatus("stopped");
     this.listeners.clear();
     this.statusListeners.clear();
+    this.deps.onDispose?.();
+  }
+
+  dispose(): void {
+    this.stop();
   }
 
   /**
@@ -192,12 +213,41 @@ export class ParisListStream {
     }
   }
 
+  private retain(): void {
+    if (this.stopped) return;
+    this.activeConsumers++;
+    if (this.idleStopTimer) {
+      clearTimeout(this.idleStopTimer);
+      this.idleStopTimer = null;
+    }
+  }
+
+  private release(): void {
+    if (this.stopped) return;
+    this.activeConsumers = Math.max(0, this.activeConsumers - 1);
+    if (this.activeConsumers > 0) return;
+    this.scheduleIdleStop();
+  }
+
+  private scheduleIdleStop(): void {
+    const timeout = this.deps.streamIdleTimeoutMs;
+    if (timeout === false) return;
+    if (timeout <= 0) {
+      this.stop();
+      return;
+    }
+    if (this.idleStopTimer) return;
+    this.idleStopTimer = setTimeout(() => {
+      this.idleStopTimer = null;
+      if (this.activeConsumers === 0) this.stop();
+    }, timeout);
+  }
+
   /** Returns true on success, false on failure. */
   private async refetchFirstPage({ initial = false } = {}): Promise<boolean> {
     try {
       const page = await this.deps.paris.list({
-        includeInactive: this.params.includeInactive,
-        showPendingResults: this.params.showPendingResults,
+        feed: this.params.feed,
         categoryId: this.params.categoryId,
         search: this.params.search,
         limit: this.params.pageSize,
@@ -224,8 +274,7 @@ export class ParisListStream {
     if (!this.nextCursor) return;
     try {
       const page = await this.deps.paris.list({
-        includeInactive: this.params.includeInactive,
-        showPendingResults: this.params.showPendingResults,
+        feed: this.params.feed,
         categoryId: this.params.categoryId,
         search: this.params.search,
         limit: this.params.pageSize,
@@ -289,6 +338,7 @@ export class ParisListStream {
     // Socket already filtered out syncStatus/pong; everything else is a
     // sequenced broadcast we can apply.
     if (msg.type === "syncStatus" || msg.type === "pong") return;
+    const feed = this.params.feed ?? "active";
     let changed = false;
     switch (msg.type) {
       case "coefficient_update": {
@@ -340,8 +390,8 @@ export class ParisListStream {
       case "pari_created": {
         // Hidden paris are never exposed.
         if (!msg.data.isVisible) break;
-        // Filter by feed + category before inserting.
-        if (this.params.includeInactive || this.params.showPendingResults) break; // newly-created paris only show up in active feed
+        // Newly-created paris only show up in the active feed.
+        if (feed !== "active") break;
         if (this.params.categoryId !== undefined && msg.data.categoryId !== this.params.categoryId)
           break;
         const localised = localisePariCreated(msg.data, this.deps.getLanguage());
@@ -352,7 +402,7 @@ export class ParisListStream {
       }
       case "pari_result_set": {
         // Active and pending feeds: remove the pari once a result is set.
-        if (!this.params.includeInactive) {
+        if (feed !== "finished") {
           const idx = this.items.findIndex((p) => p.id === msg.data.pariAddress);
           if (idx !== -1) {
             this.items.splice(idx, 1);
@@ -361,20 +411,20 @@ export class ParisListStream {
         }
         // Finished feed: broadcast doesn't carry full Pari payload — refetch so
         // the resolved pari shows up at the top.
-        if (this.params.includeInactive) {
+        if (feed === "finished") {
           void this.refetchFirstPage();
         }
         break;
       }
       case "pari_paused": {
-        if (!this.params.includeInactive && !this.params.showPendingResults) {
+        if (feed === "active") {
           const idx = this.items.findIndex((p) => p.id === msg.data.pariAddress);
           if (idx !== -1) {
             this.items.splice(idx, 1);
             changed = true;
           }
         }
-        if (this.params.showPendingResults) {
+        if (feed === "pending") {
           void this.refetchFirstPage();
         }
         break;

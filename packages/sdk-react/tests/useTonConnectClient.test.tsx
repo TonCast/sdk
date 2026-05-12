@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
 import { ToncastProvider, useTonConnectClient } from "../src";
 
-const TEST_ADDR = "UQD7k4QZ7LtO3ZtCnoS1GIy84erPasgjiU70_rgRqNxQwIQN";
+const TEST_ADDR = "UQABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAZAm";
 
 describe("useTonConnectClient", () => {
   it("sets userAddress when address is non-empty", () => {

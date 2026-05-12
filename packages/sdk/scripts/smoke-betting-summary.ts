@@ -1,18 +1,17 @@
 // Real-API smoke for betting.summary — does NOT sign or send anything.
-// Run: npx tsx scripts/smoke-betting-summary.ts [pariId] [userAddress]
+// Run: USER_ADDRESS=... npx tsx scripts/smoke-betting-summary.ts [pariId] [userAddress]
 import { fromNano } from "@ton/core";
 import { TON_ADDRESS } from "@toncast/tx-sdk";
 import { createTonClient, ToncastClient } from "../src";
 import { printBetQuote } from "./_lib/print-quote";
 
 const DEFAULT_PARI = "EQCi1hBngahzphH1L0wknVCUJBVs7a_2LfHzoUwsoJ9biEIK";
-const DEFAULT_USER = "UQD7k4QZ7LtO3ZtCnoS1GIy84erPasgjiU70_rgRqNxQwIQN";
 
 const fmtTon = (nano: bigint): string => fromNano(nano);
 
 async function main() {
   const pariId = process.argv[2] ?? DEFAULT_PARI;
-  const userAddress = process.argv[3] ?? DEFAULT_USER;
+  const userAddress = process.argv[3] ?? requireEnv("USER_ADDRESS");
 
   const tonClient = createTonClient({ apiKey: process.env.TONCENTER_API_KEY });
   const client = new ToncastClient({ language: "en", userAddress, tonClient });
@@ -105,3 +104,9 @@ main().catch((err) => {
   console.error("FAILED:", err);
   process.exit(1);
 });
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing required env var ${name}`);
+  return value;
+}

@@ -4,28 +4,30 @@ import {
   type BetQuote,
   type BetSummary,
   type BreakdownTotals,
-  breakdownTotals,
   type CoinCapacity,
   type ConfirmedQuote,
-  calcWinnings,
-  DEFAULT_WALLET_RESERVE,
+  type ConfirmQuoteParams,
   fixedTicketsForBudget,
   ODDS_MAX,
   ODDS_MIN,
   ODDS_STEP,
-  oddsLiquidity,
-  PARI_EXECUTION_FEE,
   type PriceCoinsOptions,
-  type QuoteCommon,
   sameSideMedianYesOdds,
   sliderPositionToYesOdds,
   stepOdds,
   TON_ADDRESS,
-  yesOddsToDecimalOdds,
   yesOddsToSliderPosition,
 } from "@toncast/sdk";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useToncastClient } from "../client/useToncastClient";
+import {
+  buildCoinOptions,
+  getLiquidityMarkers,
+  getMaxTickets,
+  normalizeQuote,
+  ODDS_MID,
+  pickSource,
+} from "./useBetDerived";
 import { useBetQuote } from "./useBetQuote";
 import { useBetSummary } from "./useBetSummary";
 import { useConfirmBet } from "./useConfirmBet";
@@ -51,8 +53,6 @@ export interface UseBetParams {
   defaultTickets?: number;
   /** Forwarded to {@link useBetSummary}. */
   priceCoinsOptions?: PriceCoinsOptions;
-  /** Default 30s — staleTime on the summary query. */
-  summaryStaleTime?: number;
   /** Default 5s — staleTime on the live quote query. */
   quoteStaleTime?: number;
 }
@@ -168,11 +168,15 @@ export interface UseBetResult {
   liquidityMarkers: { leftPct: number; tickets: number; yesOdds: number }[];
 
   // ─── Action ───────────────────────────────────────────────────────────────
-  confirm: UseMutationResult<ConfirmedQuote, Error, { quote: BetQuote; params?: QuoteCommon }>;
+  confirm: UseMutationResult<
+    ConfirmedQuote,
+    Error,
+    { quote: BetQuote; params?: ConfirmQuoteParams }
+  >;
   /** Convenience: run `confirm` with the current quote. Does NOT refetch — call
    *  `bet.refresh()` after `tc.sendTransaction(...)` resolves so the wallet
    *  balances reflect the on-chain state. */
-  confirmCurrent: () => Promise<ConfirmedQuote | null>;
+  confirmCurrent: (ack: { financialRiskAcknowledged: true }) => Promise<ConfirmedQuote | null>;
   /** Re-fetch summary (pari + oddsState + priced wallet coins). Call after the
    *  TonConnect transaction is signed and broadcast so the UI shows the new
    *  wallet balance and updated order book. Safe to call any time. */
@@ -201,7 +205,6 @@ export function useBet(params: UseBetParams): UseBetResult {
     defaultYesOdds,
     defaultTickets,
     priceCoinsOptions,
-    summaryStaleTime = 30_000,
     quoteStaleTime = 5_000,
   } = params;
 
@@ -214,43 +217,13 @@ export function useBet(params: UseBetParams): UseBetResult {
 
   const isYes = side === "yes";
 
-  // `summaryStaleTime` is intentionally NOT forwarded — `subscribeSummary`
-  // is a long-lived two-phase stream that the SDK pool keeps warm; staleness
-  // semantics don't apply.
   const summary = useBetSummary(pariId, priceCoinsOptions);
-  void summaryStaleTime;
-  // Capacities = fully-priced coins (always selectable). loadingCoins =
-  // wallet jettons whose pricing is still being computed (phase-1 of
-  // `subscribeSummary`); we include them in `coins` as non-feasible
-  // placeholder capacities so the UI shows them as "loading…" without
-  // hiding their existence.
-  const coins = useMemo<CoinCapacity[]>(() => {
-    const capacities = summary.data?.capacities ?? [];
-    const loading = summary.data?.loadingCoins ?? [];
-    if (loading.length === 0) return capacities;
-    const placeholders: CoinCapacity[] = loading.map((c) => ({
-      source: { address: c.address, amount: c.amount, symbol: c.symbol, decimals: c.decimals },
-      feasible: false,
-      reason: "pricing_in_progress",
-      minBetTon: 0n,
-      maxBetTon: 0n,
-    }));
-    return [...capacities, ...placeholders];
-  }, [summary.data]);
+  const coins = useMemo<CoinCapacity[]>(() => buildCoinOptions(summary.data), [summary.data]);
 
-  // Auto-pick a source: caller-provided one if still viable, else TON, else
-  // first viable jetton.
-  const source = useMemo<string | null>(() => {
-    if (coins.length === 0) return requestedSource;
-    if (requestedSource) {
-      const cap = coins.find((c) => c.source.address === requestedSource);
-      if (cap?.feasible) return requestedSource;
-    }
-    const ton = coins.find((c) => c.source.address === TON_ADDRESS);
-    if (ton?.feasible) return ton.source.address;
-    const fallback = coins.find((c) => c.feasible);
-    return fallback?.source.address ?? null;
-  }, [coins, requestedSource]);
+  const source = useMemo<string | null>(
+    () => pickSource(coins, requestedSource),
+    [coins, requestedSource],
+  );
 
   const selectedCoin = useMemo<CoinCapacity | null>(() => {
     if (!source) return null;
@@ -271,9 +244,6 @@ export function useBet(params: UseBetParams): UseBetResult {
     },
     [ticketsKey],
   );
-
-  // Midpoint yesOdds used as the fair first-offer price on an empty book.
-  const ODDS_MID = Math.round((ODDS_MIN + ODDS_MAX) / 2); // 50
 
   const isBookEmpty = selectedCoin !== null && legs.length === 0;
 
@@ -377,82 +347,30 @@ export function useBet(params: UseBetParams): UseBetResult {
       ticketsCount: tickets,
       oddsState: summary.data.oddsState,
     };
-  }, [summary.data, selectedCoin, tickets, pariId, isYes, mode, yesOdds, isBookEmpty, ODDS_MID]);
+  }, [summary.data, selectedCoin, tickets, pariId, isYes, mode, yesOdds, isBookEmpty]);
 
   const underlyingQuote = useBetQuote(quoteParams, { staleTime: quoteStaleTime });
 
-  const quote = useMemo<NormalizedQuote>(() => {
-    const data = underlyingQuote.data;
-    if (!data) {
-      return {
-        underlying: underlyingQuote,
-        data: undefined,
-        matched: [],
-        placed: null,
-        totalCost: 0n,
-        required: 0n,
-        walletReserve: 0n,
-        totals: {
-          matchedTickets: 0,
-          matchedTicketCost: 0n,
-          placementTickets: 0,
-          placementTicketCost: 0n,
-          executionFee: 0n,
-          stake: 0n,
-          total: 0n,
-        },
-        decimalOdds: yesOddsToDecimalOdds(yesOdds, isYes),
-        winnings: 0n,
-        isFeasible: false,
-        reason: null,
-      };
-    }
-    const rawPlaced = data.breakdown.placement ?? data.breakdown.unmatched ?? null;
-    const enrich = (row: { yesOdds: number; tickets: number; cost: bigint }): QuoteRow => ({
-      yesOdds: row.yesOdds,
-      tickets: row.tickets,
-      cost: row.cost,
-      stake: row.cost - PARI_EXECUTION_FEE,
-      decimalOdds: yesOddsToDecimalOdds(row.yesOdds, isYes),
-    });
-    const isTon = selectedCoin?.source.address === TON_ADDRESS;
-    const reserve = isTon ? DEFAULT_WALLET_RESERVE : 0n;
-    return {
-      underlying: underlyingQuote,
-      data,
-      matched: data.breakdown.matched.map(enrich),
-      placed: rawPlaced ? enrich(rawPlaced) : null,
-      totalCost: data.totalCost,
-      required: data.totalCost + reserve,
-      walletReserve: reserve,
-      totals: breakdownTotals(data),
-      decimalOdds: yesOddsToDecimalOdds(yesOdds, isYes),
-      winnings: calcWinnings(data.bets, 0),
-      isFeasible: data.option.feasible,
-      reason: data.option.feasible ? null : data.option.reason,
-    };
-  }, [underlyingQuote, selectedCoin, yesOdds, isYes]);
+  const quote = useMemo<NormalizedQuote>(
+    () => normalizeQuote({ underlyingQuote, selectedCoin, yesOdds, isYes }),
+    [underlyingQuote, selectedCoin, yesOdds, isYes],
+  );
 
   // ─── Limits ──────────────────────────────────────────────────────────────
   const minTickets = 1;
-  const maxTickets = useMemo(() => {
-    if (!selectedCoin) return 0;
-    if (mode === "fixed") return fixedTicketsForBudget(selectedCoin.maxBetTon, yesOdds, isYes);
-    // Empty counter side: affordableInWallet is 0 (no legs to price against).
-    // Use fixedTicketsForBudget at the closest sensible price so the user
-    // can still place the first order. Same logic as the yesOdds seed —
-    // prefer the same-side median, fall back to the middle of the range.
-    if (isBookEmpty) {
-      let oddsForCap = mode === "market" ? ODDS_MID : yesOdds;
-      if (mode === "market") {
-        const oddsState = summary.data?.oddsState;
-        const median = oddsState ? sameSideMedianYesOdds(oddsState, isYes) : null;
-        if (median !== null) oddsForCap = median;
-      }
-      return fixedTicketsForBudget(selectedCoin.maxBetTon, oddsForCap, isYes);
-    }
-    return affordableInWallet;
-  }, [selectedCoin, mode, yesOdds, isYes, affordableInWallet, isBookEmpty, ODDS_MID, summary.data]);
+  const maxTickets = useMemo(
+    () =>
+      getMaxTickets({
+        selectedCoin,
+        mode,
+        yesOdds,
+        isYes,
+        affordableInWallet,
+        isBookEmpty,
+        oddsState: summary.data?.oddsState,
+      }),
+    [selectedCoin, mode, yesOdds, isYes, affordableInWallet, isBookEmpty, summary.data],
+  );
 
   // ─── Source-coin conversion (bound to currently selected coin) ───────────
   const sourcePriced = useMemo(
@@ -550,26 +468,28 @@ export function useBet(params: UseBetParams): UseBetResult {
     };
   }, [tickets, maxTickets, setTickets]);
 
-  const liquidityMarkers = useMemo(() => {
-    if (!summary.data) return [];
-    return oddsLiquidity(summary.data.oddsState, isYes).map(({ yesOdds: yo, tickets: count }) => ({
-      yesOdds: yo,
-      tickets: count,
-      leftPct: ((yesOddsToSliderPosition(yo, isYes) - ODDS_MIN) / (ODDS_MAX - ODDS_MIN)) * 100,
-    }));
-  }, [summary.data, isYes]);
+  const liquidityMarkers = useMemo(
+    () => getLiquidityMarkers(summary.data, isYes),
+    [summary.data, isYes],
+  );
 
   // ─── Actions ─────────────────────────────────────────────────────────────
   const confirm = useConfirmBet();
   const qc = useQueryClient();
-  const confirmCurrent = useCallback(async (): Promise<ConfirmedQuote | null> => {
-    if (!quote.data || !quoteParams) return null;
-    // Pass `quoteParams` explicitly: the SDK normally tracks them via a
-    // WeakMap on the quote object, but that can be lost across HMR / SDK
-    // client re-instantiation. Forwarding the live params makes confirm
-    // robust against stale tracking.
-    return confirm.mutateAsync({ quote: quote.data, params: quoteParams });
-  }, [quote.data, quoteParams, confirm]);
+  const confirmCurrent = useCallback(
+    async (ack: { financialRiskAcknowledged: true }): Promise<ConfirmedQuote | null> => {
+      if (!quote.data || !quoteParams) return null;
+      // Pass `quoteParams` explicitly: the SDK normally tracks them via a
+      // WeakMap on the quote object, but that can be lost across HMR / SDK
+      // client re-instantiation. Forwarding the live params makes confirm
+      // robust against stale tracking.
+      return confirm.mutateAsync({
+        quote: quote.data,
+        params: { ...quoteParams, financialRiskAcknowledged: ack.financialRiskAcknowledged },
+      });
+    },
+    [quote.data, quoteParams, confirm],
+  );
 
   const refresh = useCallback(async (): Promise<void> => {
     // Drop the SDK's coin cache so the next `summary` fetch re-prices wallet

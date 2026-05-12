@@ -1,13 +1,17 @@
-import { ALL_CATEGORY_FILTER, type Category, type Pari } from "@toncast/sdk";
-import { useCategories, useStreamList } from "@toncast/sdk-react";
+import { ALL_CATEGORY_FILTER, type CategoryFilter, type Pari } from "@toncast/sdk";
+import { useCategoryFilters, useStreamList } from "@toncast/sdk-react";
 import { useState } from "react";
 import { BetDialog } from "@/components/BetDialog";
 import { PariCard } from "@/components/PariCard";
+import { PariCardSkeleton } from "@/components/PariCardSkeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useT } from "@/lib/i18n/useT";
 import { cn } from "@/lib/utils";
+
+/** Same column template for skeletons and loaded tiles — `min(100%,190px)` avoids track overflow on narrow viewports. */
+const PARIS_GRID_CLASS =
+  "grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr))]";
 
 interface PickedSide {
   pari: Pari;
@@ -16,8 +20,8 @@ interface PickedSide {
 
 export function ParisListPage() {
   const t = useT();
-  const categories = useCategories();
-  const [active, setActive] = useState<Category | null>(null);
+  const categories = useCategoryFilters();
+  const [active, setActive] = useState<CategoryFilter | null>(null);
   const current = active ?? categories.data?.[0] ?? ALL_CATEGORY_FILTER;
   const { data, isLoading, isError, error } = useStreamList(current.param);
   const [picked, setPicked] = useState<PickedSide | null>(null);
@@ -48,9 +52,9 @@ export function ParisListPage() {
       </div>
 
       {isLoading || !data ? (
-        <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(190px,1fr))]">
+        <div className={PARIS_GRID_CLASS}>
           {Array.from({ length: 10 }).map((_, i) => (
-            <Skeleton key={String(i)} className="h-72" />
+            <PariCardSkeleton key={String(i)} />
           ))}
         </div>
       ) : data.length === 0 ? (
@@ -60,7 +64,7 @@ export function ParisListPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(190px,1fr))]">
+        <div className={PARIS_GRID_CLASS}>
           {data.map((p) => (
             <PariCard key={p.id} pari={p} onPickSide={(pari, side) => setPicked({ pari, side })} />
           ))}

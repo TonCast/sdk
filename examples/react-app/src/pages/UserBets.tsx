@@ -1,63 +1,28 @@
-// Flat list of every bet the connected user has ever placed, newest first.
-// Uses cursor pagination: first page via `useBets()`, subsequent pages via
-// the same hook with the `nextCursor` threaded through local state.
-//
-// Duplicate-append guard: once a cursor key has been processed we skip it,
-// so TanStack window-focus refetches don't double-push items.
-
-import { type Bet, type BetStatus, type Cursor, pariCoverUrl } from "@toncast/sdk";
-import { useBets } from "@toncast/sdk-react";
+import { type Bet, type BetStatus, pariCoverUrl } from "@toncast/sdk";
+import { useInfiniteBets } from "@toncast/sdk-react";
 import { useTonAddress } from "@tonconnect/ui-react";
-import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { ConnectButton } from "@/components/ConnectButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useT } from "@/lib/i18n/useT";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { ConnectButton } from "@/components/ConnectButton";
+import { useT } from "@/lib/i18n/useT";
 
-function cursorKey(c: Cursor | null): string {
-  return c === null ? "__initial__" : JSON.stringify(c);
-}
+const MAX_RENDERED_BETS = 200;
 
 export function UserBetsPage() {
   const t = useT();
   const userAddress = useTonAddress();
 
-  const [cursor, setCursor] = useState<Cursor | null>(null);
-  const [all, setAll] = useState<Bet[]>([]);
-  const [nextCursor, setNextCursor] = useState<Cursor | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  // Tracks which cursors have already been appended — prevents duplicate rows
-  // on TanStack refetches (window focus, reconnect) of the same page.
-  const appendedRef = useRef(new Set<string>());
-
-  const query = useBets(cursor !== null ? { cursor } : {}, {
-    enabled: Boolean(userAddress),
-  });
-
-  useEffect(() => {
-    if (!query.data) return;
-    const key = cursorKey(cursor);
-    if (appendedRef.current.has(key)) return;
-    appendedRef.current.add(key);
-    setNextCursor(query.data.nextCursor);
-    setHasMore(query.data.hasMore);
-    setAll((prev) => (cursor === null ? query.data!.items : [...prev, ...query.data!.items]));
-  }, [query.data, cursor]);
-
-  // Reset everything when the wallet switches.
-  const prevAddrRef = useRef(userAddress);
-  useEffect(() => {
-    if (prevAddrRef.current === userAddress) return;
-    prevAddrRef.current = userAddress;
-    setCursor(null);
-    setAll([]);
-    setNextCursor(null);
-    setHasMore(false);
-    appendedRef.current.clear();
-  }, [userAddress]);
+  const query = useInfiniteBets(
+    { userAddress },
+    {
+      enabled: Boolean(userAddress),
+    },
+  );
+  const all = query.data?.pages.flatMap((page) => page.items).slice(0, MAX_RENDERED_BETS) ?? [];
+  const hasMore = Boolean(query.hasNextPage && all.length < MAX_RENDERED_BETS);
 
   if (!userAddress) {
     return (
@@ -74,7 +39,7 @@ export function UserBetsPage() {
   }
 
   const isInitialLoading = query.isLoading && all.length === 0;
-  const isLoadingMore = query.isFetching && all.length > 0;
+  const isLoadingMore = query.isFetchingNextPage;
 
   if (query.isError && all.length === 0) {
     return (
@@ -109,7 +74,7 @@ export function UserBetsPage() {
         </Card>
       ) : (
         <div className="space-y-2">
-          {all.map((bet) => (
+          {all.map((bet: Bet) => (
             <BetRow key={bet.id} bet={bet} />
           ))}
 
@@ -125,8 +90,8 @@ export function UserBetsPage() {
             <div className="flex justify-center pt-2">
               <Button
                 variant="outline"
-                onClick={() => setCursor(nextCursor)}
-                disabled={query.isFetching}
+                onClick={() => void query.fetchNextPage()}
+                disabled={query.isFetchingNextPage}
               >
                 {t("common.showMore")}
               </Button>
@@ -162,7 +127,13 @@ function BetRow({ bet }: { bet: Bet }) {
           aria-label={bet.pariName ?? bet.pariAddress}
         >
           {thumbSrc ? (
-            <img src={thumbSrc} alt="" className="size-full object-cover" loading="lazy" decoding="async" />
+            <img
+              src={thumbSrc}
+              alt=""
+              className="size-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
           ) : (
             <div className="size-full bg-muted" />
           )}
@@ -172,9 +143,7 @@ function BetRow({ bet }: { bet: Bet }) {
           <div className="flex flex-wrap items-center gap-2">
             <span
               className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                isYes
-                  ? "bg-success/15 text-success"
-                  : "bg-destructive/15 text-destructive"
+                isYes ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
               }`}
             >
               {t(isYes ? "side.yes" : "side.no")}
@@ -193,7 +162,17 @@ function BetRow({ bet }: { bet: Bet }) {
             </span>
           )}
           <div className="mt-1 text-xs text-muted-foreground">
-            {bet.ticketsCount} {bet.ticketsCount === 1 ? "ticket" : "tickets"} · {amountTon} TON · {date}
+            {bet.ticketsCount === 1
+              ? t("page.bets.rowMetaOne", {
+                  count: bet.ticketsCount,
+                  amountTon,
+                  date,
+                })
+              : t("page.bets.rowMetaMany", {
+                  count: bet.ticketsCount,
+                  amountTon,
+                  date,
+                })}
           </div>
         </div>
 

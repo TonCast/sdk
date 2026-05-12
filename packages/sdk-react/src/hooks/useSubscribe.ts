@@ -1,11 +1,7 @@
-import { keepPreviousData } from "@tanstack/react-query";
 import type { PariStreamSnapshot, SubscribePariParams } from "@toncast/sdk";
 import { useToncastClient } from "../client/useToncastClient";
-import {
-  type UseObservableQueryOptions,
-  type UseObservableQueryResult,
-  useObservableQuery,
-} from "./useObservableQuery";
+import { toncastQueryKeys } from "../queryKeys";
+import { type UseLiveStreamQueryResult, useLiveStreamQuery } from "./useLiveStreamQuery";
 
 /**
  * Live single-pari view: latest `PariStreamSnapshot` (`{ pari, oddsState,
@@ -22,16 +18,13 @@ import {
 export function useSubscribe(
   pariId: string | null | undefined,
   params: SubscribePariParams = {},
-  options?: Omit<
-    UseObservableQueryOptions<PariStreamSnapshot>,
-    "queryKey" | "requestFn" | "enabled"
-  >,
-): UseObservableQueryResult<PariStreamSnapshot> {
+  options?: { keepPreviousData?: boolean },
+): UseLiveStreamQueryResult<PariStreamSnapshot> {
   const client = useToncastClient();
-  return useObservableQuery<PariStreamSnapshot>({
-    placeholderData: keepPreviousData,
+  return useLiveStreamQuery<PariStreamSnapshot>({
+    keepPreviousData: true,
     ...options,
-    queryKey: ["toncast", "paris", "subscribe", pariId ?? "_disabled", params],
+    queryKey: toncastQueryKeys.paris.subscribe(pariId, params),
     requestFn: () => client.paris.subscribe(pariId as string, params),
     enabled: Boolean(pariId),
   });

@@ -10,7 +10,8 @@
 // equals the strategy's `totalCost`, so the deeplink amount and Tonkeeper's
 // "Sent" line match item-for-item.
 //
-// Run: npx tsx scripts/smoke-bet-1ton.ts [pariId] [userAddress]
+// Run:
+//   TONCAST_FINANCIAL_RISK_ACK=1 USER_ADDRESS=... npx tsx scripts/smoke-bet-1ton.ts [pariId]
 
 import { toNano } from "@ton/core";
 import {
@@ -24,17 +25,17 @@ import {
 import { findActivePariV3 } from "./_lib/find-pari-v3";
 import { tonkeeperDeeplink } from "./_lib/tonkeeper";
 
-const DEFAULT_USER = "UQD7k4QZ7LtO3ZtCnoS1GIy84erPasgjiU70_rgRqNxQwIQN";
-
-// Hardcoded smoke params — match the toncast.me UI flow byte-for-byte.
-const BUDGET_TON = toNano("1");
+const BUDGET_TON = toNano(process.env.BUDGET_TON ?? "0.2");
 const REFERRAL_PCT = 1; // platform 4% + referral 1% = 5% total fee
 const REFERRAL_ADDRESS = TONCAST_PROXY_ADDRESS; // any mainnet address ≠ beneficiary
 const fmt = (nano: bigint): string =>
   `${(Number(nano) / 1e9).toLocaleString("en", { maximumFractionDigits: 9 })} TON`;
 
 async function main() {
-  const userAddress = process.argv[3] ?? DEFAULT_USER;
+  if (process.env.TONCAST_FINANCIAL_RISK_ACK !== "1") {
+    throw new Error("Set TONCAST_FINANCIAL_RISK_ACK=1 before generating a signable transaction.");
+  }
+  const userAddress = process.argv[3] ?? requireEnv("USER_ADDRESS");
   const tonClient = createTonClient({ apiKey: process.env.TONCENTER_API_KEY });
   const client = new ToncastClient({ tonClient, userAddress });
 
@@ -90,6 +91,12 @@ async function main() {
   console.log(JSON.stringify(message, null, 2));
   console.log(`\n▸ Tonkeeper deeplink:`);
   console.log(`  ${tonkeeperDeeplink(message)}`);
+}
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is required; do not use placeholder addresses.`);
+  return value;
 }
 
 main().catch((err) => {

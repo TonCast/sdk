@@ -14,9 +14,11 @@ import {
   type BetSummary,
   type CoinCapacity,
   type ConfirmedQuote,
+  type ConfirmQuoteParams,
   type Cursor,
   DEFAULT_LANGUAGE,
   type Page,
+  type ParisCursor,
   type PricedCoin,
   type QuoteFixedBetParams,
   type QuoteLimitBetParams,
@@ -77,14 +79,15 @@ async function quickStart() {
 
   const maxBudgetTon = picked.maxBetTon < 5_000_000_000n ? picked.maxBetTon : 5_000_000_000n;
 
-  const quoteParams: QuoteMarketBetParams = {
+  const quoteParams = {
     pariId: pari.id,
     isYes: true,
     maxBudgetTon,
     source: picked.source.address,
     pricedCoins: summary.pricedCoins,
     oddsState: summary.oddsState,
-  };
+    financialRiskAcknowledged: true,
+  } satisfies QuoteMarketBetParams & ConfirmQuoteParams;
 
   const quote = await client.betting.quoteMarketBet(quoteParams);
 
@@ -167,13 +170,14 @@ async function preparingABet() {
   const summary = await client.betting.summary(pariId);
 
   // Limit mode example from README
-  const limitParams: QuoteLimitBetParams = {
+  const limitParams = {
     pariId,
     isYes: true,
     worstYesOdds: 56,
     ticketsCount: 300,
     source: TON_ADDRESS,
-  };
+    financialRiskAcknowledged: true,
+  } satisfies QuoteLimitBetParams & ConfirmQuoteParams;
   const limitQuote = await client.betting.quoteLimitBet(limitParams);
   const _limitConfirmed: ConfirmedQuote = await client.betting.confirmQuote(
     limitQuote,
@@ -181,13 +185,14 @@ async function preparingABet() {
   );
 
   // Fixed mode example from README
-  const fixedParams: QuoteFixedBetParams = {
+  const fixedParams = {
     pariId,
     isYes: true,
     yesOdds: 56,
     ticketsCount: 10,
     source: TON_ADDRESS,
-  };
+    financialRiskAcknowledged: true,
+  } satisfies QuoteFixedBetParams & ConfirmQuoteParams;
   const fixedQuote = await client.betting.quoteFixedBet(fixedParams);
   const _fixedConfirmed: ConfirmedQuote = await client.betting.confirmQuote(
     fixedQuote,
@@ -198,7 +203,7 @@ async function preparingABet() {
   const usdt = summary.capacities.find((c) => c.source.symbol === "USDT" && c.feasible);
   if (!usdt) throw new Error("user has no viable USDT balance");
 
-  const overrideParams: QuoteMarketBetParams = {
+  const overrideParams = {
     pariId,
     isYes: true,
     maxBudgetTon: 5_000_000_000n,
@@ -209,7 +214,8 @@ async function preparingABet() {
     beneficiary: recipientWallet,
     referral: partnerWallet,
     referralPct: 5,
-  };
+    financialRiskAcknowledged: true,
+  } satisfies QuoteMarketBetParams & ConfirmQuoteParams;
   const overrideQuote = await client.betting.quoteMarketBet(overrideParams);
   const _overrideConfirmed = await client.betting.confirmQuote(overrideQuote, overrideParams);
 }
@@ -234,7 +240,10 @@ function languages() {
 
 async function pagination() {
   const client = new ToncastClient();
-  let page: Page<unknown> = (await client.paris.list({ feed: "finished", limit: 20 })) as any;
+  let page: Page<unknown, ParisCursor> = (await client.paris.list({
+    feed: "finished",
+    limit: 20,
+  })) as any;
   while (page.hasMore && page.nextCursor) {
     page = (await client.paris.list({ feed: "finished", cursor: page.nextCursor })) as any;
   }

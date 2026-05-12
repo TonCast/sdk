@@ -9,12 +9,14 @@
 //   • TON   — sync path (computeXxxBets → buildTonBetTx). Zero swap.
 //   • USDT  — async path (quoteXxxBet → confirmQuote). STON.fi swap inside.
 //
-// Run: npx tsx scripts/smoke-bet-modes.ts [pariId] [userAddress]
+// Run:
+//   TONCAST_FINANCIAL_RISK_ACK=1 USER_ADDRESS=... npx tsx scripts/smoke-bet-modes.ts [pariId] [userAddress]
 
 import { fromNano } from "@ton/core";
 import {
   type BetQuote,
   buildTonBetTx,
+  type ConfirmQuoteParams,
   calcWinnings,
   computeFixedBets,
   computeLimitBets,
@@ -26,7 +28,6 @@ import {
 import { findActivePariV3 } from "./_lib/find-pari-v3";
 import { tonkeeperDeeplink } from "./_lib/tonkeeper";
 
-const DEFAULT_USER = "UQD7k4QZ7LtO3ZtCnoS1GIy84erPasgjiU70_rgRqNxQwIQN";
 const USDT_MASTER = "0:B113A994B5024A16719F69139328EB759596C38A25F59028B146FECDC3621DFE";
 
 // Hardcoded — matches the toncast.me UI flow.
@@ -48,7 +49,8 @@ interface RunSummary {
 }
 
 async function main() {
-  const userAddress = process.argv[3] ?? DEFAULT_USER;
+  requireFinancialRiskAck();
+  const userAddress = process.argv[3] ?? requireEnv("USER_ADDRESS");
   const tonClient = createTonClient({ apiKey: process.env.TONCENTER_API_KEY });
   const client = new ToncastClient({ tonClient, userAddress });
 
@@ -139,6 +141,7 @@ async function main() {
     pricedCoins: priced,
     referral: REFERRAL,
     referralPct: REFERRAL_PCT,
+    financialRiskAcknowledged: true as const,
     // Don't fail the smoke if the wallet can't cover; the *quote* is still
     // valid — only signing/sending would actually fail. We only print, never sign.
     allowInsufficientBalance: true,
@@ -151,7 +154,7 @@ async function main() {
       yesOdds: 60,
       ticketsCount: 5,
     });
-    summaries.push(await confirmAndRecord(client, q, "USDT", "fixed"));
+    summaries.push(await confirmAndRecord(client, q, usdtCommon, "USDT", "fixed"));
   }
 
   // Limit (10 tickets, worstYesOdds=64)
@@ -162,7 +165,7 @@ async function main() {
       ticketsCount: 10,
       oddsState,
     });
-    summaries.push(await confirmAndRecord(client, q, "USDT", "limit"));
+    summaries.push(await confirmAndRecord(client, q, usdtCommon, "USDT", "limit"));
   }
 
   // Market (0.7 TON-equivalent ≈ 1 USDT)
@@ -172,7 +175,7 @@ async function main() {
       maxBudgetTon: 700_000_000n,
       oddsState,
     });
-    summaries.push(await confirmAndRecord(client, q, "USDT", "market"));
+    summaries.push(await confirmAndRecord(client, q, usdtCommon, "USDT", "market"));
   }
 
   // ─── Summary table ───────────────────────────────────────────────────
@@ -215,13 +218,14 @@ function rec(
 async function confirmAndRecord(
   client: ToncastClient,
   quote: BetQuote,
+  params: ConfirmQuoteParams,
   source: RunSummary["source"],
   mode: RunSummary["mode"],
 ): Promise<RunSummary> {
   if (!quote.option.feasible) {
     throw new Error(`${source} ${mode} infeasible: ${quote.option.reason}`);
   }
-  const confirmed = await client.betting.confirmQuote(quote);
+  const confirmed = await client.betting.confirmQuote(quote, params);
   const tx = confirmed.txs[0];
   if (!tx) throw new Error(`${source} ${mode} confirmed has no txs`);
   const payout = calcWinnings(quote.bets, REFERRAL_PCT);
@@ -236,3 +240,17 @@ main().catch((err) => {
   console.error("FAILED:", err);
   process.exit(1);
 });
+
+function requireFinancialRiskAck(): void {
+  if (process.env.TONCAST_FINANCIAL_RISK_ACK !== "1") {
+    throw new Error(
+      "Set TONCAST_FINANCIAL_RISK_ACK=1 after acknowledging this script prepares signable mainnet transactions.",
+    );
+  }
+}
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing required env var ${name}`);
+  return value;
+}

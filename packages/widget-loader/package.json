@@ -26,7 +26,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
-    "lint:fix": "biome check --write ."
+    "lint:fix": "biome check --write .",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "keywords": [
     "toncast",
@@ -36,10 +37,7 @@
   ],
   "license": "MIT",
   "author": "Toncast",
-  "peerDependencies": {
-    "@toncast/widget": ">=0.0.1"
-  },
   "devDependencies": {
-    "@toncast/widget": "*"
+    "@toncast/widget": "0.0.1"
   }
 }

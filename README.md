@@ -140,9 +140,19 @@ Wrap your tree in `TonConnectUIProvider` with a valid manifest URL for your doma
 
 For visual setup and exported snippets, use [`examples/widget-constructor/`](./examples/widget-constructor/).
 
+### Subscribing to `bet` events
+
+The successful-bet event is exposed identically through both surfaces:
+
+- **Class:** `widget.on("bet", ({ pariId, amount, side }) => …)` (and matching `off`).
+- **React:** `<Widget onBet={({ pariId, amount, side }) => …} />` from `@toncast/widget/react`.
+
+Both deliver the same payload and fire after the wallet send call resolves. See [`packages/widget/README.md`](./packages/widget/README.md#subscribing-to-bet-events) for the full snippets.
+
 ## Widget white-label theming
 
-`@toncast/widget` accepts `widget.cssVars` for per-instance visual customization.
+`@toncast/widget` accepts `widget.cssVars` for per-instance visual customization and
+`widget.layout.grid` for responsive market-card columns.
 Source tokens such as `accent`, `bg`, `success`, `danger`, `warn`, and `density`
 are resolved into readable foregrounds, subtle backgrounds, hover/active states,
 surface/chrome colors, order-book fills, shadows, borders, and spacing variables.
@@ -164,6 +174,13 @@ const widget = new ToncastWidget({
       light: { bg: "#ffffff" },
       dark: { bg: "#0b1020" },
     },
+    layout: {
+      grid: {
+        mobile: 1,
+        tablet: 2,
+        desktop: 3,
+      },
+    },
   },
 });
 ```
@@ -178,6 +195,8 @@ to disable all derivation, or use `deriveCssVars: { colors: false }` /
 
 - **Building anything?** Start with [`packages/sdk/README.md`](./packages/sdk/README.md) — full API surface, betting flow, advanced jetton discovery.
 - **Building a React UI?** Read [`packages/sdk-react/README.md`](./packages/sdk-react/README.md) — quick start + every hook in one page.
+- **Public API & versioning (pre–1.0.0):** [`docs/PUBLIC_API.md`](./docs/PUBLIC_API.md).
+- **Releases:** [`RELEASING.md`](./RELEASING.md) and [`CHANGELOG.md`](./CHANGELOG.md).
 - **Want to see it work?** Run the demo: `npm run dev --workspace @toncast/react-app-example`. Source in [`examples/react-app/`](./examples/react-app).
 
 ## License

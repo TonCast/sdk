@@ -1,16 +1,9 @@
+import { parseHttpUrl } from "../utils/url";
+
 /** Absolute http(s) manifest URL, or `null` if `domain` is not usable for TonConnect standalone. */
 export function tryTonConnectManifestUrl(domain: string): string | null {
-  let url: URL;
-  try {
-    url = new URL(domain);
-  } catch {
-    return null;
-  }
-
-  if (url.protocol !== "https:" && url.protocol !== "http:") {
-    return null;
-  }
-
+  const url = parseHttpUrl(domain);
+  if (!url) return null;
   url.hash = "";
   url.search = "";
   url.pathname = `${url.pathname.replace(/\/$/, "")}/tonconnect-manifest.json`;

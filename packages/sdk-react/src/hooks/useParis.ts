@@ -1,6 +1,7 @@
 import { type UseQueryOptions, type UseQueryResult, useQuery } from "@tanstack/react-query";
 import type { ListParisParams, Page, Pari } from "@toncast/sdk";
 import { useToncastClient } from "../client/useToncastClient";
+import { toncastQueryKeys } from "../queryKeys";
 
 /**
  * One page of paris with TanStack-Query semantics (cache, dedup, refetch).
@@ -14,7 +15,7 @@ export function useParis(
   const client = useToncastClient();
   return useQuery<Page<Pari>>({
     ...options,
-    queryKey: ["toncast", "paris", "list", params],
+    queryKey: toncastQueryKeys.paris.list(params),
     queryFn: ({ signal }) => client.paris.list({ ...params, signal }),
   });
 }

@@ -1,0 +1,164 @@
+/* ===== LAYOUT HELPERS ===== */
+.tc-form-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tc-form-gap, 12px);
+}
+.tc-form-col-sm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tc-form-col-xs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tc-form-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tc-form-row-between {
+  display: flex;
+  justify-content: space-between;
+}
+.tc-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 0;
+  text-align: center;
+}
+.tc-empty-state-card {
+  padding: 12px 0;
+}
+.tc-bet-side-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tc-bet-side-toggle-title {
+  flex: 1;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--tc-fg);
+}
+.tc-detail-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tc-detail-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tc-bet-row-thumb-btn {
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+}
+.tc-bet-row-name-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  padding: 0;
+}
+.tc-bet-row-meta-mono {
+  font-family: monospace;
+  font-size: 11px;
+}
+.tc-bet-row-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  background: var(--tc-bg-muted);
+}
+.tc-bet-row-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.tc-category-chip {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.tc-detail-meta-badge {
+  flex-shrink: 0;
+}
+.tc-stepper-readout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  pointer-events: none;
+}
+.tc-stepper-input {
+  flex: 1;
+}
+.tc-error-sm {
+  padding: 16px;
+  color: var(--tc-danger-fg);
+  font-size: 12px;
+}
+.tc-quote-row-warn {
+  color: var(--tc-warn-fg);
+  font-weight: 600;
+}
+.tc-quote-row-placed-note {
+  padding-left: 8px;
+}
+.tc-quote-row-placed-block {
+  padding-top: 4px;
+}
+.tc-quote-row-indent {
+  padding-left: 8px;
+}
+.tc-quote-error {
+  color: var(--tc-danger);
+  font-size: 12px;
+}
+.tc-text-warn {
+  color: var(--tc-warn-fg);
+}
+.tc-quote-notice {
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+.tc-coef-slider-wrap {
+  position: relative;
+}
+.tc-coef-slider-overlay {
+  position: absolute;
+  inset: 0 10px;
+  pointer-events: none;
+  z-index: 0;
+}
+.tc-coef-slider-fill {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 8px;
+  border-radius: 4px;
+  background: var(--tc-success);
+  right: -10px;
+}
+.tc-coef-slider-marker {
+  position: absolute;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tc-danger);
+  transform: translate(-50%, -50%);
+}
+.tc-coef-slider-wrap .tc-slider-root {
+  position: relative;
+  z-index: 1;
+}

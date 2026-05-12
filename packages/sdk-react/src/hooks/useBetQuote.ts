@@ -11,7 +11,7 @@ import type {
   QuoteMarketBetParams,
 } from "@toncast/sdk";
 import { useToncastClient } from "../client/useToncastClient";
-import { serializeKey } from "../utils/serializeKey";
+import { toncastQueryKeys } from "../queryKeys";
 
 export type UseBetQuoteParams =
   | ({ mode: "fixed" } & QuoteFixedBetParams)
@@ -31,8 +31,8 @@ export type UseBetQuoteParams =
  *
  * Disabled when `params` is `null` (e.g. while waiting for `useBetSummary`
  * to resolve). The returned `BetQuote` keeps object identity inside
- * TanStack's cache, so `client.betting.confirmQuote(quote)` can recover
- * the original params via its internal WeakMap.
+ * TanStack's cache, so `client.betting.confirmQuote(quote, acknowledgedParams)`
+ * can verify the original quote before signing.
  */
 export function useBetQuote(
   params: UseBetQuoteParams | null,
@@ -42,9 +42,7 @@ export function useBetQuote(
   return useQuery<BetQuote>({
     placeholderData: keepPreviousData,
     ...options,
-    // BigInt fields (`maxBudgetTon`, `ticketsCount`, etc.) can't go through
-    // TanStack's default JSON.stringify hasher — pre-serialise.
-    queryKey: ["toncast", "betting", "quote", serializeKey(params)],
+    queryKey: toncastQueryKeys.betting.quote(params),
     queryFn: () => {
       if (!params) throw new Error("useBetQuote: params is null");
       switch (params.mode) {

@@ -7,24 +7,27 @@
 import { TON_ADDRESS, TonClient, ToncastClient } from "../src";
 
 async function main() {
+  const userAddress = requireEnv("USER_ADDRESS");
+  const pariId = requireEnv("PARI_ID");
   const tonClient = new TonClient({
     endpoint: process.env.TON_ENDPOINT ?? "https://toncenter.com/api/v2/jsonRPC",
     apiKey: process.env.TONCENTER_API_KEY,
   });
 
   const client = new ToncastClient({
-    userAddress: process.env.USER_ADDRESS,
+    userAddress,
     tonClient,
   });
 
   // Store the params once and reuse for both quote and confirmQuote — keeps
   // beneficiary / senderAddress / referral consistent end-to-end.
   const quoteParams = {
-    pariId: process.env.PARI_ID ?? "TODO_PARI_ID",
+    pariId,
     isYes: true,
     yesOdds: 56,
     ticketsCount: 10,
     source: TON_ADDRESS,
+    financialRiskAcknowledged: true as const,
   };
 
   const quote = await client.betting.quoteFixedBet(quoteParams);
@@ -32,7 +35,7 @@ async function main() {
   // Re-simulates the swap and rebuilds the tx — REQUIRED before signing.
   // Address resolution is auto-tracked from the matching quote* call.
   // Returns { quote, txs, messages } — both raw and TonConnect formats.
-  const confirmed = await client.betting.confirmQuote(quote);
+  const confirmed = await client.betting.confirmQuote(quote, quoteParams);
 
   console.log("totalCost:", confirmed.quote.totalCost, "nano-TON");
   console.log("messages to sign:", confirmed.messages.length);
@@ -53,3 +56,9 @@ main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is required; do not use placeholder addresses.`);
+  return value;
+}

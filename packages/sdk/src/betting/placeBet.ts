@@ -24,6 +24,7 @@ import type { CoinsResource } from "../resources/coins";
 import type { ParisResource } from "../resources/paris";
 import type { OddsState } from "../types/odds-state";
 import type { Pari } from "../types/pari";
+import { parseTonAddress } from "../utils/address";
 import { ToncastObservable } from "../utils/observable";
 import { CachedStonApiClient } from "../wallet/cached-ston-api";
 
@@ -140,7 +141,16 @@ export interface QuoteCommon {
   walletReserve?: bigint;
   pricedCoins?: PricedCoin[];
   allowInsufficientBalance?: boolean;
+  /**
+   * Required before `confirmQuote` can return signable transactions. Put this
+   * on quote params when you want `confirmQuote(quote)` auto-tracking to work.
+   */
+  financialRiskAcknowledged?: true;
 }
+
+export type ConfirmQuoteParams = QuoteCommon & {
+  financialRiskAcknowledged: true;
+};
 
 export interface QuoteFixedBetParams extends QuoteCommon {
   yesOdds: number;
@@ -304,8 +314,10 @@ export class BettingResource {
       // browser can opt in (`window.__TONCAST_DEBUG_SIMULATE = true`)
       // without rebuilding the SDK; otherwise zero overhead.
       // The entire branch is stripped by esbuild/rollup in production builds.
-      this.cachedApi = new CachedStonApiClient(undefined, undefined,
-        process.env.NODE_ENV !== "production"
+      this.cachedApi = new CachedStonApiClient(
+        undefined,
+        undefined,
+        getNodeEnv() !== "production"
           ? (event) => {
               // biome-ignore lint/suspicious/noExplicitAny: opt-in dev hook
               const g = globalThis as any;
@@ -365,44 +377,22 @@ export class BettingResource {
   }
 
   /**
-   * Warm up STON.fi's `/v1/markets` cache (~40K pair list, can take 3–8 s on
-   * a cold call). The first real `priceCoins()` call would otherwise block
-   * the betting UI on this single request.
-   *
-   * Implementation: tx-sdk's `pairsCache` field is `private`, but at runtime
-   * it's a regular property on the `ToncastTxSdk` instance — we reach it via
-   * `(txSdk as any).pairsCache` and call `.get()` directly. That hits
-   * `/v1/markets` and stores the snapshot inside the same cache instance
-   * that subsequent `priceCoins()` calls will read from. No route discovery,
-   * no swap simulation, just the one HTTP call we actually want to prefetch.
+   * Warm up tx-sdk's official `priceCoins` path so STON.fi route discovery
+   * happens before the first betting UI interaction. This intentionally avoids
+   * reaching into tx-sdk private cache fields; if tx-sdk changes internals, the
+   * public pricing contract is still the only dependency.
    *
    * No-op without `tonClient` (jetton-funded paths aren't reachable anyway).
    */
-  async prefetchSwapMarkets(): Promise<void> {
+  async prefetchSwapMarkets(availableCoins?: AvailableCoin[]): Promise<void> {
     if (!this.deps.tonClient) return;
-    // De-dupe parallel callers — the underlying STON.fi `/v1/markets`
-    // response is ~4 MB, fetching it twice in flight (e.g. bootstrap +
-    // first betSummary) wastes the user's bandwidth and CPU.
+    // De-dupe parallel callers — route discovery may fetch a large STON.fi
+    // markets snapshot, so duplicated warm-ups waste bandwidth and CPU.
     if (this.inflightSwapMarkets) return this.inflightSwapMarkets;
-    const txSdk = this.getTxSdk() as unknown as {
-      pairsCache?: { get(): Promise<unknown> };
-    };
-    const pairsCache = txSdk.pairsCache;
-    if (!pairsCache?.get) {
-      // tx-sdk's internal `pairsCache` was renamed or removed — we can't
-      // prefetch anymore. Loud warn so a stale wrapper doesn't silently
-      // regress to "first jetton-funded bet blocks for 3-8 s".
-      this.deps.logger?.warn?.(
-        "tx-sdk.pairsCache not found — prefetchSwapMarkets is a no-op. " +
-          "Pin @toncast/sdk to a version compatible with the installed @toncast/tx-sdk.",
-      );
-      return;
-    }
-    this.inflightSwapMarkets = pairsCache
-      .get()
+    this.inflightSwapMarkets = this.priceCoins({ availableCoins })
       .then(() => undefined)
       .catch((err) => {
-        // First real `priceCoins()` will retry through the same cache.
+        // First real `priceCoins()` will retry and surface through the normal path.
         this.deps.logger?.warn?.("prefetchSwapMarkets failed", err);
       })
       .finally(() => {
@@ -436,8 +426,7 @@ export class BettingResource {
     if (placedTickets <= 0) return quote;
     const fixedEntry = quote.breakdown.matched[0];
     if (!fixedEntry) return quote;
-    const perTicketCost =
-      (fixedEntry.cost - PARI_EXECUTION_FEE) / BigInt(params.ticketsCount);
+    const perTicketCost = (fixedEntry.cost - PARI_EXECUTION_FEE) / BigInt(params.ticketsCount);
     return {
       ...quote,
       breakdown: {
@@ -714,13 +703,19 @@ export class BettingResource {
    * built `quote` manually with `tx-sdk`, or want to override the originals
    * (e.g. swap the beneficiary at the last second).
    */
-  async confirmQuote(quote: BetQuote, params?: QuoteCommon): Promise<ConfirmedQuote> {
+  async confirmQuote(quote: BetQuote, params?: ConfirmQuoteParams): Promise<ConfirmedQuote> {
     const resolvedParams = params ?? this.paramsByQuote.get(quote);
     if (!resolvedParams) {
       throw new ToncastError(
         "confirmQuote needs the original quoteParams — pass them as the second arg, " +
           "or produce the quote via this SDK's quoteXxxBet so they're auto-tracked.",
         "QUOTE_PARAMS_MISSING",
+      );
+    }
+    if (resolvedParams.financialRiskAcknowledged !== true) {
+      throw new ToncastError(
+        "confirmQuote requires financialRiskAcknowledged: true before returning signable transactions.",
+        "FINANCIAL_RISK_ACK_REQUIRED",
       );
     }
     const { beneficiary, senderAddress, referral, referralPct } = this.resolveAddresses(
@@ -733,7 +728,7 @@ export class BettingResource {
     // outer layer of the same belt-and-suspenders defence.
     this.cachedApi?.clear();
     const fresh = await this.getTxSdk().confirmQuote(quote, {
-      pariAddress: resolvedParams.pariId,
+      pariAddress: parseTonAddress(resolvedParams.pariId, "pariId"),
       beneficiary,
       senderAddress,
       referral,
@@ -800,9 +795,7 @@ export class BettingResource {
           // STON.fi markets resolve — surface them via `loadingCoins` so the
           // UI can render them as "loading" without confusing the quote engine.
           const loadingJettons = allCoins.filter((c) => c.address !== TON_ADDRESS);
-          observer.next?.(
-            this.buildSummary(pari, oddsState, tonOnlyPriced, opts, loadingJettons),
-          );
+          observer.next?.(this.buildSummary(pari, oddsState, tonOnlyPriced, opts, loadingJettons));
           // Phase 2 — full priceCoins with STON.fi swap routing for jettons.
           // Re-uses `allCoins` to avoid a second balance round-trip.
           return this.priceCoins({ ...opts, availableCoins: allCoins }).then((fullPriced) => {
@@ -879,7 +872,7 @@ export class BettingResource {
     const pricedCoins =
       params.pricedCoins ?? (await this.priceCoins({ slippage: params.slippage }));
     return {
-      pariAddress: params.pariId,
+      pariAddress: parseTonAddress(params.pariId, "pariId"),
       beneficiary,
       senderAddress,
       isYes: params.isYes,
@@ -918,14 +911,18 @@ export class BettingResource {
     referral: string | null;
     referralPct: number;
   } {
-    const signer = params.senderAddress ?? this.requireUserAddress(method);
-    const beneficiary = params.beneficiary ?? signer;
+    const signer = parseTonAddress(
+      params.senderAddress ?? this.requireUserAddress(method),
+      "senderAddress",
+    );
+    const beneficiary = parseTonAddress(params.beneficiary ?? signer, "beneficiary");
 
     // Per-call referral wins (including explicit `referral: null`); else fall
     // back to the SDK-level default.
     const explicitReferral = params.referral !== undefined || params.referralPct !== undefined;
     const fallback = explicitReferral ? undefined : this.deps.getReferral();
-    const referral = explicitReferral ? (params.referral ?? null) : (fallback?.address ?? null);
+    const referralRaw = explicitReferral ? (params.referral ?? null) : (fallback?.address ?? null);
+    const referral = referralRaw ? parseTonAddress(referralRaw, "referral") : null;
     const referralPct = explicitReferral ? (params.referralPct ?? 0) : (fallback?.pct ?? 0);
 
     return { senderAddress: signer, beneficiary, referral, referralPct };
@@ -1004,6 +1001,14 @@ export { TON_ADDRESS };
  */
 function isTonAddress(addr: string): boolean {
   return addr.toLowerCase() === TON_ADDRESS.toLowerCase();
+}
+
+function getNodeEnv(): string | undefined {
+  const proc =
+    typeof globalThis === "undefined"
+      ? undefined
+      : (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process;
+  return proc?.env?.NODE_ENV;
 }
 
 /**

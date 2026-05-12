@@ -1,14 +1,13 @@
-import { type Bet, type BetStatus, type Cursor, pariCoverUrl } from "@toncast/sdk";
-import { useBets } from "@toncast/sdk-react";
-import { useEffect, useRef, useState } from "react";
+import { type Bet, type BetStatus, pariCoverUrl } from "@toncast/sdk";
+import { useInfiniteBets } from "@toncast/sdk-react";
 import { ConnectButton } from "../components/ConnectButton";
+import { ConnectPromptCard } from "../components/ConnectPromptCard";
 import { Button } from "../components/ui/Button";
-import { Skeleton } from "../components/ui/Skeleton";
+import { SkeletonList } from "../components/ui/SkeletonList";
 import { useNav } from "../context";
-import type { TranslationKey } from "../i18n/translations";
 import { useT } from "../i18n/useT";
 import { useTcState } from "../tc-bridge";
-import { appendBetsPage, cursorKey, MAX_RENDERED_BETS } from "./myBetsState";
+import { MAX_RENDERED_BETS } from "./myBetsState";
 
 const STATUS_CLASS: Record<BetStatus, string> = {
   placed: "tc-badge-placed",
@@ -38,49 +37,37 @@ function BetRow({ bet }: { bet: Bet }) {
         <div className="tc-bet-row">
           <button
             type="button"
-            className="tc-bet-row-thumb"
-            style={{ border: "none", cursor: "pointer", padding: 0, background: "none" }}
+            className="tc-bet-row-thumb tc-bet-row-thumb-btn"
             onClick={() => navigate({ name: "detail", pariId: bet.pariAddress })}
           >
             {thumb ? (
               <img src={thumb} alt="" loading="lazy" />
             ) : (
-              <div style={{ width: "100%", height: "100%", background: "var(--tc-bg-muted)" }} />
+              <div className="tc-bet-row-thumb-placeholder" />
             )}
           </button>
           <div className="tc-bet-row-body">
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+            <div className="tc-bet-row-badges">
               <span className={`tc-badge ${bet.isYes ? "tc-badge-yes" : "tc-badge-no"}`}>
                 {t(bet.isYes ? "side.yes" : "side.no")}
               </span>
               <span className={`tc-badge ${STATUS_CLASS[bet.status]}`}>
-                {t(`bet.status.${bet.status}` as TranslationKey)}
+                {t(`bet.status.${bet.status}`)}
               </span>
             </div>
             {bet.pariName ? (
               <button
                 type="button"
-                className="tc-bet-row-name"
-                style={{
-                  border: "none",
-                  background: "none",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  fontFamily: "inherit",
-                  padding: 0,
-                }}
+                className="tc-bet-row-name tc-bet-row-name-btn"
                 onClick={() => navigate({ name: "detail", pariId: bet.pariAddress })}
               >
                 {bet.pariName}
               </button>
             ) : (
-              <div className="tc-bet-row-meta" style={{ fontFamily: "monospace", fontSize: 11 }}>
-                {bet.pariAddress}
-              </div>
+              <div className="tc-bet-row-meta tc-bet-row-meta-mono">{bet.pariAddress}</div>
             )}
             <div className="tc-bet-row-meta">
-              {t("bet.ticketsCount", { n: bet.ticketsCount })} · {amountTon} TON ·{" "}
-              {date}
+              {t("bet.ticketsCount", { n: bet.ticketsCount })} · {amountTon} TON · {date}
             </div>
           </div>
         </div>
@@ -94,51 +81,17 @@ export function MyBetsView() {
   const { address } = useTcState();
   const { back, canGoBack } = useNav();
 
-  const [cursor, setCursor] = useState<Cursor | null>(null);
-  const [all, setAll] = useState<Bet[]>([]);
-  const [nextCursor, setNextCursor] = useState<Cursor | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const appendedRef = useRef(new Set<string>());
-  // Ref keeps latest `all` accessible in the pagination effect without being a dep,
-  // preventing an effect re-run (and potential double-append) on every state update.
-  const allRef = useRef<Bet[]>([]);
-  allRef.current = all;
-
   // userAddress must be part of the params so it is included in the TanStack Query
   // cache key — prevents stale data from a previous user flashing when a new wallet connects.
-  const query = useBets(
-    cursor !== null ? { cursor, userAddress: address } : { userAddress: address },
-    { enabled: Boolean(address) },
-  );
-
-  useEffect(() => {
-    if (!query.data) return;
-    const key = cursorKey(cursor);
-    if (appendedRef.current.has(key)) return;
-    appendedRef.current.add(key);
-    const { nextCursor: nc, items, hasMore: more } = query.data;
-    const next = appendBetsPage(allRef.current, items, { reset: cursor === null });
-    setNextCursor(nc);
-    setAll(next);
-    setHasMore(more && next.length < MAX_RENDERED_BETS);
-  }, [query.data, cursor]);
-
-  const prevAddrRef = useRef(address);
-  useEffect(() => {
-    if (prevAddrRef.current === address) return;
-    prevAddrRef.current = address;
-    setCursor(null);
-    setAll([]);
-    setNextCursor(null);
-    setHasMore(false);
-    appendedRef.current.clear();
-  }, [address]);
+  const query = useInfiniteBets({ userAddress: address }, { enabled: Boolean(address) });
+  const all = query.data?.pages.flatMap((page) => page.items).slice(0, MAX_RENDERED_BETS) ?? [];
+  const hasMore = Boolean(query.hasNextPage && all.length < MAX_RENDERED_BETS);
 
   const isInitialLoading = query.isLoading && all.length === 0;
-  const isLoadingMore = query.isFetching && all.length > 0;
+  const isLoadingMore = query.isFetchingNextPage;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div className="tc-form-col-sm">
       {canGoBack && (
         <button type="button" className="tc-back-btn" onClick={back}>
           {t("page.paris.detail.back")}
@@ -147,20 +100,7 @@ export function MyBetsView() {
       <h2 className="tc-page-title">{t("page.bets.title")}</h2>
 
       {!address ? (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 12,
-            padding: "32px 0",
-          }}
-        >
-          <p className="tc-text-sm tc-text-muted" style={{ textAlign: "center" }}>
-            {t("page.bets.connectPrompt")}
-          </p>
-          <ConnectButton />
-        </div>
+        <ConnectPromptCard text={t("page.bets.connectPrompt")} action={<ConnectButton />} />
       ) : query.isError && all.length === 0 ? (
         <div className="tc-error">
           {t("page.bets.loadFailed", {
@@ -168,29 +108,19 @@ export function MyBetsView() {
           })}
         </div>
       ) : isInitialLoading ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={String(i)} style={{ height: 80 }} />
-          ))}
-        </div>
+        <SkeletonList count={5} itemStyle={{ height: 80 }} />
       ) : all.length === 0 ? (
         <div className="tc-empty">{t("page.bets.empty")}</div>
       ) : (
         <>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="tc-form-col-sm">
             {all.map((bet) => (
               <BetRow key={bet.id} bet={bet} />
             ))}
           </div>
-          {isLoadingMore && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={String(i)} style={{ height: 80 }} />
-              ))}
-            </div>
-          )}
+          {isLoadingMore && <SkeletonList count={3} itemStyle={{ height: 80 }} />}
           {query.isError && all.length > 0 && (
-            <div className="tc-error" style={{ fontSize: 12 }}>
+            <div className="tc-error-sm">
               {t("page.bets.loadFailed", {
                 error: query.error instanceof Error ? query.error.message : String(query.error),
               })}
@@ -200,8 +130,8 @@ export function MyBetsView() {
             <div className="tc-load-more-row">
               <Button
                 variant="secondary"
-                onClick={() => setCursor(nextCursor)}
-                disabled={query.isFetching}
+                onClick={() => void query.fetchNextPage()}
+                disabled={query.isFetchingNextPage}
               >
                 {t("common.showMore")}
               </Button>

@@ -1,6 +1,7 @@
 import { type UseQueryOptions, type UseQueryResult, useQuery } from "@tanstack/react-query";
 import type { AvailableCoin, ListCoinsParams } from "@toncast/sdk";
 import { useToncastClient } from "../client/useToncastClient";
+import { toncastQueryKeys } from "../queryKeys";
 
 /** TON + jetton balances. Requires `tonClient` on the underlying `ToncastClient`. */
 export function useCoins(
@@ -8,9 +9,10 @@ export function useCoins(
   options?: Omit<UseQueryOptions<AvailableCoin[]>, "queryKey" | "queryFn">,
 ): UseQueryResult<AvailableCoin[]> {
   const client = useToncastClient();
+  const resolvedAddress = params.userAddress ?? client.getUserAddress() ?? null;
   return useQuery<AvailableCoin[]>({
     ...options,
-    queryKey: ["toncast", "coins", "list", params.userAddress ?? client.getUserAddress() ?? null],
+    queryKey: toncastQueryKeys.coins.list(resolvedAddress),
     queryFn: ({ signal }) => client.coins.list({ ...params, signal }),
   });
 }

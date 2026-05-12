@@ -53,7 +53,7 @@ export function CoefficientChart({ history }: { history: CoefficientHistoryPoint
           </span>
         )}
       </div>
-      <div style={{ position: "relative", width: "100%" }}>
+      <div className="tc-chart-canvas">
         <svg
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
           preserveAspectRatio="none"
@@ -111,16 +111,7 @@ export function CoefficientChart({ history }: { history: CoefficientHistoryPoint
           ) : null}
         </svg>
         {history.length === 0 && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              pointerEvents: "none",
-            }}
-          >
+          <div className="tc-chart-empty-overlay">
             <span className="tc-text-xs tc-text-muted">{t("chart.noTrades")}</span>
           </div>
         )}

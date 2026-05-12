@@ -27,24 +27,54 @@
       "types": "./dist/color-math.d.ts",
       "import": "./dist/color-math.js",
       "require": "./dist/color-math.cjs"
+    },
+    "./css-vars-builder": {
+      "types": "./dist/css-vars-builder.d.ts",
+      "import": "./dist/css-vars-builder.js",
+      "require": "./dist/css-vars-builder.cjs"
+    },
+    "./url": {
+      "types": "./dist/url.d.ts",
+      "import": "./dist/url.js",
+      "require": "./dist/url.cjs"
+    },
+    "./use-prefers-color-scheme-dark": {
+      "types": "./dist/use-prefers-color-scheme-dark.d.ts",
+      "import": "./dist/use-prefers-color-scheme-dark.js",
+      "require": "./dist/use-prefers-color-scheme-dark.cjs"
+    },
+    "./constants": {
+      "types": "./dist/constants.d.ts",
+      "import": "./dist/constants.js",
+      "require": "./dist/constants.cjs"
     }
   },
   "files": [
     "dist",
     "README.md"
   ],
-  "sideEffects": true,
+  "sideEffects": [
+    "./src/browser-globals.ts",
+    "./dist/index.css",
+    "./dist/index.iife.js",
+    "./dist/browser-globals.js",
+    "./dist/browser-globals.cjs"
+  ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsup",
+    "build:css": "node scripts/bundle-widget-css.mjs",
+    "build:css:check": "node scripts/bundle-widget-css.mjs --check",
+    "prebuild": "npm run build:css",
+    "build": "tsup && npm run build:iife",
     "build:iife": "tsup --config tsup.iife.config.ts",
     "dev": "tsup --watch",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
-    "lint:fix": "biome check --write ."
+    "lint:fix": "biome check --write .",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "keywords": [
     "toncast",
@@ -56,21 +86,34 @@
   "license": "MIT",
   "author": "Toncast",
   "dependencies": {
-    "@radix-ui/react-dialog": "^1.1.0",
-    "@radix-ui/react-select": "^2.1.0",
+    "@ton/core": "0.63.1",
+    "buffer": "6.0.3",
+    "lucide-react": "0.468.0"
+  },
+  "peerDependencies": {
     "@radix-ui/react-slider": "^1.2.0",
-    "@tanstack/react-query": "^5.62.0",
-    "@ton/core": "^0.63.1",
-    "@toncast/sdk": "*",
-    "@toncast/sdk-react": "*",
+    "@tanstack/react-query": "^5.0.0",
+    "@toncast/sdk": "0.0.1",
+    "@toncast/sdk-react": "0.0.1",
     "@tonconnect/ui-react": "^2.0.0",
-    "buffer": "^6.0.3",
-    "lucide-react": "^0.468.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@tonconnect/ui-react": {
+      "optional": true
+    }
   },
   "devDependencies": {
+    "@radix-ui/react-slider": "^1.2.0",
+    "@tanstack/react-query": "^5.62.0",
+    "@toncast/sdk": "0.0.1",
+    "@toncast/sdk-react": "0.0.1",
+    "@tonconnect/ui-react": "^2.0.0",
     "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0"
+    "@types/react-dom": "^19.0.0",
+    "jsdom": "^29.1.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }

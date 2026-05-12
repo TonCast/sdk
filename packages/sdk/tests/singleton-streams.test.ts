@@ -52,8 +52,17 @@ function jsonResponse(body: unknown): Response {
   });
 }
 
+function streamPoolSizes(client: ToncastClient): { lists: number; paris: number } {
+  const paris = client.paris as unknown as {
+    listStreams: Map<string, unknown>;
+    pariStreams: Map<string, unknown>;
+  };
+  return { lists: paris.listStreams.size, paris: paris.pariStreams.size };
+}
+
 describe("Pooled streams in ParisResource", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -130,28 +139,58 @@ describe("Pooled streams in ParisResource", () => {
     stubFetch();
     const client = new ToncastClient({ prefetch: false });
     const a = client.paris.streamList();
+    expect(streamPoolSizes(client).lists).toBe(1);
     a.stop();
+    expect(streamPoolSizes(client).lists).toBe(0);
     const b = client.paris.streamList();
     expect(a).not.toBe(b);
     b.stop();
   });
 
-  it("streamList: subscribe()/unsubscribe() does NOT auto-stop the stream (pool keeps it warm)", async () => {
-    vi.useFakeTimers();
+  it("subscribe: a stopped stream is evicted from the per-pari pool", async () => {
     stubFetch();
     const client = new ToncastClient({ prefetch: false });
+    const a = client.paris.subscribe("EQA");
+    expect(streamPoolSizes(client).paris).toBe(1);
+    a.stop();
+    expect(streamPoolSizes(client).paris).toBe(0);
+    const b = client.paris.subscribe("EQA");
+    expect(a).not.toBe(b);
+    b.stop();
+  });
+
+  it("streamList: subscribe()/unsubscribe() stops the stream after the idle timeout", async () => {
+    vi.useFakeTimers();
+    stubFetch();
+    const client = new ToncastClient({ prefetch: false, streamIdleTimeoutMs: 100 });
     const a = client.paris.streamList();
 
     const sub = a.subscribe({});
     sub.unsubscribe();
-    vi.advanceTimersByTime(120_000);
+    vi.advanceTimersByTime(99);
     expect(a.getStatus()).not.toBe("stopped");
+    vi.advanceTimersByTime(1);
+    expect(a.getStatus()).toBe("stopped");
+    expect(streamPoolSizes(client).lists).toBe(0);
 
-    // Re-subscribe still returns the same warm instance.
+    // Re-subscribing after idle stop creates a fresh instance.
     const again = client.paris.streamList();
-    expect(again).toBe(a);
+    expect(again).not.toBe(a);
 
     vi.useRealTimers();
-    a.stop();
+    again.stop();
+  });
+
+  it("dispose stops pooled list and per-pari streams immediately", async () => {
+    stubFetch();
+    const client = new ToncastClient({ prefetch: false });
+    const list = client.paris.streamList();
+    const single = client.paris.subscribe("EQA");
+    await new Promise((r) => setTimeout(r, 0));
+
+    client.dispose();
+
+    expect(list.getStatus()).toBe("stopped");
+    expect(single.getStatus()).toBe("stopped");
   });
 });

@@ -21,8 +21,7 @@ const UUID_RE = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i;
 /** Cloudflare custom image ids for legacy paris are plain decimal strings (see API fixtures). */
 const CF_NUMERIC_IMAGE_RE = /^\d{8,24}$/;
 
-export const DEFAULT_PARI_COVER_VARIANT =
-  "w=400,h=400,fit=contain,format=webp,quality=85";
+export const DEFAULT_PARI_COVER_VARIANT = "w=400,h=400,fit=contain,format=webp,quality=85";
 
 export function pariCoverUrl(
   image: string | null | undefined,

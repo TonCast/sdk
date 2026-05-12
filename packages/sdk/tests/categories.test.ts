@@ -87,4 +87,21 @@ describe("categories.list", () => {
     expect(c).toEqual(SAMPLE_EN);
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
+
+  it("listFilters returns UI-ready feed/category filters separately from raw categories", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async () => jsonResponse(SAMPLE_EN));
+    const client = new ToncastClient({ language: "en", prefetch: false });
+
+    await expect(client.categories.listFilters()).resolves.toEqual([
+      { name: "All", param: { feed: "active" } },
+      { name: "Sports", param: { feed: "active", categoryId: 1 } },
+      { name: "Crypto", param: { feed: "active", categoryId: 3 } },
+      { name: "Pending result", param: { feed: "pending" } },
+      { name: "Finished", param: { feed: "finished" } },
+    ]);
+    await expect(client.categories.list()).resolves.toEqual(SAMPLE_EN);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
 });

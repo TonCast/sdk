@@ -1,6 +1,4 @@
 /** Entry without `ToncastWidget` class / embedded CSS (use `index` for CDN script). */
-import "./browser-globals";
-
 export type {
   ClientDescriptor,
   TonConnectDescriptor,
@@ -9,6 +7,8 @@ export type {
   ToncastWidgetCssVarsBase,
   ToncastWidgetDensity,
   ToncastWidgetDerivedCssVarsOptions,
+  ToncastWidgetGridLayout,
+  ToncastWidgetLayout,
 } from "./types";
 export type { WidgetProps } from "./Widget";
 export { Widget } from "./Widget";

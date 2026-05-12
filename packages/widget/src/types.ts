@@ -20,6 +20,16 @@ export type TonConnectDescriptor = TcStandaloneDescriptor | TcIntegratedDescript
 export type ClientStandaloneDescriptor = {
   type: "standalone";
   /**
+   * Toncast REST API base URL used by `@toncast/sdk`.
+   * Defaults to the public Toncast API.
+   */
+  baseUrl?: string;
+  /**
+   * WebSocket origin (`wss://host` or `ws://host`, no path) for live paris streams.
+   * When omitted, `@toncast/sdk` derives it from `baseUrl` (same host; `https`→`wss`).
+   */
+  wsUrl?: string;
+  /**
    * Custom RPC endpoint for the TON client.
    * Defaults to `https://toncenter.com/api/v2/jsonRPC`.
    * **Production note**: supply your own endpoint + apiKey to avoid rate limits.
@@ -40,6 +50,20 @@ export type ClientIntegratedDescriptor = {
 export type ClientDescriptor = ClientStandaloneDescriptor | ClientIntegratedDescriptor;
 
 export type ToncastWidgetDensity = "compact" | "default" | "comfortable";
+
+export interface ToncastWidgetGridLayout {
+  /** Columns below 480px. Defaults to 1. */
+  mobile?: number;
+  /** Columns from 480px to 759px. Defaults to 2. */
+  tablet?: number;
+  /** Columns from 760px upward. Defaults to 3. */
+  desktop?: number;
+}
+
+export interface ToncastWidgetLayout {
+  /** Responsive pari-card grid columns. */
+  grid?: ToncastWidgetGridLayout;
+}
 
 export interface ToncastWidgetDerivedCssVarsOptions {
   /** Derive foreground/background/hover variables from accent/success/danger/warn. Defaults to true. */
@@ -88,13 +112,6 @@ export interface ToncastWidgetCssVarsBase {
   radius?: string;
   /** Box-shadow for card hover states. Matches the `--tc-shadow` CSS variable. */
   shadow?: string;
-  /**
-   * Overrides the pari grid column layout.
-   * Accepts any valid CSS `grid-template-columns` value.
-   * Example: `"repeat(2, 1fr)"` forces 2 columns, `"repeat(auto-fill, minmax(140px, 1fr))"` for a denser grid.
-   * Omit to use the default responsive auto-fill layout.
-   */
-  gridCols?: string;
   /** Semantic positive color used by YES buttons, won badges, and positive chart/order-book states. */
   success?: string;
   /** Text color for positive surfaces. Derived from success when omitted. */
@@ -187,8 +204,17 @@ export interface ToncastWidgetConfig {
      * Defaults to "light" when omitted.
      */
     theme?: "light" | "dark" | "system";
+    /**
+     * When `theme` is `"system"`, used as the server snapshot for `prefers-color-scheme`
+     * (React `useSyncExternalStore`) so SSR markup matches the intended first paint.
+     * Forward from `Sec-CH-Prefers-Color-Scheme`, a cookie, or your framework request context.
+     * Defaults to `"light"` on the server when omitted.
+     */
+    ssrColorScheme?: "light" | "dark";
     /** Override CSS custom properties for per-instance theming. */
     cssVars?: ToncastWidgetCssVars;
+    /** Responsive layout settings. */
+    layout?: ToncastWidgetLayout;
     /**
      * Controls whether semantic colors and density source tokens generate
      * derived CSS variables. Defaults to true for both groups.
@@ -210,8 +236,6 @@ export interface ToncastWidgetConfig {
      * Pass an empty array [] to hide the picker entirely.
      */
     languages?: SupportedLanguage[];
-    /** Called when the user successfully sends a bet transaction. */
-    onBet?: (pariId: string, amount: bigint, side: "yes" | "no") => void;
   };
 }
 

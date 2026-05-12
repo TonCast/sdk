@@ -47,10 +47,24 @@ export interface ReferralConfig {
   pct: number;
 }
 
+export interface PrefetchConfig {
+  /** Warm localised categories. */
+  categories?: boolean;
+  /** Warm wallet TON/jetton balances when `userAddress` + `tonClient` are available. */
+  coins?: boolean;
+  /** Warm STON.fi swap markets after a jetton balance is detected. */
+  swapMarkets?: boolean;
+}
+
 export interface ToncastClientOptions {
   /** REST API base URL. */
   baseUrl?: string;
-  /** WebSocket base URL. */
+  /**
+   * WebSocket origin (`wss://host` or `ws://host`, no path). The SDK appends
+   * paths such as `/ws/pari-list` and `/ws/<pariId>`.
+   *
+   * When omitted, derived from {@link baseUrl} (same host; `https`→`wss`, `http`→`ws`).
+   */
   wsUrl?: string;
   /** Default user wallet address. Optional — public endpoints work without it. */
   userAddress?: string;
@@ -99,17 +113,39 @@ export interface ToncastClientOptions {
   maxAttempts?: number;
   /** Base delay between retries in ms (doubled per attempt). Default 1000. */
   retryDelayMs?: number;
+  /** Per-request timeout in ms. Default 15000. Set `0` to disable. */
+  requestTimeoutMs?: number;
   /**
-   * Eagerly fetch static reference data on `new ToncastClient()` and on
-   * `setLanguage()`. Right now this just primes the categories list (rarely
-   * changes, almost every UI surface needs it on the first render). Default `true`.
-   *
-   * Disable in tightly controlled environments where you want zero outbound
-   * traffic until you explicitly call a resource method.
+   * How long live streams stay warm after their last subscriber leaves.
+   * Default `30000`. Set `0` to stop immediately or `false` to keep streams
+   * alive until `stop()` / `client.dispose()`.
    */
-  prefetch?: boolean;
+  streamIdleTimeoutMs?: number | false;
+  /**
+   * Eagerly fetch reference/wallet data. Default `false` — constructing a
+   * client is pure unless prefetch is requested explicitly.
+   *
+   * `true` enables the legacy full warm-up. Prefer the object form in
+   * production so each network side effect is intentional.
+   */
+  prefetch?: boolean | PrefetchConfig;
 }
 
 export const DEFAULT_BASE_URL = "https://toncast.me/api";
 /** Base URL for `wss://…/ws/<channel>` endpoints (e.g. `/ws/pari-list`). */
 export const DEFAULT_WS_URL = "wss://toncast.me";
+
+/**
+ * Derives a WebSocket origin from a Toncast REST base URL. Only `protocol` and `host`
+ * are used (path/query are ignored). Invalid URLs fall back to {@link DEFAULT_WS_URL}.
+ */
+export function resolveWsUrlFromApiBaseUrl(apiBaseUrl: string): string {
+  try {
+    const u = new URL(apiBaseUrl);
+    const wsProtocol =
+      u.protocol === "https:" ? "wss:" : u.protocol === "http:" ? "ws:" : u.protocol;
+    return `${wsProtocol}//${u.host}`;
+  } catch {
+    return DEFAULT_WS_URL;
+  }
+}

@@ -1,5 +1,9 @@
 import type { SupportedLanguage } from "@toncast/sdk";
 
+export type { SupportedLanguage };
+
+import { RADIUS_DEFAULT } from "@toncast/widget/constants";
+
 export type Device = "mobile" | "tablet" | "desktop";
 
 export interface ThemeColorSet {
@@ -10,11 +14,17 @@ export interface ThemeColorSet {
   warn: string;
 }
 
+export interface ThemeGridConfig {
+  mobile: number;
+  tablet: number;
+  desktop: number;
+}
+
 export interface ThemeConfig {
   colorScheme: "light" | "dark" | "system";
   radius: number;
-  /** Grid columns: 0 = auto (responsive), 1–4 = fixed count */
-  columns: number;
+  /** Responsive market-card grid columns. */
+  grid: ThemeGridConfig;
   density: "compact" | "default" | "comfortable";
   /** Colors applied in light mode */
   light: ThemeColorSet;
@@ -32,6 +42,13 @@ export interface ConstructorConfig {
   language: SupportedLanguage | "";
   /** Languages available in the widget's in-app picker. Empty = show all. */
   languages: SupportedLanguage[];
+  /** Optional Toncast REST API base URL for staging/self-hosted API environments. */
+  apiBaseUrl: string;
+  /**
+   * Optional WebSocket origin (`wss://host`, no path). Live paris streams.
+   * When empty, the SDK derives WS from `apiBaseUrl`.
+   */
+  apiWsUrl: string;
   referralAddress: string;
   referralPct: number;
   theme: ThemeConfig;
@@ -59,14 +76,36 @@ export const DEFAULT_CONFIG: ConstructorConfig = {
   iconUrl: "",
   language: "",
   languages: [],
+  apiBaseUrl: "",
+  apiWsUrl: "",
   referralAddress: "",
   referralPct: 0,
   theme: {
     colorScheme: "light",
-    radius: 12,
-    columns: 0,
+    radius: RADIUS_DEFAULT,
+    grid: {
+      mobile: 1,
+      tablet: 2,
+      desktop: 3,
+    },
     density: "default",
     light: DEFAULT_LIGHT_COLORS,
     dark: DEFAULT_DARK_COLORS,
   },
 };
+
+/** Restore Config-tab fields to defaults without changing Theme tab. */
+export function resetConfigTabToDefaults(config: ConstructorConfig): ConstructorConfig {
+  return {
+    ...config,
+    domain: DEFAULT_CONFIG.domain,
+    appName: DEFAULT_CONFIG.appName,
+    iconUrl: DEFAULT_CONFIG.iconUrl,
+    language: DEFAULT_CONFIG.language,
+    languages: [...DEFAULT_CONFIG.languages],
+    apiBaseUrl: DEFAULT_CONFIG.apiBaseUrl,
+    apiWsUrl: DEFAULT_CONFIG.apiWsUrl,
+    referralAddress: DEFAULT_CONFIG.referralAddress,
+    referralPct: DEFAULT_CONFIG.referralPct,
+  };
+}

@@ -8,6 +8,10 @@ import { Widget } from "./Widget";
 
 const STYLE_ID = "toncast-widget-styles";
 
+/** Present on `<link rel="stylesheet">` when layout CSS is supplied by the host ZIP/page. */
+const CDN_STYLESHEET_ATTR = "data-toncast-widget-css";
+const CDN_STYLESHEET_LOADED_ATTR = "data-toncast-widget-css-loaded";
+
 /**
  * Derive a version tag from the CSS content so the injected <style> tag is
  * automatically replaced whenever widget.css changes — no manual bump needed.
@@ -19,12 +23,21 @@ function cssHash(css: string): string {
   }
   return (h >>> 0).toString(36);
 }
-const STYLE_VERSION = cssHash(widgetCss as unknown as string);
+const STYLE_VERSION = cssHash(widgetCss);
 
 /** Tracks how many ToncastWidget instances are currently mounted. */
 let mountedCount = 0;
 
 function injectStyles(): void {
+  const cdnStylesheet = document.querySelector<HTMLLinkElement>(
+    `link[rel="stylesheet"][${CDN_STYLESHEET_ATTR}]`,
+  );
+  if (
+    cdnStylesheet &&
+    (cdnStylesheet.getAttribute(CDN_STYLESHEET_LOADED_ATTR) === "true" || cdnStylesheet.sheet)
+  ) {
+    return;
+  }
   const existing = document.getElementById(STYLE_ID);
   if (existing) {
     // Same version already injected — nothing to do.
@@ -35,7 +48,7 @@ function injectStyles(): void {
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.setAttribute("data-version", STYLE_VERSION);
-  style.textContent = widgetCss as unknown as string;
+  style.textContent = widgetCss;
   document.head.appendChild(style);
 }
 
@@ -56,17 +69,12 @@ export class ToncastWidget {
     this.config = config;
   }
 
-  /**
-   * Merges current config with an `onBet` bridge.
-   * Composes with user-supplied `onBet` if present — both receive every event.
-   */
-  private buildConfig(): ToncastWidgetConfig {
-    const userOnBet = this.config.widget?.onBet;
-    const onBet = (pariId: string, amount: bigint, side: "yes" | "no") => {
-      this.emit("bet", { pariId, amount, side });
-      userOnBet?.(pariId, amount, side);
-    };
-    return { ...this.config, widget: { ...this.config.widget, onBet } };
+  /** React element with the bet-event bridge wired into Widget's `onBet` prop. */
+  private renderElement() {
+    return createElement(Widget, {
+      config: this.config,
+      onBet: (payload) => this.emit("bet", payload),
+    });
   }
 
   mount(container: Element): void {
@@ -78,13 +86,13 @@ export class ToncastWidget {
     injectStyles();
     mountedCount++;
     this.root = createRoot(container);
-    this.root.render(createElement(Widget, { config: this.buildConfig() }));
+    this.root.render(this.renderElement());
     this.emit("mount", { container } as ToncastWidgetEventMap["mount"]);
   }
 
   /**
    * Re-render the widget with an updated config without unmounting.
-   * Changes to `endpoint`, `apiKey`, `network`, `language`, or `referral` will
+   * Changes to `baseUrl`, `wsUrl`, `endpoint`, `apiKey`, `network`, `language`, or `referral` will
    * create a fresh ToncastClient and reset the TanStack Query cache — a brief
    * loading state will appear. Purely visual changes (theme, cssVars, …) are
    * applied instantly without a data reload.
@@ -94,7 +102,7 @@ export class ToncastWidget {
   update(config: ToncastWidgetConfig): void {
     this.config = config;
     if (!this.root) return;
-    this.root.render(createElement(Widget, { config: this.buildConfig() }));
+    this.root.render(this.renderElement());
   }
 
   unmount(): void {
@@ -113,7 +121,7 @@ export class ToncastWidget {
    * Subscribe to lifecycle and bridge events from this host instance.
    *
    * - `mount` / `unmount` — widget attached to or removed from the DOM.
-   * - `bet` — user placed a bet (fires alongside `widget.onBet` in config).
+   * - `bet` — user placed a bet (sole subscription channel).
    * - `error` — emitted only when **another listener** you registered on this
    *   instance throws (for example your `bet` handler). Not all SDK/UI failures.
    */

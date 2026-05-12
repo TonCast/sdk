@@ -25,6 +25,16 @@ export default defineConfig({
         __dirname,
         "../../packages/widget/src/theme/colorMath.ts",
       ),
+      "@toncast/widget/css-vars-builder": resolve(
+        __dirname,
+        "../../packages/widget/src/theme/cssVarBuilder.ts",
+      ),
+      "@toncast/widget/url": resolve(__dirname, "../../packages/widget/src/utils/url.ts"),
+      "@toncast/widget/use-prefers-color-scheme-dark": resolve(
+        __dirname,
+        "../../packages/widget/src/utils/usePrefersColorSchemeDark.ts",
+      ),
+      "@toncast/widget/constants": resolve(__dirname, "../../packages/widget/src/constants.ts"),
       // Resolve workspace packages from source so Vite always uses fresh code.
       "@toncast/widget": resolve(__dirname, "../../packages/widget/src"),
       "@toncast/sdk-react": resolve(__dirname, "../../packages/sdk-react/src"),
@@ -39,7 +49,6 @@ export default defineConfig({
       "@radix-ui/react-select",
       "@radix-ui/react-dialog",
       "@ton/core",
-      "@ton/ton",
       "@ston-fi/sdk",
       "@ston-fi/api",
       "@toncast/tx-sdk",

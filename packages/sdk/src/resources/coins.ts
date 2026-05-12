@@ -1,4 +1,4 @@
-import { Address } from "@ton/ton";
+import { Address } from "@ton/core";
 import { TON_ADDRESS } from "@toncast/tx-sdk";
 import type { Logger, TonClient } from "../client/config";
 import { ToncastError } from "../errors";

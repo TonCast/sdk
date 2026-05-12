@@ -2,7 +2,7 @@ import { z } from "zod";
 import { Endpoints } from "../http/endpoints";
 import type { HttpClient } from "../http/HttpClient";
 import type { SupportedLanguage } from "../i18n/languages";
-import { type Category, ServerCategorySchema } from "../types/category";
+import { type Category, type CategoryFilter, ServerCategorySchema } from "../types/category";
 
 const ServerCategoriesSchema = z.array(ServerCategorySchema);
 
@@ -17,15 +17,15 @@ export interface CategoriesResourceDeps {
  * as a stable initial state (e.g. before `useCategories` resolves) without
  * hardcoding the literal.
  */
-export const ALL_CATEGORY_FILTER: Category = { name: "All", param: {} };
+export const ALL_CATEGORY_FILTER: CategoryFilter = { name: "All", param: { feed: "active" } };
 
 /**
  * Mode-flip entries appended after the localised category chips.
  * `param` is exactly what `paris.streamList()` expects.
  */
-const FEED_ENTRIES: Category[] = [
-  { name: "Pending result", param: { showPendingResults: true } },
-  { name: "Finished", param: { includeInactive: true } },
+const FEED_ENTRIES: CategoryFilter[] = [
+  { name: "Pending result", param: { feed: "pending" } },
+  { name: "Finished", param: { feed: "finished" } },
 ];
 
 /**
@@ -43,9 +43,7 @@ export class CategoriesResource {
   constructor(private readonly deps: CategoriesResourceDeps) {}
 
   /**
-   * Returns the localised category list with feed entries appended at the end.
-   * Each entry has `name` and `param` — pass `param` directly to
-   * `paris.streamList()`.
+   * Returns raw localised categories from the API.
    *
    * Note: the underlying HTTP request is **not** abort-able. Categories are a
    * global singleton — wiring an external `AbortSignal` into the shared fetch
@@ -67,19 +65,31 @@ export class CategoriesResource {
         schema: ServerCategoriesSchema,
       })
       .then((fresh) => {
-        const categories: Category[] = fresh.map((c) => ({
-          name: c.title,
-          param: { categoryId: c.id },
-        }));
-        const result = [ALL_CATEGORY_FILTER, ...categories, ...FEED_ENTRIES];
-        this.cache.set(lang, result);
-        return result;
+        this.cache.set(lang, fresh);
+        return fresh;
       })
       .finally(() => {
         this.inflight.delete(lang);
       });
     this.inflight.set(lang, promise);
     return promise;
+  }
+
+  /**
+   * Returns UI-ready filter chips derived from raw categories.
+   * This intentionally stays separate from `list()` so data consumers do not
+   * receive view-model rows masquerading as API categories.
+   */
+  async listFilters(): Promise<CategoryFilter[]> {
+    const categories = await this.list();
+    return [
+      ALL_CATEGORY_FILTER,
+      ...categories.map((c) => ({
+        name: c.title,
+        param: { feed: "active" as const, categoryId: c.id },
+      })),
+      ...FEED_ENTRIES,
+    ];
   }
 
   /** Drop all cached categories. */

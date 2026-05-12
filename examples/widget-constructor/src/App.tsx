@@ -1,74 +1,14 @@
-import { Address } from "@ton/core";
 import { useEffect, useState } from "react";
 import { ConfigTab } from "./components/ConfigTab";
 import { ExportTab } from "./components/ExportTab";
 import { LivePreview } from "./components/LivePreview";
 import { ThemeTab } from "./components/ThemeTab";
-import { type ConstructorConfig, DEFAULT_CONFIG, type Device, type ThemeConfig } from "./types";
+import { type ConstructorConfig, DEFAULT_CONFIG, type Device } from "./types";
+import { previewBackdropFromConfig } from "./utils/generateZip";
+import { normalizeConfig } from "./utils/normalizeConfig";
+import { usePrefersColorSchemeDark } from "./utils/usePrefersColorSchemeDark";
 
 type Tab = "theme" | "config" | "export";
-
-const VALID_DENSITIES: ThemeConfig["density"][] = ["compact", "default", "comfortable"];
-const VALID_SCHEMES: ThemeConfig["colorScheme"][] = ["light", "dark", "system"];
-
-/** Normalizes constructor domain: trim, require absolute http(s) URL or empty. */
-function normalizeDomain(raw: unknown): string {
-  if (typeof raw !== "string") return DEFAULT_CONFIG.domain;
-  const s = raw.trim();
-  if (!s) return "";
-  try {
-    const u = new URL(s);
-    return u.protocol === "http:" || u.protocol === "https:" ? s : "";
-  } catch {
-    return "";
-  }
-}
-
-/** Trim; valid addresses only; normalize to **non-bounceable** user-facing form (typically `UQ…`). */
-function normalizeReferralAddress(raw: unknown): string {
-  if (typeof raw !== "string") return "";
-  const s = raw.trim();
-  if (!s) return "";
-  try {
-    return Address.parse(s).toString({ bounceable: false, urlSafe: true });
-  } catch {
-    return "";
-  }
-}
-
-/** Coerces a persisted config into a well-typed, bounded ConstructorConfig. */
-function normalizeConfig(parsed: Partial<ConstructorConfig>): ConstructorConfig {
-  const t = parsed.theme;
-  return {
-    ...DEFAULT_CONFIG,
-    ...parsed,
-    // Ensure array fields are actually arrays (null/undefined from corrupt storage crashes .length)
-    languages: Array.isArray(parsed.languages) ? parsed.languages : DEFAULT_CONFIG.languages,
-    referralPct: Number.isFinite(Number(parsed.referralPct))
-      ? Math.min(7, Math.max(0, Number(parsed.referralPct)))
-      : DEFAULT_CONFIG.referralPct,
-    domain: normalizeDomain(parsed.domain),
-    referralAddress: normalizeReferralAddress(parsed.referralAddress),
-    theme: {
-      ...DEFAULT_CONFIG.theme,
-      ...t,
-      colorScheme: VALID_SCHEMES.includes(t?.colorScheme as ThemeConfig["colorScheme"])
-        ? (t?.colorScheme as ThemeConfig["colorScheme"])
-        : DEFAULT_CONFIG.theme.colorScheme,
-      density: VALID_DENSITIES.includes(t?.density as ThemeConfig["density"])
-        ? (t?.density as ThemeConfig["density"])
-        : DEFAULT_CONFIG.theme.density,
-      radius: Number.isFinite(Number(t?.radius))
-        ? Math.min(64, Math.max(0, Number(t?.radius)))
-        : DEFAULT_CONFIG.theme.radius,
-      columns: Number.isFinite(Number(t?.columns))
-        ? Math.min(4, Math.max(0, Math.round(Number(t?.columns))))
-        : DEFAULT_CONFIG.theme.columns,
-      light: { ...DEFAULT_CONFIG.theme.light, ...(t?.light ?? {}) },
-      dark: { ...DEFAULT_CONFIG.theme.dark, ...(t?.dark ?? {}) },
-    },
-  };
-}
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "theme", label: "Theme" },
@@ -76,24 +16,35 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "export", label: "Export" },
 ];
 
-const DEVICES: { id: Device; label: string; width: string; icon: string; previewLabel: string }[] =
-  [
-    {
-      id: "mobile",
-      label: "370px",
-      width: "370px",
-      icon: "📱",
-      previewLabel: "Mobile, 370 pixels wide",
-    },
-    {
-      id: "tablet",
-      label: "768px",
-      width: "768px",
-      icon: "📟",
-      previewLabel: "Tablet, 768 pixels wide",
-    },
-    { id: "desktop", label: "100%", width: "100%", icon: "🖥", previewLabel: "Desktop, full width" },
-  ];
+const DEVICES: {
+  id: Device;
+  label: string;
+  width: string;
+  icon: string;
+  previewLabel: string;
+}[] = [
+  {
+    id: "mobile",
+    label: "370px",
+    width: "370px",
+    icon: "📱",
+    previewLabel: "Mobile, 370 pixels wide",
+  },
+  {
+    id: "tablet",
+    label: "640px",
+    width: "640px",
+    icon: "📟",
+    previewLabel: "Tablet, 640 pixels wide",
+  },
+  {
+    id: "desktop",
+    label: "100%",
+    width: "100%",
+    icon: "🖥",
+    previewLabel: "Desktop, full width",
+  },
+];
 
 const STORAGE_KEY = "tc-constructor-config-v2";
 
@@ -114,6 +65,8 @@ export function App() {
   const [config, setConfig] = useState<ConstructorConfig>(loadConfig);
   const [tab, setTab] = useState<Tab>("theme");
   const [device, setDevice] = useState<Device>("mobile");
+  const prefersDark = usePrefersColorSchemeDark();
+  const previewBackdrop = previewBackdropFromConfig(config, prefersDark);
 
   // Persist config changes to localStorage.
   useEffect(() => {
@@ -124,8 +77,8 @@ export function App() {
     }
   }, [config]);
 
-  const handleReset = () => {
-    if (window.confirm("Reset all settings to defaults?")) {
+  const handleResetAll = () => {
+    if (window.confirm("Reset all settings (Theme + Config) to defaults?")) {
       setConfig(DEFAULT_CONFIG);
     }
   };
@@ -182,14 +135,14 @@ export function App() {
         </div>
 
         {/* Footer nav */}
-        <div className="px-4 py-3 border-t border-slate-800 flex items-center justify-between">
+        <div className="px-4 py-3 border-t border-slate-800 flex items-center justify-between gap-2">
           <button
             type="button"
-            onClick={handleReset}
-            className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
-            title="Reset all settings to defaults"
+            onClick={handleResetAll}
+            className="text-xs font-medium px-2 py-1.5 rounded-md border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors shrink-0"
+            title="Theme, Config, manifest fields, API URLs, referral — full defaults"
           >
-            Reset
+            Reset all
           </button>
           {tab !== "export" ? (
             <button
@@ -245,7 +198,10 @@ export function App() {
         </div>
 
         {/* Preview canvas */}
-        <div className="flex-1 overflow-auto flex items-start justify-center p-8 bg-slate-950/80">
+        <div
+          className="flex-1 overflow-auto flex items-start justify-center p-8"
+          style={{ backgroundColor: previewBackdrop }}
+        >
           <div
             style={{
               width: DEVICES.find((d) => d.id === device)?.width ?? "100%",

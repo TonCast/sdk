@@ -8,7 +8,7 @@ export const SelectGroup = SelectPrimitive.Group;
 export const SelectValue = SelectPrimitive.Value;
 
 export const SelectTrigger = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Trigger>,
+  React.ComponentRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
 >(({ className, children, ...props }, ref) => (
   <SelectPrimitive.Trigger
@@ -48,7 +48,7 @@ export const SelectContent = React.forwardRef<
         className={cn(
           "p-1.5",
           position === "popper" &&
-            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]",
+            "h-(--radix-select-trigger-height) w-full min-w-(--radix-select-trigger-width)",
         )}
       >
         {children}
@@ -65,7 +65,7 @@ export const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-lg py-2 pl-8 pr-2 text-sm outline-none transition-colors duration-150 focus:bg-[rgb(var(--glass-bg)/calc(var(--glass-bg-alpha)*0.7))] focus:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex w-full cursor-default select-none items-center rounded-lg py-2 pl-8 pr-2 text-sm outline-none transition-colors duration-150 focus:bg-[rgb(var(--glass-bg)/calc(var(--glass-bg-alpha)*0.7))] focus:text-foreground data-disabled:pointer-events-none data-disabled:opacity-50",
       className,
     )}
     {...props}

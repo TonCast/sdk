@@ -43,7 +43,7 @@ export function PariCard({ pari, onPickSide }: PariCardProps) {
   const ended = timeLeft === "ended";
 
   return (
-    <Card className="overflow-hidden flex flex-col h-full">
+    <Card className="flex h-full min-h-0 min-w-0 w-full max-w-full flex-col overflow-hidden">
       <Link
         to={`/p/${encodeURIComponent(pari.id)}`}
         className="flex min-h-0 flex-1 flex-col text-foreground no-underline outline-none transition-opacity hover:opacity-95 focus-visible:opacity-95"
@@ -59,9 +59,7 @@ export function PariCard({ pari, onPickSide }: PariCardProps) {
           <div className="w-full aspect-square shrink-0 bg-muted" />
         )}
         <div className="flex flex-1 flex-col p-3 space-y-2">
-          <div className="text-sm font-medium leading-snug line-clamp-3 min-h-[3.75rem]">
-            {pari.name}
-          </div>
+          <div className="text-sm font-medium leading-snug line-clamp-3 min-h-15">{pari.name}</div>
           <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-auto">
             <span className="inline-flex items-center gap-1">
               <Clock className="size-3" />

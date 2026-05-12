@@ -41,6 +41,7 @@ export {
   type BetSummary,
   type CoinCapacity,
   type ConfirmedQuote,
+  type ConfirmQuoteParams,
   type MarketCapacity,
   type PriceCoinsOptions,
   type QuoteCommon,
@@ -63,6 +64,7 @@ export type {
   TonConnectTransaction,
   ToncastClientOptions,
 } from "./client/config";
+export { DEFAULT_BASE_URL, DEFAULT_WS_URL, resolveWsUrlFromApiBaseUrl } from "./client/config";
 export { ToncastClient } from "./client/ToncastClient";
 export {
   ToncastApiError,
@@ -102,6 +104,10 @@ export type {
   StreamListParams,
 } from "./resources/paris-stream";
 export * from "./types";
+export {
+  parseTonAddress,
+  type TonAddressString,
+} from "./utils/address";
 export {
   firstValue,
   fromPromise,

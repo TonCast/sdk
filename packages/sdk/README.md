@@ -2,13 +2,26 @@
 
 Universal, transport-agnostic SDK for the Toncast prediction-market protocol. Reads paris (markets), categories, bets, and **builds** ready-to-sign bet transactions via [`@toncast/tx-sdk`](https://github.com/TonCast/tx-sdk) (TON or any jetton routed through STON.fi). The integrator hands the prepared transactions to whichever wallet bridge they use — TonConnect, custom signer, server-side wallet, anything.
 
-> **Status: 0.0.1 · pre-release.** Public REST + WebSocket surfaces are wired against the live API. A browser-side widget (with TonConnect built in) is planned separately.
+> **Status: 0.0.1 (pre–1.0.0).** REST + WebSocket are implemented against the live Toncast API. Until `1.0.0`, **pin an exact** `npm` version of `@toncast/sdk` — minor bumps may include breaking changes. See [CHANGELOG.md](../../CHANGELOG.md) and [docs/PUBLIC_API.md](../../docs/PUBLIC_API.md).
+>
+> **Embeddable UI:** use [`@toncast/widget`](https://www.npmjs.com/package/@toncast/widget) and/or [`@toncast/widget-loader`](https://www.npmjs.com/package/@toncast/widget-loader) (CDN bundle). React apps may prefer [`@toncast/sdk-react`](https://www.npmjs.com/package/@toncast/sdk-react).
+
+### Security and responsibilities
+
+- The SDK **never** holds private keys, **never** signs, and **never** sends transactions. It only builds payloads (`TxParams`, TonConnect `messages`).
+- **`userAddress` / `beneficiary` / `senderAddress` are security-critical** — supply only values from your wallet bridge or trusted config; never placeholders in production.
+- For jetton-funded bets, run **`confirmQuote`** immediately before signing (see repository [`AGENTS.md`](../../AGENTS.md)).
+- Financial risk is inherent when integrating digital-asset flows — smoke-test on **minimal** amounts on mainnet before production traffic.
+
+### Logging in production
+
+`ToncastClient` accepts an optional `logger` (`debug`, `warn`, `error`). In production, prefer **warn+** in user-facing builds; reserve `debug` for development. Avoid logging full wallet addresses or PII unless you have a compliance reason and retention policy.
 
 ---
 
 ## Scope
 
-- **`categories`** — list (cached forever per language)
+- **`categories`** — raw list (`{ id, title }`) plus UI-ready filters
 - **`paris`** — list (`active` / `finished` / `pending` feeds, cursor pagination), get, oddsState, coefficient history, winners
 - **`paris.streamList`** — live, paginated, self-managing list of paris (WS broadcast + automatic polling fallback, sequenceId dedup, gap recovery, `pari_created` localization — all internal)
 - **`bets`** — list by pari, list by user (cursor pagination)
@@ -52,6 +65,7 @@ const client = new ToncastClient({
   // referral is OPTIONAL — set it once and every bet attributes a share to your wallet.
   referral: { address: "UQMyIntegratorWallet…", pct: 5 },          // 0..7
   // userAddress is OPTIONAL here — set it later, when the wallet is known.
+  // prefetch defaults to false: construction does not touch the network.
 });
 
 // `coins.list()` discovers TON + every jetton the user holds — zero config.
@@ -108,6 +122,7 @@ const quoteParams = {
   // reusing what summary already loaded saves two HTTP round-trips.
   pricedCoins: summary.pricedCoins,             // TON valuations of every wallet coin
   oddsState: summary.oddsState,                 // current order book on this pari
+  financialRiskAcknowledged: true,              // required before signable txs are returned
 };
 
 const quote = await client.betting.quoteMarketBet(quoteParams);
@@ -145,9 +160,8 @@ const quote = await client.betting.quoteMarketBet(quoteParams);
 //   Disable Place Bet       → !quote.option.feasible
 
 // 4. User clicks "Place Bet" → REQUIRED re-simulation + tx build.
-//    `confirmQuote` re-uses the params from the matching quote* call automatically
-//    (tracked by quote object identity). Pass a second arg only to override.
-const confirmed = await client.betting.confirmQuote(quote);
+//    Pass the acknowledged params so the SDK can return signable transactions.
+const confirmed = await client.betting.confirmQuote(quote, quoteParams);
 
 // confirmed ≈ {
 //   quote:    /* same shape as above, option.estimated === false now */,
@@ -164,8 +178,9 @@ See the [Reading data](#reading-data) and [Preparing a bet](#preparing-a-bet) se
 ## Reading data
 
 ```ts
-// Categories — cached forever per language
-const categories = await client.categories.list();
+// Categories — raw domain data, cached forever per language
+const categories = await client.categories.list();        // Array<{ id: number; title: string }>
+const filters = await client.categories.listFilters();    // Array<{ name: string; param: StreamListParams }>
 
 // Paris — three feeds, free-text search, category filter
 const active = await client.paris.list({ categoryId: 3, limit: 20 });
@@ -218,8 +233,8 @@ stream.hasMore;
 // Synchronous read of current state (no listener)
 stream.snapshot();
 
-// Tear down — closes WS, stops polling
-stream.stop();
+// Tear down — closes WS, stops polling. `dispose()` is an explicit alias.
+stream.dispose();
 ```
 
 **What the SDK does internally** (so the integrator doesn't have to):
@@ -257,7 +272,7 @@ stream.onBetEvent((event) => {
 
 stream.onStatus((s) => {});   // "loading" | "live" | "polling" | "stopped"
 stream.snapshot();             // { pari, oddsState, coefficientHistory } sync read
-stream.stop();
+stream.dispose();
 ```
 
 **Per-broadcast effect** (all internal):
@@ -272,6 +287,26 @@ stream.stop();
 | `comment_added` | silently ignored — comments will land in a later iteration |
 
 Reconnect-aware sync: on the **first** open the loader data is fresh, so `syncStatus.isLatest === false` is treated as "we're starting from scratch". On a **reconnect** the same `isLatest === false` triggers a transparent re-fetch (we may have missed events while the socket was down).
+
+## Client lifecycle and defaults
+
+`new ToncastClient()` is intentionally pure by default: it does not prefetch categories, wallet coins, or STON.fi markets. Opt in deliberately:
+
+```ts
+const client = new ToncastClient({
+  tonClient,
+  prefetch: { categories: true, coins: false, swapMarkets: false },
+  requestTimeoutMs: 15_000,      // default
+  streamIdleTimeoutMs: 30_000,   // 0 = stop immediately, false = advanced/manual lifetime
+});
+```
+
+Every `streamList` / `subscribe` consumer is ref-counted. Unsubscribing the last `onSnapshot`, `onPari`, `onOddsState`, `onCoefficientHistory`, `onBetEvent`, or `onStatus` listener schedules idle cleanup; React hooks only unsubscribe, the SDK owns socket/polling teardown. For long-lived Node processes, route transitions, tests, or widget unmounts, call:
+
+```ts
+client.paris.dispose();  // all pari/list streams + shared list socket
+client.dispose();        // all SDK-owned live resources and listeners
+```
 
 ## Preparing a bet
 
@@ -347,12 +382,21 @@ const quote = await client.betting.quoteMarketBet({
   maxBudgetTon,                                 // TON-equivalent budget
   pricedCoins: summary.pricedCoins,             // from priceCoins()
   oddsState: summary.oddsState,
+  financialRiskAcknowledged: true,
 });
 if (!quote.option.feasible) throw new Error(quote.option.reason);
 
 // `confirmQuote` re-simulates STON.fi at the current rate (catches slippage drift)
 // and rebuilds the tx. Required for jettons, never skip.
-const confirmed = await client.betting.confirmQuote(quote);
+const confirmed = await client.betting.confirmQuote(quote, {
+  pariId: pari.id,
+  isYes: true,
+  source: USDT_MASTER,
+  maxBudgetTon,
+  pricedCoins: summary.pricedCoins,
+  oddsState: summary.oddsState,
+  financialRiskAcknowledged: true,
+});
 const messages = confirmed.messages;            // ready for connector.sendTransaction
 ```
 
@@ -362,7 +406,7 @@ const messages = confirmed.messages;            // ready for connector.sendTrans
 
 `betting.summary(pariId)` reads pari + odds + balances in parallel; pass `pricedCoins` / `oddsState` back to `quote*` (or to `computeMarketBets` directly) to skip the re-fetch. Re-quoting on every slider tick is cheap.
 
-> **Address resolution**: `confirmQuote(quote)` automatically re-uses the params from the `quote*` call that produced `quote` (tracked by object identity). Pass a second argument only when you want to override (e.g. swap the beneficiary at the last second) or when the quote was built manually with `tx-sdk`.
+> **Address resolution + risk acknowledgement**: `confirmQuote` can re-use params from the `quote*` call that produced `quote`, but production code should pass the acknowledged params explicitly: `confirmQuote(quote, { ...quoteParams, financialRiskAcknowledged: true })`. The SDK refuses to return signable transactions without that acknowledgement.
 
 ### Market mode — most common UI flow
 
@@ -386,14 +430,15 @@ const quoteParams = {
   // beneficiary:   recipientWallet,           // who owns the tickets. Default: senderAddress (= self-bet)
   // referral:      partnerWallet,             // per-bet attribution. Default: client.referral
   // referralPct:   5,                         // 0..7. Default: client.referral.pct
+  financialRiskAcknowledged: true,
 };
 
 const quote = await client.betting.quoteMarketBet(quoteParams);
 
 // Required before signing — re-simulates the swap, verifies the quote, returns
 // { quote, txs, messages } ready for the wallet bridge. Auto-uses the params
-// captured at quote-time, so `confirmQuote(quote)` is enough.
-const confirmed = await client.betting.confirmQuote(quote);
+// captured at quote-time, but pass the acknowledged params explicitly.
+const confirmed = await client.betting.confirmQuote(quote, quoteParams);
 //   confirmed.messages — TonConnect-shaped
 //   confirmed.txs      — raw tx-sdk TxParams[]
 ```
@@ -405,16 +450,18 @@ Match available counter-side up to `worstYesOdds`, place the remainder as a new 
 ```ts
 import { TON_ADDRESS } from "@toncast/sdk";
 
-const quote = await client.betting.quoteLimitBet({
+const quoteParams = {
   pariId,
   isYes: true,
   worstYesOdds: 56,    // 2..98, even
   ticketsCount: 300,
   source: TON_ADDRESS,
+  financialRiskAcknowledged: true,
   // senderAddress, beneficiary, referral, referralPct — same overrides as market mode
-});
+};
 
-const confirmed = await client.betting.confirmQuote(quote);
+const quote = await client.betting.quoteLimitBet(quoteParams);
+const confirmed = await client.betting.confirmQuote(quote, quoteParams);
 ```
 
 ### Fixed mode
@@ -424,16 +471,18 @@ One specific `yesOdds`, one `ticketsCount`. Ignores current liquidity.
 ```ts
 import { TON_ADDRESS } from "@toncast/sdk";
 
-const quote = await client.betting.quoteFixedBet({
+const quoteParams = {
   pariId,
   isYes: true,
   yesOdds: 56,
   ticketsCount: 10,
   source: TON_ADDRESS,
+  financialRiskAcknowledged: true,
   // senderAddress, beneficiary, referral, referralPct
-});
+};
 
-const confirmed = await client.betting.confirmQuote(quote);
+const quote = await client.betting.quoteFixedBet(quoteParams);
+const confirmed = await client.betting.confirmQuote(quote, quoteParams);
 ```
 
 ### All three addresses overridden + jetton source
@@ -466,13 +515,14 @@ const quoteParams = {
   // 3. Referral: pass `referral: null` to skip referral for one bet.
   referral: partnerWallet,
   referralPct: 5, // 0..7, validated on-chain as uint3
+  financialRiskAcknowledged: true,
 };
 
 const quote = await client.betting.quoteMarketBet(quoteParams);
 
 // Required for jetton sources — re-simulates the STON.fi route right before signing.
 // Address resolution is auto-tracked from the quote call.
-const confirmed = await client.betting.confirmQuote(quote);
+const confirmed = await client.betting.confirmQuote(quote, quoteParams);
 // Sign confirmed.messages (TonConnect) or confirmed.txs (raw) — the SDK does not.
 ```
 
@@ -638,6 +688,7 @@ npm run test        # vitest
 npm run typecheck   # tsc --noEmit
 npm run lint        # biome
 npm run lint:fix    # biome with autofix
+npm run check       # lint + typecheck + test + build
 ```
 
 Live smoke-tests against production (read-only):
@@ -650,6 +701,32 @@ npx tsx scripts/smoke-betting-summary.ts         # betting.summary + 3 quote mod
 npx tsx scripts/smoke-paris-stream.ts            # paris.streamList live + status
 npx tsx scripts/smoke-pari-subscribe.ts          # paris.subscribe(id) live + status
 ```
+
+Signing/deeplink smoke scripts require explicit inputs:
+
+```bash
+TONCAST_FINANCIAL_RISK_ACK=1 USER_ADDRESS=... npx tsx scripts/smoke-bet-1ton.ts [pariId]
+TONCAST_FINANCIAL_RISK_ACK=1 USER_ADDRESS=... npx tsx scripts/smoke-bet-1usdt.ts [pariId]
+```
+
+## Production checklist
+
+- Pin exact package versions until `1.0.0`.
+- Never hardcode or invent `userAddress`, `senderAddress`, or `beneficiary`; read them from the connected wallet or verified server config.
+- Require explicit developer/user acknowledgement before returning signable bet transactions (`financialRiskAcknowledged: true`).
+- For jetton-funded bets, always run `quote*Bet` through `confirmQuote` immediately before signing; this is where fresh STON.fi simulation catches slippage drift.
+- Surface `ToncastError`, `ToncastApiError`, and `ToncastWsError` to the caller/UI. Do not turn them into silent empty states.
+- Mainnet smoke-test production integrations with minimal amounts before increasing limits.
+- Call `client.dispose()` / stream `.dispose()` during widget unmounts, server shutdown, and tests.
+
+## Migration notes
+
+- Replace `includeInactive: true` with `feed: "finished"`.
+- Replace `showPendingResults: true` with `feed: "pending"`.
+- `client.categories.list()` now returns raw `{ id, title }` domain categories. For UI chips, use `client.categories.listFilters()` or React's `useCategoryFilters()`.
+- `cursor` for `paris.list` is `ParisCursor | null`; pass `page.nextCursor` back as-is.
+- `prefetch` no longer defaults to eager network work. Use `prefetch: true` for legacy warm-up or `{ categories, coins, swapMarkets }` for explicit behavior.
+- `confirmQuote` refuses to return signable transactions unless acknowledged params include `financialRiskAcknowledged: true`.
 
 ## License
 

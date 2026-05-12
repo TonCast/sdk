@@ -15,6 +15,9 @@
 import { TonClient, ToncastClient } from "../src";
 
 async function main() {
+  const signerAddress = requireEnv("SIGNER_ADDRESS");
+  const pariId = requireEnv("PARI_ID");
+  const beneficiary = requireEnv("RECIPIENT_ADDRESS");
   const tonClient = new TonClient({
     endpoint: process.env.TON_ENDPOINT ?? "https://toncenter.com/api/v2/jsonRPC",
     apiKey: process.env.TONCENTER_API_KEY,
@@ -22,7 +25,7 @@ async function main() {
 
   const client = new ToncastClient({
     baseUrl: process.env.TONCAST_API_URL,
-    userAddress: process.env.SIGNER_ADDRESS, // the SIGNER (TonConnect-bound wallet)
+    userAddress: signerAddress, // the SIGNER (TonConnect-bound wallet)
     tonClient,
   });
 
@@ -31,9 +34,6 @@ async function main() {
   const coins = await client.coins.list();
   const usdt = coins.find((c) => c.symbol === "USDT");
   if (!usdt) throw new Error("signer wallet has no USDT");
-
-  const pariId = process.env.PARI_ID ?? "TODO_PARI_ID";
-  const beneficiary = process.env.RECIPIENT_ADDRESS ?? "UQ_RECIPIENT_ADDRESS";
 
   const quoteParams = {
     pariId,
@@ -45,13 +45,14 @@ async function main() {
     beneficiary,
     referral: process.env.REFERRAL_ADDRESS ?? null, // can equal SIGNER for agent self-referral
     referralPct: 5, // 0..7
+    financialRiskAcknowledged: true as const,
   };
 
   const quote = await client.betting.quoteFixedBet(quoteParams);
 
   // Re-simulates the swap and rebuilds the tx — required before signing (critical for jetton sources).
   // Returns { quote, txs, messages }; auto-uses the params from the matching quote* call.
-  const confirmed = await client.betting.confirmQuote(quote);
+  const confirmed = await client.betting.confirmQuote(quote, quoteParams);
 
   console.log("messages ready for TonConnect:", JSON.stringify(confirmed.messages, null, 2));
 }
@@ -60,3 +61,9 @@ main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is required; do not use placeholder addresses.`);
+  return value;
+}

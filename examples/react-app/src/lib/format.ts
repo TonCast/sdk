@@ -49,7 +49,7 @@ export function shortAddr(addr: string, head = 6, tail = 4): string {
  * `endTime` is a Unix timestamp in seconds (matches the SDK shape).
  */
 export function formatTimeLeft(endTime: number, now: number = Date.now()): string {
-  const remaining = Math.floor(endTime - now / 1000);
+  const remaining = endTime - Math.floor(now / 1000);
   if (remaining <= 0) return "ended";
   const d = Math.floor(remaining / 86_400);
   const h = Math.floor((remaining % 86_400) / 3600);
@@ -58,4 +58,3 @@ export function formatTimeLeft(endTime: number, now: number = Date.now()): strin
   if (h > 0) return `${h}h ${m}m`;
   return `${m}m`;
 }
-

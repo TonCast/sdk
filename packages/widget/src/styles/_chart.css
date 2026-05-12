@@ -1,0 +1,84 @@
+/* ===== CHART ===== */
+.tc-chart-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.tc-chart-meta {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--tc-fg-muted);
+}
+.tc-chart-trend-up {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--tc-success-fg);
+}
+.tc-chart-trend-down {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--tc-danger-fg);
+}
+.tc-chart-svg {
+  width: 100%;
+  height: 96px;
+}
+.tc-chart-canvas {
+  position: relative;
+  width: 100%;
+}
+.tc-chart-empty-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* ===== MY BETS ===== */
+.tc-bet-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tc-bet-row-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--tc-bg-muted);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.tc-bet-row-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tc-bet-row-body {
+  flex: 1;
+  min-width: 0;
+}
+.tc-bet-row-name {
+  font-size: 13px;
+  font-weight: 500;
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  cursor: pointer;
+  color: var(--tc-fg);
+}
+.tc-bet-row-name:hover {
+  text-decoration: underline;
+}
+.tc-bet-row-meta {
+  font-size: 11px;
+  color: var(--tc-fg-muted);
+  margin-top: 2px;
+}
