@@ -58,7 +58,7 @@ export interface ToncastWidgetInstance {
   unmount(): void;
   /**
    * Re-render the widget with an updated config without unmounting.
-   * Changes to `baseUrl`, `endpoint`, `apiKey`, `network`, `language`, or `referral` will
+   * Changes to `baseUrl`, `wsUrl`, `endpoint`, `apiKey`, `network`, `language`, or `referral` will
    * create a fresh ToncastClient — a brief loading state will appear.
    * Purely visual changes (theme, cssVars, …) are applied instantly.
    * Safe to call before `mount()`.

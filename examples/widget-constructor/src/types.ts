@@ -44,6 +44,11 @@ export interface ConstructorConfig {
   languages: SupportedLanguage[];
   /** Optional Toncast REST API base URL for staging/self-hosted API environments. */
   apiBaseUrl: string;
+  /**
+   * Optional WebSocket origin (`wss://host`, no path). Live paris streams.
+   * When empty, the SDK derives WS from `apiBaseUrl`.
+   */
+  apiWsUrl: string;
   referralAddress: string;
   referralPct: number;
   theme: ThemeConfig;
@@ -72,6 +77,7 @@ export const DEFAULT_CONFIG: ConstructorConfig = {
   language: "",
   languages: [],
   apiBaseUrl: "",
+  apiWsUrl: "",
   referralAddress: "",
   referralPct: 0,
   theme: {
@@ -87,3 +93,19 @@ export const DEFAULT_CONFIG: ConstructorConfig = {
     dark: DEFAULT_DARK_COLORS,
   },
 };
+
+/** Restore Config-tab fields to defaults without changing Theme tab. */
+export function resetConfigTabToDefaults(config: ConstructorConfig): ConstructorConfig {
+  return {
+    ...config,
+    domain: DEFAULT_CONFIG.domain,
+    appName: DEFAULT_CONFIG.appName,
+    iconUrl: DEFAULT_CONFIG.iconUrl,
+    language: DEFAULT_CONFIG.language,
+    languages: [...DEFAULT_CONFIG.languages],
+    apiBaseUrl: DEFAULT_CONFIG.apiBaseUrl,
+    apiWsUrl: DEFAULT_CONFIG.apiWsUrl,
+    referralAddress: DEFAULT_CONFIG.referralAddress,
+    referralPct: DEFAULT_CONFIG.referralPct,
+  };
+}

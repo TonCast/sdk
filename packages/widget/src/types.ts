@@ -25,6 +25,11 @@ export type ClientStandaloneDescriptor = {
    */
   baseUrl?: string;
   /**
+   * WebSocket origin (`wss://host` or `ws://host`, no path) for live paris streams.
+   * When omitted, `@toncast/sdk` derives it from `baseUrl` (same host; `https`→`wss`).
+   */
+  wsUrl?: string;
+  /**
    * Custom RPC endpoint for the TON client.
    * Defaults to `https://toncenter.com/api/v2/jsonRPC`.
    * **Production note**: supply your own endpoint + apiKey to avoid rate limits.
@@ -199,6 +204,13 @@ export interface ToncastWidgetConfig {
      * Defaults to "light" when omitted.
      */
     theme?: "light" | "dark" | "system";
+    /**
+     * When `theme` is `"system"`, used as the server snapshot for `prefers-color-scheme`
+     * (React `useSyncExternalStore`) so SSR markup matches the intended first paint.
+     * Forward from `Sec-CH-Prefers-Color-Scheme`, a cookie, or your framework request context.
+     * Defaults to `"light"` on the server when omitted.
+     */
+    ssrColorScheme?: "light" | "dark";
     /** Override CSS custom properties for per-instance theming. */
     cssVars?: ToncastWidgetCssVars;
     /** Responsive layout settings. */

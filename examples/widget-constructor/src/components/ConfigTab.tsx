@@ -1,6 +1,6 @@
-import type { SupportedLanguage } from "@toncast/sdk";
+import { DEFAULT_BASE_URL, DEFAULT_WS_URL, type SupportedLanguage } from "@toncast/sdk";
 import { parseHttpUrl, stripTrailingSlashes } from "@toncast/widget/url";
-import type { ConstructorConfig } from "../types";
+import { type ConstructorConfig, resetConfigTabToDefaults } from "../types";
 import { PillButton } from "./ui/PillButton";
 import { SegmentedButtonGroup } from "./ui/SegmentedButtonGroup";
 import { TextFieldRow } from "./ui/TextFieldRow";
@@ -58,6 +58,29 @@ export function ConfigTab({ config, onChange }: Props) {
 
   return (
     <div className="space-y-5">
+      <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-800/80">
+        <span className="text-[10px] text-slate-500 uppercase tracking-wide font-semibold">
+          Config
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            if (
+              !window.confirm(
+                "Reset Config (domain, API URLs, manifest, languages, referral) to defaults? Theme is unchanged.",
+              )
+            ) {
+              return;
+            }
+            onChange(resetConfigTabToDefaults(config));
+          }}
+          className="text-[10px] font-medium px-2 py-1 rounded-md border border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-500 transition-colors"
+          title="Domain, API URLs, manifest, languages, referral — theme is unchanged"
+        >
+          Reset section
+        </button>
+      </div>
+
       <TextFieldRow
         id="tc-domain"
         label="App domain"
@@ -87,8 +110,18 @@ export function ConfigTab({ config, onChange }: Props) {
         type="url"
         value={config.apiBaseUrl}
         onChange={(v) => set("apiBaseUrl", v)}
-        placeholder="https://api.toncast.app"
-        hint="Optional. Use only for staging or a custom Toncast API deployment."
+        placeholder={DEFAULT_BASE_URL}
+        hint="Leave empty for the public Toncast API. Override only for staging or self-hosted API."
+      />
+
+      <TextFieldRow
+        id="tc-api-ws-url"
+        label="Toncast WebSocket origin (optional)"
+        type="url"
+        value={config.apiWsUrl}
+        onChange={(v) => set("apiWsUrl", v)}
+        placeholder={DEFAULT_WS_URL}
+        hint={`Leave empty — WS is derived from the API URL (e.g. ${DEFAULT_BASE_URL} → ${DEFAULT_WS_URL}). Override only if streams live on another host.`}
       />
 
       <TextFieldRow

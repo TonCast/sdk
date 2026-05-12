@@ -47,6 +47,15 @@ describe("widget export snippets", () => {
     expect(buildJsSnippet(c)).toContain('"baseUrl": "https://api.staging.toncast.test"');
   });
 
+  it("emits wsUrl when apiWsUrl is configured", () => {
+    const c = config({
+      apiBaseUrl: "https://api.staging.toncast.test",
+      apiWsUrl: "wss://ws.staging.toncast.test",
+    });
+    expect(buildIndexHtml(c)).toContain('"wsUrl": "wss://ws.staging.toncast.test"');
+    expect(buildJsSnippet(c)).toContain('"wsUrl": "wss://ws.staging.toncast.test"');
+  });
+
   it("does not emit raw script-closing tags from config values", () => {
     const maliciousConfig = config({
       domain: "https://safe.example/'</script><script>alert(1)</script>",

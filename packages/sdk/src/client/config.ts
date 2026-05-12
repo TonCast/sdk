@@ -59,7 +59,12 @@ export interface PrefetchConfig {
 export interface ToncastClientOptions {
   /** REST API base URL. */
   baseUrl?: string;
-  /** WebSocket base URL. */
+  /**
+   * WebSocket origin (`wss://host` or `ws://host`, no path). The SDK appends
+   * paths such as `/ws/pari-list` and `/ws/<pariId>`.
+   *
+   * When omitted, derived from {@link baseUrl} (same host; `https`→`wss`, `http`→`ws`).
+   */
   wsUrl?: string;
   /** Default user wallet address. Optional — public endpoints work without it. */
   userAddress?: string;
@@ -129,3 +134,18 @@ export interface ToncastClientOptions {
 export const DEFAULT_BASE_URL = "https://toncast.me/api";
 /** Base URL for `wss://…/ws/<channel>` endpoints (e.g. `/ws/pari-list`). */
 export const DEFAULT_WS_URL = "wss://toncast.me";
+
+/**
+ * Derives a WebSocket origin from a Toncast REST base URL. Only `protocol` and `host`
+ * are used (path/query are ignored). Invalid URLs fall back to {@link DEFAULT_WS_URL}.
+ */
+export function resolveWsUrlFromApiBaseUrl(apiBaseUrl: string): string {
+  try {
+    const u = new URL(apiBaseUrl);
+    const wsProtocol =
+      u.protocol === "https:" ? "wss:" : u.protocol === "http:" ? "ws:" : u.protocol;
+    return `${wsProtocol}//${u.host}`;
+  } catch {
+    return DEFAULT_WS_URL;
+  }
+}

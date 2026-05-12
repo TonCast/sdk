@@ -128,8 +128,8 @@ function WidgetShell() {
 /**
  * Isolated component that holds a single standalone ToncastClient.
  * Rendered with a `key` by ToncastLayer — React remounts it (and resets TanStack
- * Query cache) whenever client-critical config changes: baseUrl, endpoint, apiKey,
- * network, language, or referral. All other config changes (theme, cssVars, …) don't affect
+ * Query cache) whenever client-critical config changes: baseUrl, wsUrl, endpoint, apiKey,
+ * network, language, or referral. All other config changes (theme, cssVars, …) do not affect
  * the key, so the client survives cosmetic re-renders.
  */
 function StandaloneClientLayer({
@@ -145,6 +145,7 @@ function StandaloneClientLayer({
   if (!clientRef.current) {
     clientRef.current = new ToncastClient({
       baseUrl: desc?.baseUrl,
+      wsUrl: desc?.wsUrl,
       tonClient: createTonClient({
         endpoint: desc?.endpoint,
         apiKey: desc?.apiKey,
@@ -193,6 +194,7 @@ function ToncastLayer({
   const desc = config.client as ClientStandaloneDescriptor | undefined;
   const clientKey = [
     desc?.baseUrl ?? "",
+    desc?.wsUrl ?? "",
     desc?.endpoint ?? "",
     desc?.apiKey ?? "",
     desc?.network ?? "mainnet",
@@ -223,8 +225,11 @@ export interface WidgetProps {
 }
 
 export function Widget({ config, className, style, onBet }: WidgetProps) {
-  const prefersDark = usePrefersColorSchemeDark();
   const configTheme = config.widget?.theme;
+  const prefersDark = usePrefersColorSchemeDark({
+    enabled: configTheme === "system",
+    serverSnapshot: config.widget?.ssrColorScheme === "dark",
+  });
   const effectiveTheme: "light" | "dark" =
     configTheme === "system" ? (prefersDark ? "dark" : "light") : (configTheme ?? "light");
 
@@ -257,6 +262,7 @@ export function Widget({ config, className, style, onBet }: WidgetProps) {
             <div
               className={cn(themeClass, className)}
               style={cssVarStyle || style ? { ...cssVarStyle, ...style } : undefined}
+              suppressHydrationWarning={configTheme === "system"}
             >
               <WidgetErrorBoundary>
                 <WidgetShell />
@@ -269,8 +275,19 @@ export function Widget({ config, className, style, onBet }: WidgetProps) {
   );
 
   if (config.tonconnect.type === "integrated") {
-    return <IntegratedProvider instance={config.tonconnect.instance}>{inner}</IntegratedProvider>;
+    return (
+      <IntegratedProvider instance={config.tonconnect.instance} widgetTheme={config.widget?.theme}>
+        {inner}
+      </IntegratedProvider>
+    );
   }
 
-  return <StandaloneProvider domain={config.tonconnect.options.domain}>{inner}</StandaloneProvider>;
+  return (
+    <StandaloneProvider
+      domain={config.tonconnect.options.domain}
+      widgetTheme={config.widget?.theme}
+    >
+      {inner}
+    </StandaloneProvider>
+  );
 }

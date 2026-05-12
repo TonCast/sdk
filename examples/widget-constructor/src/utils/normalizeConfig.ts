@@ -34,6 +34,21 @@ export function normalizeApiBaseUrl(raw: unknown): string {
   return url ? stripTrailingSlashes((raw as string).trim()) : "";
 }
 
+/** Trim, require absolute ws(s) URL, strip trailing slashes — empty otherwise. */
+export function normalizeApiWsUrl(raw: unknown): string {
+  if (typeof raw !== "string") return "";
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  let url: URL;
+  try {
+    url = new URL(trimmed);
+  } catch {
+    return "";
+  }
+  if (url.protocol !== "wss:" && url.protocol !== "ws:") return "";
+  return stripTrailingSlashes(trimmed);
+}
+
 /** Trim, accept valid TON addresses only; normalise to non-bounceable user form (UQ…). */
 export function normalizeReferralAddress(raw: unknown): string {
   if (typeof raw !== "string") return "";
@@ -59,6 +74,7 @@ export function normalizeConfig(parsed: Partial<ConstructorConfig>): Constructor
     ...parsed,
     languages: Array.isArray(parsed.languages) ? parsed.languages : DEFAULT_CONFIG.languages,
     apiBaseUrl: normalizeApiBaseUrl(parsed.apiBaseUrl),
+    apiWsUrl: normalizeApiWsUrl(parsed.apiWsUrl),
     referralPct: Number.isFinite(Number(parsed.referralPct))
       ? Math.min(7, Math.max(0, Number(parsed.referralPct)))
       : DEFAULT_CONFIG.referralPct,

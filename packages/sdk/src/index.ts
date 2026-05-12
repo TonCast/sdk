@@ -64,6 +64,7 @@ export type {
   TonConnectTransaction,
   ToncastClientOptions,
 } from "./client/config";
+export { DEFAULT_BASE_URL, DEFAULT_WS_URL, resolveWsUrlFromApiBaseUrl } from "./client/config";
 export { ToncastClient } from "./client/ToncastClient";
 export {
   ToncastApiError,

@@ -77,8 +77,8 @@ export function App() {
     }
   }, [config]);
 
-  const handleReset = () => {
-    if (window.confirm("Reset all settings to defaults?")) {
+  const handleResetAll = () => {
+    if (window.confirm("Reset all settings (Theme + Config) to defaults?")) {
       setConfig(DEFAULT_CONFIG);
     }
   };
@@ -135,14 +135,14 @@ export function App() {
         </div>
 
         {/* Footer nav */}
-        <div className="px-4 py-3 border-t border-slate-800 flex items-center justify-between">
+        <div className="px-4 py-3 border-t border-slate-800 flex items-center justify-between gap-2">
           <button
             type="button"
-            onClick={handleReset}
-            className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
-            title="Reset all settings to defaults"
+            onClick={handleResetAll}
+            className="text-xs font-medium px-2 py-1.5 rounded-md border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors shrink-0"
+            title="Theme, Config, manifest fields, API URLs, referral — full defaults"
           >
-            Reset
+            Reset all
           </button>
           {tab !== "export" ? (
             <button

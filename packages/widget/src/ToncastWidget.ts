@@ -92,7 +92,7 @@ export class ToncastWidget {
 
   /**
    * Re-render the widget with an updated config without unmounting.
-   * Changes to `endpoint`, `apiKey`, `network`, `language`, or `referral` will
+   * Changes to `baseUrl`, `wsUrl`, `endpoint`, `apiKey`, `network`, `language`, or `referral` will
    * create a fresh ToncastClient and reset the TanStack Query cache — a brief
    * loading state will appear. Purely visual changes (theme, cssVars, …) are
    * applied instantly without a data reload.

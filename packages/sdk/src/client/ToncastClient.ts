@@ -11,10 +11,10 @@ import { parseTonAddress } from "../utils/address";
 import { noopLogger } from "../utils/logger";
 import {
   DEFAULT_BASE_URL,
-  DEFAULT_WS_URL,
   type Logger,
   type PrefetchConfig,
   type ReferralConfig,
+  resolveWsUrlFromApiBaseUrl,
   type TonClient,
   type ToncastClientOptions,
 } from "./config";
@@ -53,8 +53,9 @@ export class ToncastClient {
     this.tonClient = options.tonClient;
     this.logger = options.logger ?? noopLogger;
 
+    const resolvedBaseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
     this.http = new HttpClient({
-      baseUrl: options.baseUrl ?? DEFAULT_BASE_URL,
+      baseUrl: resolvedBaseUrl,
       getLanguage: () => this.language,
       logger: this.logger,
       maxAttempts: options.maxAttempts ?? 3,
@@ -70,7 +71,7 @@ export class ToncastClient {
     });
     this.paris = new ParisResource({
       http: this.http,
-      wsBaseUrl: options.wsUrl ?? DEFAULT_WS_URL,
+      wsBaseUrl: options.wsUrl ?? resolveWsUrlFromApiBaseUrl(resolvedBaseUrl),
       getLanguage: () => this.language,
       logger: this.logger,
       streamIdleTimeoutMs: options.streamIdleTimeoutMs ?? 30_000,

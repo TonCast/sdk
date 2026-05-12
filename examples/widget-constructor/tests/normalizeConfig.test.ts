@@ -4,6 +4,7 @@ import { DEFAULT_CONFIG } from "../src/types";
 import {
   clampRadius,
   normalizeApiBaseUrl,
+  normalizeApiWsUrl,
   normalizeConfig,
   normalizeDomain,
   normalizeReferralAddress,
@@ -28,6 +29,18 @@ describe("normalizeApiBaseUrl", () => {
   it("rejects bad input", () => {
     expect(normalizeApiBaseUrl("foo")).toBe("");
     expect(normalizeApiBaseUrl(undefined)).toBe("");
+  });
+});
+
+describe("normalizeApiWsUrl", () => {
+  it("accepts ws(s) origins and strips trailing slashes", () => {
+    expect(normalizeApiWsUrl("wss://ws.example.com/")).toBe("wss://ws.example.com");
+    expect(normalizeApiWsUrl("  ws://127.0.0.1:9000  ")).toBe("ws://127.0.0.1:9000");
+  });
+  it("rejects http(s) and garbage", () => {
+    expect(normalizeApiWsUrl("https://x.test")).toBe("");
+    expect(normalizeApiWsUrl("")).toBe("");
+    expect(normalizeApiWsUrl(null)).toBe("");
   });
 });
 
@@ -73,6 +86,12 @@ describe("normalizeConfig", () => {
     expect(out.theme.colorScheme).toBe(DEFAULT_CONFIG.theme.colorScheme);
     expect(out.theme.radius).toBe(DEFAULT_CONFIG.theme.radius);
     expect(out.languages).toEqual(DEFAULT_CONFIG.languages);
+    expect(out.apiWsUrl).toBe("");
+  });
+
+  it("normalizes apiWsUrl", () => {
+    expect(normalizeConfig({ apiWsUrl: "wss://x.test/" }).apiWsUrl).toBe("wss://x.test");
+    expect(normalizeConfig({ apiWsUrl: "https://bad" }).apiWsUrl).toBe("");
   });
 
   it("rejects invalid density / colorScheme", () => {

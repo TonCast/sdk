@@ -25,7 +25,8 @@ function buildLayout(config: ConstructorConfig): ToncastWidgetLayout {
 function buildClient(config: ConstructorConfig): ToncastWidgetConfig["client"] | undefined {
   const baseUrl = stripTrailingSlashes(config.apiBaseUrl.trim());
   if (!baseUrl) return undefined;
-  return { type: "standalone", baseUrl };
+  const wsUrl = stripTrailingSlashes(config.apiWsUrl.trim());
+  return wsUrl ? { type: "standalone", baseUrl, wsUrl } : { type: "standalone", baseUrl };
 }
 
 function buildWidgetOptions(config: ConstructorConfig): NonNullable<ToncastWidgetConfig["widget"]> {
@@ -49,7 +50,8 @@ function buildWidgetOptions(config: ConstructorConfig): NonNullable<ToncastWidge
  * - HTML/JS/React snippet generators in `generateZip` (serialised to text);
  * - `LivePreview` (passed as a prop to <Widget/>).
  *
- * `tonconnect` is always emitted; `client` only when `apiBaseUrl` is non-empty.
+ * `tonconnect` is always emitted; `client` only when `apiBaseUrl` is non-empty
+ * (optional `apiWsUrl` is included when set in the constructor).
  * `widget` is always emitted (includes responsive `layout`).
  */
 export function buildWidgetConfig(config: ConstructorConfig, opts: BuildOpts): ToncastWidgetConfig {
