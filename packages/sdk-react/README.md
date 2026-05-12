@@ -1,6 +1,10 @@
 # @toncast/sdk-react
 
-React hooks for [`@toncast/sdk`](../sdk) — built on top of [`@tanstack/react-query`](https://tanstack.com/query/latest). REST methods become `useQuery` queries. Live pari streams (`paris.streamList`, `paris.subscribe`) use `useSyncExternalStore` so post-initial WS errors and snapshots stay live instead of being modeled as settled promises; observable-style resources such as `betting.subscribeSummary` still use the Observable adapter.
+React hooks for [`@toncast/sdk`](../sdk) — built on top of [`@tanstack/react-query`](https://tanstack.com/query/latest). REST methods become `useQuery` queries.
+
+**Two live-data paths:** WS-backed list and single-pari snapshots (`paris.streamList`, `paris.subscribe`) use `useLiveStreamQuery` (`useSyncExternalStore`) so post-initial errors and updates stay live without treating the stream as a one-shot promise. Observable-style resources such as `betting.subscribeSummary` use `useObservableQuery` (TanStack cache + forced per-emission renders). Pick the hook the SDK already exposes; only reach for the low-level adapters when composing custom streams.
+
+Use **`toncastQueryKeys`** for every `prefetchQuery`, `setQueryData`, and targeted `invalidateQueries` so keys match the built-in hooks exactly (including `serializeKey` for params with `bigint`).
 
 > **Status: 0.0.1 (pre–1.0.0).** Pin exact versions until `1.0.0`. See [CHANGELOG.md](../../CHANGELOG.md), [docs/PUBLIC_API.md](../../docs/PUBLIC_API.md), and repository [`AGENTS.md`](../../AGENTS.md) for betting and address handling.
 
@@ -47,6 +51,16 @@ function ParisFeed() {
 ```
 
 `<ToncastProvider>` creates an internal `QueryClient` automatically. Pass `queryClient={appQueryClient}` to share with an existing TanStack-Query app.
+
+```tsx
+import { toncastQueryKeys } from "@toncast/sdk-react";
+
+// Prefetch must use the same builders as the hooks
+void queryClient.prefetchQuery({
+  queryKey: toncastQueryKeys.paris.detail(pariId),
+  queryFn: ({ signal }) => client.paris.get(pariId, signal),
+});
+```
 
 ## Hooks
 

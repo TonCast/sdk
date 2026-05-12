@@ -1,5 +1,6 @@
 import type { Pari, StreamListParams } from "@toncast/sdk";
 import { useToncastClient } from "../client/useToncastClient";
+import { toncastQueryKeys } from "../queryKeys";
 import { type UseLiveStreamQueryResult, useLiveStreamQuery } from "./useLiveStreamQuery";
 
 /**
@@ -21,7 +22,7 @@ export function useStreamList(
   return useLiveStreamQuery<Pari[]>({
     keepPreviousData: true,
     ...options,
-    queryKey: ["toncast", "paris", "streamList", params],
+    queryKey: toncastQueryKeys.paris.streamList(params),
     requestFn: () => client.paris.streamList(params),
   });
 }

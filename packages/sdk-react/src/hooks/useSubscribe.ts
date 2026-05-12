@@ -1,5 +1,6 @@
 import type { PariStreamSnapshot, SubscribePariParams } from "@toncast/sdk";
 import { useToncastClient } from "../client/useToncastClient";
+import { toncastQueryKeys } from "../queryKeys";
 import { type UseLiveStreamQueryResult, useLiveStreamQuery } from "./useLiveStreamQuery";
 
 /**
@@ -23,7 +24,7 @@ export function useSubscribe(
   return useLiveStreamQuery<PariStreamSnapshot>({
     keepPreviousData: true,
     ...options,
-    queryKey: ["toncast", "paris", "subscribe", pariId ?? "_disabled", params],
+    queryKey: toncastQueryKeys.paris.subscribe(pariId, params),
     requestFn: () => client.paris.subscribe(pariId as string, params),
     enabled: Boolean(pariId),
   });

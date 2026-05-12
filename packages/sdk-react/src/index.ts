@@ -49,4 +49,4 @@ export { useTonConnectClient } from "./hooks/useTonConnectClient";
 // Language management — single source of truth for app-wide locale
 export { type UseToncastLanguageResult, useToncastLanguage } from "./hooks/useToncastLanguage";
 // Query-key builders for prefetch / invalidate / setQueryData
-export { toncastQueryKeys } from "./queryKeys";
+export { type MarketCapacityKeyOpts, toncastQueryKeys } from "./queryKeys";

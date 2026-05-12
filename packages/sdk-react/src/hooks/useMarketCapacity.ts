@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query";
 import type { MarketCapacity, OddsState } from "@toncast/sdk";
 import { useToncastClient } from "../client/useToncastClient";
-import { serializeKey } from "../utils/serializeKey";
+import { toncastQueryKeys } from "../queryKeys";
 
 export interface UseMarketCapacityOpts {
   /** Optional budget ceiling — clips `maxTickets` to whatever the budget can buy.
@@ -40,7 +40,7 @@ export function useMarketCapacity(
     // the queryKey — it changes on every WS update and would invalidate the
     // cache on each broadcast. Callers passing an OddsState should re-mount
     // the hook (key on `pariId` upstream) when they need a fresh capacity.
-    queryKey: ["toncast", "betting", "marketCapacity", sourceKey, isYes, serializeKey(opts)],
+    queryKey: toncastQueryKeys.betting.marketCapacity(sourceKey, isYes, opts),
     queryFn: () => client.betting.marketCapacity(source as string | OddsState, isYes, opts),
     enabled: source != null && source !== "",
   });
