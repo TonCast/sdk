@@ -1,10 +1,8 @@
 // Translation catalogs for the demo app.
 //
-// English is the canonical source; other languages cascade through `Catalog<T>`
-// — any missing key in a non-EN catalog automatically falls back to its EN
-// counterpart at lookup time (`t()` in `useT.ts`). This means new strings can
-// be added safely: they appear in English everywhere until translators get to
-// them, and TS still flags missing keys at the call site.
+// English (`en`) is the canonical key set. Every locale must define every
+// `TranslationKey`; `t()` in `useT.ts` still falls back to English if a value is
+// ever missing at runtime.
 
 import type { SupportedLanguage } from "@toncast/sdk";
 
@@ -111,9 +109,7 @@ const en = {
 
 export type TranslationKey = keyof typeof en;
 
-type Catalog = Partial<Record<TranslationKey, string>>;
-
-const ru: Catalog = {
+const ru = {
   "header.title": "Toncast SDK демо",
 
   "page.paris.title": "Пари",
@@ -211,9 +207,9 @@ const ru: Catalog = {
   "toast.copyFailed": "Нет доступа к буферу обмена",
   "toast.languageSet": "Язык: {label}",
   "toast.betSent": "Ставка отправлена — обновляем балансы",
-};
+} satisfies Record<TranslationKey, string>;
 
-const es: Catalog = {
+const es = {
   "header.title": "Demo de Toncast SDK",
   "page.paris.title": "Apuestas",
   "page.paris.empty": "No hay apuestas activas en esta categoría.",
@@ -227,6 +223,16 @@ const es: Catalog = {
   "page.bets.rowMetaOne": "{count} boleto · {amountTon} TON · {date}",
   "page.bets.rowMetaMany": "{count} boletos · {amountTon} TON · {date}",
   "category.all": "Todas",
+
+  "pari.result.title": "Resultado final",
+  "pari.result.yes": "SÍ ganó",
+  "pari.result.no": "NO ganó",
+  "pari.result.draw": "Empate — ningún lado gana",
+  "pari.result.unknown": "Resultado: {result}",
+  "pari.result.pendingInactive":
+    "Este mercado está inactivo. El resultado final aún no está publicado en la cadena.",
+  "pari.bettingClosed": "Las apuestas están cerradas — este mercado se ha liquidado.",
+
   "bet.title": "Hacer una apuesta",
   "bet.mode.market": "Market",
   "bet.mode.limit": "Limit",
@@ -250,8 +256,25 @@ const es: Catalog = {
   "bet.connectPrompt": "Conecta una cartera para cargar tus saldos y apostar.",
   "bet.quoteWillAppear": "La cotización aparecerá tras elegir un presupuesto.",
   "bet.noViableCoin": "No hay moneda viable en tu cartera.",
+  "bet.balanceTooLow":
+    "Saldo insuficiente para 1 boleto con este coeficiente — sube el coeficiente o recarga.",
+  "bet.loadingPrice": "cargando precio…",
   "bet.maxOf": "{current} / {max} boletos",
   "bet.oneTicket": "1 boleto",
+
+  "page.bets.title": "Mis apuestas",
+  "page.bets.empty": "Aún no has hecho ninguna apuesta.",
+  "page.bets.connectPrompt": "Conecta una cartera para ver tu historial de apuestas.",
+  "page.bets.loadFailed": "Error al cargar apuestas: {error}",
+  "bet.status.placed": "en cola",
+  "bet.status.matched": "aparejada",
+  "bet.status.won": "ganada",
+  "bet.status.won_yes": "ganada",
+  "bet.status.won_no": "ganada",
+  "bet.status.lost": "perdida",
+  "bet.status.cancelled": "cancelada",
+  "bet.status.refunded": "reembolsada",
+
   "side.yes": "SÍ",
   "side.no": "NO",
   "orderBook.title": "Libro de órdenes",
@@ -261,6 +284,10 @@ const es: Catalog = {
   "orderBook.empty": "Sin liquidez en el libro.",
   "chart.title": "Probabilidad de SÍ en el tiempo",
   "chart.noTrades": "aún sin operaciones",
+  "chart.trendUp": "▲",
+  "chart.trendDown": "▼",
+
+  "menu.myBets": "Mis apuestas",
   "menu.copyAddress": "Copiar dirección",
   "menu.disconnect": "Desconectar",
   "menu.theme.light": "Tema claro",
@@ -273,9 +300,9 @@ const es: Catalog = {
   "toast.copyFailed": "No se pudo acceder al portapapeles",
   "toast.languageSet": "Idioma: {label}",
   "toast.betSent": "Apuesta enviada — actualizando saldos",
-};
+} satisfies Record<TranslationKey, string>;
 
-const fr: Catalog = {
+const fr = {
   "header.title": "Démo Toncast SDK",
   "page.paris.title": "Paris",
   "page.paris.empty": "Aucun pari actif dans cette catégorie.",
@@ -289,6 +316,16 @@ const fr: Catalog = {
   "page.bets.rowMetaOne": "{count} ticket · {amountTon} TON · {date}",
   "page.bets.rowMetaMany": "{count} tickets · {amountTon} TON · {date}",
   "category.all": "Tous",
+
+  "pari.result.title": "Résultat final",
+  "pari.result.yes": "OUI a gagné",
+  "pari.result.no": "NON a gagné",
+  "pari.result.draw": "Match nul — aucun gagnant",
+  "pari.result.unknown": "Résultat : {result}",
+  "pari.result.pendingInactive":
+    "Ce marché est inactif. Le résultat final n’est pas encore publié on-chain.",
+  "pari.bettingClosed": "Les paris sont fermés — ce marché est réglé.",
+
   "bet.title": "Placer un pari",
   "bet.mode.market": "Marché",
   "bet.mode.limit": "Limite",
@@ -312,8 +349,25 @@ const fr: Catalog = {
   "bet.connectPrompt": "Connectez un portefeuille pour charger vos soldes et préparer un pari.",
   "bet.quoteWillAppear": "Le devis apparaîtra après avoir choisi un budget.",
   "bet.noViableCoin": "Aucune pièce utilisable dans votre portefeuille.",
+  "bet.balanceTooLow":
+    "Solde insuffisant pour 1 ticket à ce coefficient — augmentez le coefficient ou rechargez.",
+  "bet.loadingPrice": "chargement du prix…",
   "bet.maxOf": "{current} / {max} tickets",
   "bet.oneTicket": "1 ticket",
+
+  "page.bets.title": "Mes paris",
+  "page.bets.empty": "Vous n’avez pas encore placé de pari.",
+  "page.bets.connectPrompt": "Connectez un portefeuille pour voir l’historique des paris.",
+  "page.bets.loadFailed": "Échec du chargement des paris : {error}",
+  "bet.status.placed": "placé",
+  "bet.status.matched": "apparié",
+  "bet.status.won": "gagné",
+  "bet.status.won_yes": "gagné",
+  "bet.status.won_no": "gagné",
+  "bet.status.lost": "perdu",
+  "bet.status.cancelled": "annulé",
+  "bet.status.refunded": "remboursé",
+
   "side.yes": "OUI",
   "side.no": "NON",
   "orderBook.title": "Carnet d'ordres",
@@ -323,6 +377,10 @@ const fr: Catalog = {
   "orderBook.empty": "Pas de liquidité dans le carnet.",
   "chart.title": "Probabilité de OUI dans le temps",
   "chart.noTrades": "aucune transaction encore",
+  "chart.trendUp": "▲",
+  "chart.trendDown": "▼",
+
+  "menu.myBets": "Mes paris",
   "menu.copyAddress": "Copier l'adresse",
   "menu.disconnect": "Déconnecter",
   "menu.theme.light": "Thème clair",
@@ -335,9 +393,9 @@ const fr: Catalog = {
   "toast.copyFailed": "Accès au presse-papiers refusé",
   "toast.languageSet": "Langue : {label}",
   "toast.betSent": "Pari envoyé — actualisation des soldes",
-};
+} satisfies Record<TranslationKey, string>;
 
-const de: Catalog = {
+const de = {
   "header.title": "Toncast SDK Demo",
   "page.paris.title": "Wetten",
   "page.paris.empty": "In dieser Kategorie sind derzeit keine Wetten aktiv.",
@@ -351,6 +409,16 @@ const de: Catalog = {
   "page.bets.rowMetaOne": "{count} Ticket · {amountTon} TON · {date}",
   "page.bets.rowMetaMany": "{count} Tickets · {amountTon} TON · {date}",
   "category.all": "Alle",
+
+  "pari.result.title": "Endergebnis",
+  "pari.result.yes": "JA gewinnt",
+  "pari.result.no": "NEIN gewinnt",
+  "pari.result.draw": "Unentschieden — kein Gewinner",
+  "pari.result.unknown": "Ergebnis: {result}",
+  "pari.result.pendingInactive":
+    "Dieser Markt ist inaktiv. Das Endergebnis ist on-chain noch nicht veröffentlicht.",
+  "pari.bettingClosed": "Wetten sind geschlossen — dieser Markt ist abgerechnet.",
+
   "bet.title": "Wette platzieren",
   "bet.mode.market": "Markt",
   "bet.mode.limit": "Limit",
@@ -374,8 +442,25 @@ const de: Catalog = {
   "bet.connectPrompt": "Wallet verbinden, um Salden zu laden und zu wetten.",
   "bet.quoteWillAppear": "Angebot erscheint nach Wahl eines Betrags.",
   "bet.noViableCoin": "Keine geeignete Münze im Wallet.",
+  "bet.balanceTooLow":
+    "Guthaben reicht für 1 Ticket bei dieser Quote nicht — Quote erhöhen oder aufladen.",
+  "bet.loadingPrice": "Preis wird geladen…",
   "bet.maxOf": "{current} / {max} Tickets",
   "bet.oneTicket": "1 Ticket",
+
+  "page.bets.title": "Meine Wetten",
+  "page.bets.empty": "Du hast noch keine Wetten platziert.",
+  "page.bets.connectPrompt": "Wallet verbinden, um deine Wett-Historie zu sehen.",
+  "page.bets.loadFailed": "Wetten konnten nicht geladen werden: {error}",
+  "bet.status.placed": "platziert",
+  "bet.status.matched": "gematcht",
+  "bet.status.won": "gewonnen",
+  "bet.status.won_yes": "gewonnen",
+  "bet.status.won_no": "gewonnen",
+  "bet.status.lost": "verloren",
+  "bet.status.cancelled": "storniert",
+  "bet.status.refunded": "erstattet",
+
   "side.yes": "JA",
   "side.no": "NEIN",
   "orderBook.title": "Auftragsbuch",
@@ -385,6 +470,10 @@ const de: Catalog = {
   "orderBook.empty": "Keine Liquidität im Buch.",
   "chart.title": "Wahrscheinlichkeit von JA im Zeitverlauf",
   "chart.noTrades": "noch keine Trades",
+  "chart.trendUp": "▲",
+  "chart.trendDown": "▼",
+
+  "menu.myBets": "Meine Wetten",
   "menu.copyAddress": "Adresse kopieren",
   "menu.disconnect": "Trennen",
   "menu.theme.light": "Helles Design",
@@ -397,9 +486,9 @@ const de: Catalog = {
   "toast.copyFailed": "Zugriff auf Zwischenablage nicht möglich",
   "toast.languageSet": "Sprache: {label}",
   "toast.betSent": "Wette gesendet — Salden werden aktualisiert",
-};
+} satisfies Record<TranslationKey, string>;
 
-const pt: Catalog = {
+const pt = {
   "header.title": "Demo do Toncast SDK",
   "page.paris.title": "Apostas",
   "page.paris.empty": "Nenhuma aposta ativa nesta categoria.",
@@ -413,6 +502,16 @@ const pt: Catalog = {
   "page.bets.rowMetaOne": "{count} ticket · {amountTon} TON · {date}",
   "page.bets.rowMetaMany": "{count} tickets · {amountTon} TON · {date}",
   "category.all": "Todas",
+
+  "pari.result.title": "Resultado final",
+  "pari.result.yes": "SIM venceu",
+  "pari.result.no": "NÃO venceu",
+  "pari.result.draw": "Empate — nenhum lado vence",
+  "pari.result.unknown": "Resultado: {result}",
+  "pari.result.pendingInactive":
+    "Este mercado está inativo. O resultado final ainda não foi publicado on-chain.",
+  "pari.bettingClosed": "As apostas estão fechadas — este mercado foi liquidado.",
+
   "bet.title": "Fazer aposta",
   "bet.mode.market": "Mercado",
   "bet.mode.limit": "Limite",
@@ -436,8 +535,25 @@ const pt: Catalog = {
   "bet.connectPrompt": "Conecte uma carteira para carregar saldos e apostar.",
   "bet.quoteWillAppear": "A cotação aparece ao escolher um valor.",
   "bet.noViableCoin": "Nenhuma moeda viável na carteira.",
+  "bet.balanceTooLow":
+    "Saldo insuficiente para 1 ticket neste coeficiente — aumente o coeficiente ou deposite.",
+  "bet.loadingPrice": "carregando preço…",
   "bet.maxOf": "{current} / {max} tickets",
   "bet.oneTicket": "1 ticket",
+
+  "page.bets.title": "Minhas apostas",
+  "page.bets.empty": "Você ainda não fez nenhuma aposta.",
+  "page.bets.connectPrompt": "Conecte uma carteira para ver o histórico de apostas.",
+  "page.bets.loadFailed": "Falha ao carregar apostas: {error}",
+  "bet.status.placed": "colocada",
+  "bet.status.matched": "pareada",
+  "bet.status.won": "ganha",
+  "bet.status.won_yes": "ganha",
+  "bet.status.won_no": "ganha",
+  "bet.status.lost": "perdida",
+  "bet.status.cancelled": "cancelada",
+  "bet.status.refunded": "reembolsada",
+
   "side.yes": "SIM",
   "side.no": "NÃO",
   "orderBook.title": "Livro de ordens",
@@ -447,6 +563,10 @@ const pt: Catalog = {
   "orderBook.empty": "Sem liquidez no livro.",
   "chart.title": "Probabilidade de SIM ao longo do tempo",
   "chart.noTrades": "sem trades ainda",
+  "chart.trendUp": "▲",
+  "chart.trendDown": "▼",
+
+  "menu.myBets": "Minhas apostas",
   "menu.copyAddress": "Copiar endereço",
   "menu.disconnect": "Desconectar",
   "menu.theme.light": "Tema claro",
@@ -459,9 +579,9 @@ const pt: Catalog = {
   "toast.copyFailed": "Sem acesso à área de transferência",
   "toast.languageSet": "Idioma: {label}",
   "toast.betSent": "Aposta enviada — atualizando saldos",
-};
+} satisfies Record<TranslationKey, string>;
 
-const zh: Catalog = {
+const zh = {
   "header.title": "Toncast SDK 演示",
   "page.paris.title": "投注",
   "page.paris.empty": "此分类暂无活跃投注。",
@@ -475,6 +595,15 @@ const zh: Catalog = {
   "page.bets.rowMetaOne": "{count} 张票 · {amountTon} TON · {date}",
   "page.bets.rowMetaMany": "{count} 张票 · {amountTon} TON · {date}",
   "category.all": "全部",
+
+  "pari.result.title": "最终结果",
+  "pari.result.yes": "「是」胜出",
+  "pari.result.no": "「否」胜出",
+  "pari.result.draw": "平局 — 双方皆未赢",
+  "pari.result.unknown": "结果：{result}",
+  "pari.result.pendingInactive": "该市场未激活。最终结果尚未在链上公布。",
+  "pari.bettingClosed": "投注已关闭 — 该市场已结算。",
+
   "bet.title": "下注",
   "bet.mode.market": "市价",
   "bet.mode.limit": "限价",
@@ -498,8 +627,24 @@ const zh: Catalog = {
   "bet.connectPrompt": "连接钱包以加载余额并下注。",
   "bet.quoteWillAppear": "选择金额后将显示报价。",
   "bet.noViableCoin": "钱包中无可用币种。",
+  "bet.balanceTooLow": "余额不足以按此赔率购买 1 张票 — 可提高赔率或充值。",
+  "bet.loadingPrice": "正在加载价格…",
   "bet.maxOf": "{current} / {max} 票",
   "bet.oneTicket": "1 票",
+
+  "page.bets.title": "我的投注",
+  "page.bets.empty": "您尚未下过任何投注。",
+  "page.bets.connectPrompt": "连接钱包以查看投注记录。",
+  "page.bets.loadFailed": "加载投注失败：{error}",
+  "bet.status.placed": "已下单",
+  "bet.status.matched": "已撮合",
+  "bet.status.won": "已赢",
+  "bet.status.won_yes": "已赢",
+  "bet.status.won_no": "已赢",
+  "bet.status.lost": "已输",
+  "bet.status.cancelled": "已取消",
+  "bet.status.refunded": "已退款",
+
   "side.yes": "是",
   "side.no": "否",
   "orderBook.title": "订单簿",
@@ -509,6 +654,10 @@ const zh: Catalog = {
   "orderBook.empty": "订单簿无流动性。",
   "chart.title": "「是」的概率走势",
   "chart.noTrades": "暂无交易",
+  "chart.trendUp": "▲",
+  "chart.trendDown": "▼",
+
+  "menu.myBets": "我的投注",
   "menu.copyAddress": "复制地址",
   "menu.disconnect": "断开连接",
   "menu.theme.light": "浅色主题",
@@ -521,9 +670,9 @@ const zh: Catalog = {
   "toast.copyFailed": "无法访问剪贴板",
   "toast.languageSet": "语言:{label}",
   "toast.betSent": "投注已发送 — 正在刷新余额",
-};
+} satisfies Record<TranslationKey, string>;
 
-const hi: Catalog = {
+const hi = {
   "header.title": "Toncast SDK डेमो",
   "page.paris.title": "बेट्स",
   "page.paris.empty": "इस श्रेणी में अभी कोई सक्रिय बेट नहीं है।",
@@ -537,6 +686,15 @@ const hi: Catalog = {
   "page.bets.rowMetaOne": "{count} टिकट · {amountTon} TON · {date}",
   "page.bets.rowMetaMany": "{count} टिकट · {amountTon} TON · {date}",
   "category.all": "सभी",
+
+  "pari.result.title": "अंतिम परिणाम",
+  "pari.result.yes": "हाँ जीता",
+  "pari.result.no": "नहीं जीता",
+  "pari.result.draw": "ड्रॉ — कोई विजेता नहीं",
+  "pari.result.unknown": "परिणाम: {result}",
+  "pari.result.pendingInactive": "यह बाज़ार निष्क्रिय है। अंतिम परिणाम अभी ऑन-चेन प्रकाशित नहीं हुआ।",
+  "pari.bettingClosed": "बेटिंग बंद — यह बाज़ार निपट गया।",
+
   "bet.title": "बेट लगाएँ",
   "bet.mode.market": "मार्केट",
   "bet.mode.limit": "लिमिट",
@@ -560,8 +718,24 @@ const hi: Catalog = {
   "bet.connectPrompt": "बैलेंस लोड करने और बेट तैयार करने के लिए वॉलेट कनेक्ट करें।",
   "bet.quoteWillAppear": "बजट चुनने के बाद कोट दिखेगा।",
   "bet.noViableCoin": "वॉलेट में कोई उपयुक्त सिक्का नहीं।",
+  "bet.balanceTooLow": "इस गुणांक पर 1 टिकट के लिए बैलेंस कम है — गुणांक बढ़ाएँ या टॉप-अप करें।",
+  "bet.loadingPrice": "मूल्य लोड हो रहा है…",
   "bet.maxOf": "{current} / {max} टिकट",
   "bet.oneTicket": "1 टिकट",
+
+  "page.bets.title": "मेरी बेट्स",
+  "page.bets.empty": "आपने अभी तक कोई बेट नहीं लगाई।",
+  "page.bets.connectPrompt": "बेट इतिहास देखने के लिए वॉलेट कनेक्ट करें।",
+  "page.bets.loadFailed": "बेट्स लोड करने में विफल: {error}",
+  "bet.status.placed": "रखी गई",
+  "bet.status.matched": "मैच",
+  "bet.status.won": "जीती",
+  "bet.status.won_yes": "जीती",
+  "bet.status.won_no": "जीती",
+  "bet.status.lost": "हारी",
+  "bet.status.cancelled": "रद्द",
+  "bet.status.refunded": "धनवापसी",
+
   "side.yes": "हाँ",
   "side.no": "नहीं",
   "orderBook.title": "ऑर्डर बुक",
@@ -571,6 +745,10 @@ const hi: Catalog = {
   "orderBook.empty": "बुक में कोई तरलता नहीं।",
   "chart.title": "समय के साथ हाँ की संभावना",
   "chart.noTrades": "अभी तक कोई ट्रेड नहीं",
+  "chart.trendUp": "▲",
+  "chart.trendDown": "▼",
+
+  "menu.myBets": "मेरी बेट्स",
   "menu.copyAddress": "पता कॉपी करें",
   "menu.disconnect": "डिस्कनेक्ट",
   "menu.theme.light": "हल्की थीम",
@@ -583,9 +761,9 @@ const hi: Catalog = {
   "toast.copyFailed": "क्लिपबोर्ड तक पहुँच नहीं",
   "toast.languageSet": "भाषा: {label}",
   "toast.betSent": "बेट भेज दी — बैलेंस अपडेट हो रहा",
-};
+} satisfies Record<TranslationKey, string>;
 
-const fa: Catalog = {
+const fa = {
   "header.title": "نسخه‌ی نمایشی Toncast SDK",
   "page.paris.title": "شرط‌بندی‌ها",
   "page.paris.empty": "در این دسته شرط فعالی وجود ندارد.",
@@ -599,6 +777,15 @@ const fa: Catalog = {
   "page.bets.rowMetaOne": "{count} بلیط · {amountTon} TON · {date}",
   "page.bets.rowMetaMany": "{count} بلیط · {amountTon} TON · {date}",
   "category.all": "همه",
+
+  "pari.result.title": "نتیجهٔ نهایی",
+  "pari.result.yes": "بله برنده شد",
+  "pari.result.no": "خیر برنده شد",
+  "pari.result.draw": "مساوی — هیچ‌کس برنده نیست",
+  "pari.result.unknown": "نتیجه: {result}",
+  "pari.result.pendingInactive": "این بازار غیرفعال است. نتیجهٔ نهایی هنوز on-chain منتشر نشده است.",
+  "pari.bettingClosed": "شرط‌بندی بسته است — این بازار تسویه شده است.",
+
   "bet.title": "ثبت شرط",
   "bet.mode.market": "بازار",
   "bet.mode.limit": "محدود",
@@ -622,8 +809,25 @@ const fa: Catalog = {
   "bet.connectPrompt": "برای بارگذاری موجودی و شرط، کیف پول را متصل کنید.",
   "bet.quoteWillAppear": "پس از انتخاب بودجه، نقل‌قول نمایش داده می‌شود.",
   "bet.noViableCoin": "ارز قابل‌استفاده در کیف پول وجود ندارد.",
+  "bet.balanceTooLow":
+    "موجودی برای ۱ بلیط با این ضریب کافی نیست — ضریب را بالا ببرید یا شارژ کنید.",
+  "bet.loadingPrice": "در حال بارگذاری قیمت…",
   "bet.maxOf": "{current} / {max} بلیط",
   "bet.oneTicket": "۱ بلیط",
+
+  "page.bets.title": "شرط‌های من",
+  "page.bets.empty": "هنوز هیچ شرطی نبسته‌اید.",
+  "page.bets.connectPrompt": "برای دیدن تاریخچهٔ شرط‌ها کیف پول را وصل کنید.",
+  "page.bets.loadFailed": "بارگذاری شرط‌ها ناموفق بود: {error}",
+  "bet.status.placed": "ثبت‌شده",
+  "bet.status.matched": "تطبیق‌شده",
+  "bet.status.won": "برنده",
+  "bet.status.won_yes": "برنده",
+  "bet.status.won_no": "برنده",
+  "bet.status.lost": "باخته",
+  "bet.status.cancelled": "لغوشده",
+  "bet.status.refunded": "بازپرداخت‌شده",
+
   "side.yes": "بله",
   "side.no": "خیر",
   "orderBook.title": "دفتر سفارشات",
@@ -633,6 +837,10 @@ const fa: Catalog = {
   "orderBook.empty": "نقدینگی در دفتر نیست.",
   "chart.title": "احتمال «بله» در طول زمان",
   "chart.noTrades": "هنوز معامله‌ای انجام نشده",
+  "chart.trendUp": "▲",
+  "chart.trendDown": "▼",
+
+  "menu.myBets": "شرط‌های من",
   "menu.copyAddress": "کپی آدرس",
   "menu.disconnect": "قطع اتصال",
   "menu.theme.light": "تم روشن",
@@ -645,9 +853,9 @@ const fa: Catalog = {
   "toast.copyFailed": "دسترسی به کلیپ‌بورد ممکن نیست",
   "toast.languageSet": "زبان: {label}",
   "toast.betSent": "شرط ارسال شد — در حال به‌روزرسانی موجودی",
-};
+} satisfies Record<TranslationKey, string>;
 
-const ar: Catalog = {
+const ar = {
   "header.title": "عرض Toncast SDK",
   "page.paris.title": "الرهانات",
   "page.paris.empty": "لا توجد رهانات نشطة في هذه الفئة الآن.",
@@ -661,6 +869,15 @@ const ar: Catalog = {
   "page.bets.rowMetaOne": "{count} تذكرة · {amountTon} TON · {date}",
   "page.bets.rowMetaMany": "{count} تذاكر · {amountTon} TON · {date}",
   "category.all": "الكل",
+
+  "pari.result.title": "النتيجة النهائية",
+  "pari.result.yes": "فاز نعم",
+  "pari.result.no": "فاز لا",
+  "pari.result.draw": "تعادل — لا يوجد فائز",
+  "pari.result.unknown": "النتيجة: {result}",
+  "pari.result.pendingInactive": "هذا السوق غير نشط. النتيجة النهائية غير منشورة على السلسلة بعد.",
+  "pari.bettingClosed": "الرهان مغلق — تم تسوية هذا السوق.",
+
   "bet.title": "وضع رهان",
   "bet.mode.market": "سوق",
   "bet.mode.limit": "حد",
@@ -684,8 +901,24 @@ const ar: Catalog = {
   "bet.connectPrompt": "اربط محفظة لتحميل الأرصدة وإعداد الرهان.",
   "bet.quoteWillAppear": "سيظهر العرض بعد اختيار المبلغ.",
   "bet.noViableCoin": "لا توجد عملة قابلة للاستخدام في محفظتك.",
+  "bet.balanceTooLow": "الرصيد غير كافٍ لتذكرة واحدة بهذا المعامل — ارفع المعامل أو أعد الشحن.",
+  "bet.loadingPrice": "جارٍ تحميل السعر…",
   "bet.maxOf": "{current} / {max} تذكرة",
   "bet.oneTicket": "تذكرة واحدة",
+
+  "page.bets.title": "رهاناتي",
+  "page.bets.empty": "لم تضع أي رهان بعد.",
+  "page.bets.connectPrompt": "اربط المحفظة لعرض سجل الرهانات.",
+  "page.bets.loadFailed": "تعذّر تحميل الرهانات: {error}",
+  "bet.status.placed": "موضوع",
+  "bet.status.matched": "مطابق",
+  "bet.status.won": "فائز",
+  "bet.status.won_yes": "فائز",
+  "bet.status.won_no": "فائز",
+  "bet.status.lost": "خاسر",
+  "bet.status.cancelled": "ملغى",
+  "bet.status.refunded": "مسترد",
+
   "side.yes": "نعم",
   "side.no": "لا",
   "orderBook.title": "دفتر الأوامر",
@@ -695,6 +928,10 @@ const ar: Catalog = {
   "orderBook.empty": "لا توجد سيولة في الدفتر.",
   "chart.title": "احتمال «نعم» عبر الزمن",
   "chart.noTrades": "لا توجد صفقات بعد",
+  "chart.trendUp": "▲",
+  "chart.trendDown": "▼",
+
+  "menu.myBets": "رهاناتي",
   "menu.copyAddress": "نسخ العنوان",
   "menu.disconnect": "قطع الاتصال",
   "menu.theme.light": "السمة الفاتحة",
@@ -707,9 +944,9 @@ const ar: Catalog = {
   "toast.copyFailed": "تعذّر الوصول إلى الحافظة",
   "toast.languageSet": "اللغة: {label}",
   "toast.betSent": "تم إرسال الرهان — يتم تحديث الأرصدة",
-};
+} satisfies Record<TranslationKey, string>;
 
-export const TRANSLATIONS: Record<SupportedLanguage, Catalog> = {
+export const TRANSLATIONS = {
   en,
   ru,
   hi,
@@ -720,6 +957,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Catalog> = {
   pt,
   fa,
   ar,
-};
+} satisfies Record<SupportedLanguage, Record<TranslationKey, string>>;
 
 export const EN_CATALOG = en;

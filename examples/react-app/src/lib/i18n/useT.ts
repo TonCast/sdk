@@ -1,6 +1,6 @@
 // Tiny translation hook. `t("bet.matched", { n: 20 })` — strict on key (TS
 // completes them) and on params (must mention every `{name}` placeholder).
-// Falls back to English when the active locale is missing the key.
+// Falls back to English if a template is missing (should not happen when catalogs are complete).
 
 import { useCallback } from "react";
 import { useI18n } from "./I18nProvider";
@@ -12,7 +12,7 @@ export function useT(): (key: TranslationKey, params?: TParams) => string {
   const { lang } = useI18n();
   return useCallback(
     (key, params) => {
-      const localised = TRANSLATIONS[lang]?.[key];
+      const localised = TRANSLATIONS[lang][key];
       const template = localised ?? EN_CATALOG[key];
       if (!params) return template;
       return template.replace(/\{(\w+)\}/g, (_, name: string) => {
