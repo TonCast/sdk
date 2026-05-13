@@ -1,10 +1,11 @@
 import type { Pari } from "@toncast/sdk";
 import { ODDS_MAX, ODDS_MIN, pariCoverUrl, yesOddsToDecimalOdds } from "@toncast/sdk";
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useReducer } from "react";
 import { MINUTE_TICK_MS } from "../constants";
 import { useNav } from "../context";
 import { useT } from "../i18n/useT";
 import { formatTimeLeft } from "../utils/format";
+import { useReliablePariCoverUrl } from "../utils/useReliablePariCoverUrl";
 import { Button } from "./ui/Button";
 
 /**
@@ -57,8 +58,8 @@ export function PariCard({ pari }: { pari: Pari }) {
   const t = useT();
   const { navigate } = useNav();
   const img = pariCoverUrl(pari.image);
-  const [failedImage, setFailedImage] = useState<string | null>(null);
-  const showImage = Boolean(img && failedImage !== img);
+  const { displaySrc, onImgError } = useReliablePariCoverUrl(img);
+  const showImage = Boolean(displaySrc);
 
   useMinuteTick();
 
@@ -81,11 +82,11 @@ export function PariCard({ pari }: { pari: Pari }) {
       <button type="button" className="tc-pari-cover-link" onClick={goDetail}>
         {showImage ? (
           <img
-            src={img ?? ""}
+            src={displaySrc ?? ""}
             alt=""
             loading="lazy"
             className="tc-pari-cover"
-            onError={() => setFailedImage(img)}
+            onError={onImgError}
           />
         ) : (
           <div className="tc-pari-cover-placeholder" />

@@ -8,11 +8,13 @@ import { SkeletonList } from "../components/ui/SkeletonList";
 import { useNav } from "../context";
 import { useT } from "../i18n/useT";
 import { useTcState } from "../tc-bridge";
+import { useReliablePariCoverUrl } from "../utils/useReliablePariCoverUrl";
 import { MAX_RENDERED_BETS } from "./myBetsState";
 
 function BetRow({ bet }: { bet: Bet }) {
   const { navigate } = useNav();
   const thumb = pariCoverUrl(bet.pariImage, "w=128,h=128,fit=cover,format=webp,quality=80");
+  const { displaySrc, onImgError } = useReliablePariCoverUrl(thumb);
 
   return (
     <div className="tc-card">
@@ -23,8 +25,8 @@ function BetRow({ bet }: { bet: Bet }) {
             className="tc-bet-row-thumb tc-bet-row-thumb-btn"
             onClick={() => navigate({ name: "detail", pariId: bet.pariAddress })}
           >
-            {thumb ? (
-              <img src={thumb} alt="" loading="lazy" />
+            {displaySrc ? (
+              <img src={displaySrc} alt="" loading="lazy" onError={onImgError} />
             ) : (
               <div className="tc-bet-row-thumb-placeholder" />
             )}

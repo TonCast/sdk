@@ -1,6 +1,7 @@
 import { DEFAULT_PARI_CHART_PARAMS, type Pari, pariCoverUrl } from "@toncast/sdk";
 import { useSubscribe } from "@toncast/sdk-react";
 import { useState } from "react";
+import { useReliablePariCoverUrl } from "../utils/useReliablePariCoverUrl";
 import { BetCard } from "../components/BetCard";
 import { CoefficientChart } from "../components/CoefficientChart";
 import { OrderBook } from "../components/OrderBook";
@@ -110,6 +111,7 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
   const img = snap?.pari
     ? pariCoverUrl(snap.pari.image, "w=600,h=600,fit=contain,format=webp,quality=90")
     : null;
+  const { displaySrc, onImgError } = useReliablePariCoverUrl(img);
 
   return (
     <div className="tc-form-col">
@@ -124,8 +126,21 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
         <div className="tc-card">
           {img && (
             <div className="tc-detail-img-wrapper">
-              <div className="tc-detail-img-blur" style={{ backgroundImage: `url(${img})` }} />
-              <img src={img} alt="" loading="eager" className="tc-detail-img" />
+              {displaySrc ? (
+                <>
+                  <div
+                    className="tc-detail-img-blur"
+                    style={{ backgroundImage: `url(${displaySrc})` }}
+                  />
+                  <img
+                    src={displaySrc}
+                    alt=""
+                    loading="eager"
+                    className="tc-detail-img"
+                    onError={onImgError}
+                  />
+                </>
+              ) : null}
             </div>
           )}
           <div className="tc-card-body tc-detail-card-body">
