@@ -12,7 +12,7 @@ import { OrderBook } from "../components/OrderBook";
 import { Skeleton } from "../components/ui/Skeleton";
 import { DESCRIPTION_PREVIEW_CHARS } from "../constants";
 import { useEmitBet, useNav, type WidgetView } from "../context";
-import { useFormatNumber } from "../i18n/useFormatNumber";
+import { useI18n } from "../i18n/I18nProvider";
 import { useT } from "../i18n/useT";
 import { useTcState } from "../tc-bridge";
 import { useReliablePariCoverUrl } from "../utils/useReliablePariCoverUrl";
@@ -93,7 +93,7 @@ function OutcomeBanner({ pari }: { pari: Pari }) {
 
 export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "detail" }> }) {
   const t = useT();
-  const fmt = useFormatNumber();
+  const { fmt } = useI18n();
   const { back } = useNav();
   const { address } = useTcState();
   // Bridges BetCard's positional `onBetSent` signature into the public `bet`

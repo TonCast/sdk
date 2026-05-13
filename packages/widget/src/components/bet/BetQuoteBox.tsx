@@ -1,6 +1,6 @@
 import { formatBetQuoteReason } from "@toncast/sdk";
 import type { useBet } from "@toncast/sdk-react";
-import { useFormatNumber } from "../../i18n/useFormatNumber";
+import { useI18n } from "../../i18n/I18nProvider";
 import { useT } from "../../i18n/useT";
 import { Skeleton } from "../ui/Skeleton";
 
@@ -9,7 +9,7 @@ type Bet = ReturnType<typeof useBet>;
 /** Quote breakdown rendered below the action button in BetCard. */
 export function BetQuoteBox({ bet, sourceSym }: { bet: Bet; sourceSym: string }) {
   const t = useT();
-  const fmt = useFormatNumber();
+  const { fmt } = useI18n();
   return (
     <div className="tc-quote-box">
       {!bet.quote.data && bet.quote.underlying.isFetching ? (

@@ -1,5 +1,5 @@
 import type { CoefficientHistoryPoint } from "@toncast/sdk";
-import { useFormatNumber } from "../i18n/useFormatNumber";
+import { useI18n } from "../i18n/I18nProvider";
 import { useT } from "../i18n/useT";
 
 const VIEW_W = 600;
@@ -27,7 +27,7 @@ function buildPath(history: readonly CoefficientHistoryPoint[]) {
 
 export function CoefficientChart({ history }: { history: readonly CoefficientHistoryPoint[] }) {
   const t = useT();
-  const fmt = useFormatNumber();
+  const { fmt } = useI18n();
   const last = history.at(-1);
   const first = history[0];
   const delta = last && first ? last.coefficient - first.coefficient : 0;

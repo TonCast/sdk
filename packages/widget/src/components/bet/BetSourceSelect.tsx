@@ -1,6 +1,6 @@
 import { TON_ADDRESS } from "@toncast/sdk";
 import type { useBet } from "@toncast/sdk-react";
-import { useFormatNumber } from "../../i18n/useFormatNumber";
+import { useI18n } from "../../i18n/I18nProvider";
 import { useT } from "../../i18n/useT";
 import { NativeSelect } from "../ui/Select";
 import { Skeleton } from "../ui/Skeleton";
@@ -10,7 +10,7 @@ type Bet = ReturnType<typeof useBet>;
 /** Source-coin picker with a skeleton fallback while balances load. */
 export function BetSourceSelect({ bet }: { bet: Bet }) {
   const t = useT();
-  const fmt = useFormatNumber();
+  const { fmt } = useI18n();
 
   if (!bet.summary.data) {
     return (

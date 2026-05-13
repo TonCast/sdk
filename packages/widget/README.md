@@ -54,3 +54,18 @@ For host-side logging or analytics, set **`widget.onRenderError`** on the config
 ## Bet amount input (locales)
 
 In locales where the decimal separator is a **comma** (e.g. German), a lone **dot** with exactly three digits after it (e.g. `35.572`) is treated as **ambiguous** (English-style fraction vs. thousands). The amount field shows a hint and does not apply the value until the user uses the locale’s decimal mark (e.g. `35,572` for thirty-five point five seven two).
+
+## Language: config vs in-widget picker
+
+Two layers can set the language; they coexist by design.
+
+| Source | When applied | Wins on conflict |
+| --- | --- | --- |
+| `config.widget.language` (host) | Every render where the value changes — pushed via `client.setLanguage()`, the `ToncastClient` is **not** recreated and WS subscriptions stay alive | Yes — the host’s preference always trumps a stale picker selection because it is reapplied every render |
+| In-widget language picker (header) | User clicks a flag — calls the SDK’s `setLanguage` directly | Wins until the host changes `config.widget.language` again |
+
+**To lock the language entirely** (no picker drift): pass `config.widget.language` and never change it. The picker still allows the user to switch locally, but any host-driven re-render with the same `config.widget.language` will snap it back.
+
+**To let the user choose freely**: omit `config.widget.language`. The widget then honours the SDK’s persisted choice, falling back to `navigator.language` and finally `"en"`.
+
+`widget.referral` follows the same model — pushed via `client.setReferral()` on change. In **standalone** mode (you don’t pass a `client.instance`), removing `widget.referral` from config also clears it on the SDK client. In **integrated** mode (you pass your own `ToncastClient`), an absent `widget.referral` is treated as “host manages this directly” and is never cleared by the widget.

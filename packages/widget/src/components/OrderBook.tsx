@@ -1,5 +1,5 @@
 import { type OddsState, orderBookLadder } from "@toncast/sdk";
-import { useFormatNumber } from "../i18n/useFormatNumber";
+import { type NumberFormatters, useI18n } from "../i18n/I18nProvider";
 import { useT } from "../i18n/useT";
 import { SkeletonList } from "./ui/SkeletonList";
 
@@ -7,6 +7,7 @@ type Bucket = ReturnType<typeof orderBookLadder>[number];
 
 export function OrderBook({ oddsState }: { oddsState: OddsState | null }) {
   const t = useT();
+  const { fmt } = useI18n();
 
   if (!oddsState) {
     return <SkeletonList count={6} gap={4} itemStyle={{ height: 28, width: "100%" }} />;
@@ -29,16 +30,26 @@ export function OrderBook({ oddsState }: { oddsState: OddsState | null }) {
         <div className="tc-ob-price-label">{t("orderBook.price")}</div>
         <div className="tc-ob-no-label">{t("orderBook.buyNo")}</div>
       </div>
-      {/* One ladder row per `yesOdds` — stable unique key without index. */}
+      {/* `fmt` lifted to the parent so each row reuses one context read instead
+          of N (one per `<Row>`). Identity is stable per `lang`. */}
       {visible.map((r) => (
-        <Row key={`ob-${r.yesOdds}`} bucket={r} yesMax={yesMax} noMax={noMax} />
+        <Row key={`ob-${r.yesOdds}`} bucket={r} yesMax={yesMax} noMax={noMax} fmt={fmt} />
       ))}
     </div>
   );
 }
 
-function Row({ bucket: r, yesMax, noMax }: { bucket: Bucket; yesMax: number; noMax: number }) {
-  const fmt = useFormatNumber();
+function Row({
+  bucket: r,
+  yesMax,
+  noMax,
+  fmt,
+}: {
+  bucket: Bucket;
+  yesMax: number;
+  noMax: number;
+  fmt: NumberFormatters;
+}) {
   const yesPct = r.yesDepth > 0 ? (r.yesDepth / yesMax) * 100 : 0;
   const noPct = r.noDepth > 0 ? (r.noDepth / noMax) * 100 : 0;
 

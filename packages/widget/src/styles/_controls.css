@@ -165,6 +165,14 @@
   height: 20px;
   touch-action: none;
   user-select: none;
+  /* Radix sets translateX(-50%) on the thumb wrapper only — without translateY
+     the handle sat at top:0 and looked detached from the 8px track. */
+  --radix-slider-thumb-transform: translate(-50%, -50%) !important;
+}
+
+/* Radix positions each thumb in a span immediately after the track. */
+.tc-slider-track + span {
+  top: 50%;
 }
 .tc-slider-track {
   position: relative;
@@ -191,12 +199,11 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   cursor: grab;
   transition: transform 0.1s;
-  position: absolute;
-  transform: translateX(-50%);
+  /* X/Y centre comes from Radix's outer wrapper + --radix-slider-thumb-transform — do not duplicate translateX here. */
 }
 .tc-slider-thumb:hover,
 .tc-slider-thumb:active {
-  transform: translateX(-50%) scale(1.15);
+  transform: scale(1.12);
   cursor: grabbing;
 }
 .tc-slider-thumb:focus-visible {

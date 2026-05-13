@@ -1,6 +1,6 @@
 import { parseUnits } from "@toncast/sdk";
 import type { useBet } from "@toncast/sdk-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "../../i18n/I18nProvider";
 import { useT } from "../../i18n/useT";
 import {
@@ -42,6 +42,12 @@ export function BetAmountInput({ bet, sourceSym, sourceDecimals }: Props) {
   const [parseHint, setParseHint] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  /** Locale-shaped zero hint (e.g. `0,0000` in ru-RU) — matches blur parsing rules. */
+  const amountPlaceholder = useMemo(
+    () => formatRawLocalized(0n, sourceDecimals, lang, 4),
+    [sourceDecimals, lang],
+  );
+
   useEffect(() => {
     if (bet.mode !== "market" || !bet.source) return;
     if (inputRef.current && document.activeElement === inputRef.current) return;
@@ -63,7 +69,7 @@ export function BetAmountInput({ bet, sourceSym, sourceDecimals }: Props) {
           inputMode="decimal"
           className="tc-input tc-stepper-input"
           value={draft}
-          placeholder="0.0"
+          placeholder={amountPlaceholder}
           onChange={(e) => {
             setParseHint(null);
             setDraft(e.target.value);

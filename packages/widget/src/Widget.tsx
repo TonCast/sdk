@@ -313,7 +313,7 @@ export function Widget({ config, className, style, onBet, onRenderError }: Widge
   );
 
   const inner = (
-    <ToncastLayer config={config}>
+    <ToncastLayer config={configWithTheme}>
       <ConfigProvider config={configWithTheme}>
         <BetEmitterProvider emit={onBet}>
           <NavProvider>

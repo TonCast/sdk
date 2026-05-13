@@ -3,7 +3,7 @@ import { ODDS_MAX, ODDS_MIN, pariCoverUrl, yesOddsToDecimalOdds } from "@toncast
 import { useEffect, useReducer } from "react";
 import { MINUTE_TICK_MS } from "../constants";
 import { useNav } from "../context";
-import { useFormatNumber } from "../i18n/useFormatNumber";
+import { useI18n } from "../i18n/I18nProvider";
 import { useT } from "../i18n/useT";
 import { formatTimeLeft } from "../utils/format";
 import { useReliablePariCoverUrl } from "../utils/useReliablePariCoverUrl";
@@ -57,7 +57,7 @@ function ClockIcon() {
 
 export function PariCard({ pari }: { pari: Pari }) {
   const t = useT();
-  const fmt = useFormatNumber();
+  const { fmt } = useI18n();
   const { navigate } = useNav();
   const img = pariCoverUrl(pari.image);
   const { displaySrc, onImgError } = useReliablePariCoverUrl(img);

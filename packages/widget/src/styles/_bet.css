@@ -78,6 +78,11 @@
   min-width: 0;
 }
 
+/* Amount stepper: end-align typed value + locale placeholder (`.tc-input` defaults to centre). */
+.tc-stepper-row .tc-stepper-input {
+  text-align: end;
+}
+
 .tc-quote-box {
   background: var(--tc-bg-muted);
   border: 1px solid var(--tc-border);

@@ -81,9 +81,10 @@ export function formatRawLocalized(
 /**
  * Inspects `Intl.NumberFormat(lang)` to find the locale's group and decimal
  * separators. Both fall back to the canonical `","` / `"."` when the runtime
- * rejects the BCP-47 tag.
+ * rejects the BCP-47 tag. Internal helper for {@link parseLocalizedDecimal} —
+ * not part of the public API.
  */
-export function localeNumberSeparators(lang: string): {
+function localeNumberSeparators(lang: string): {
   decimal: string;
   group: string;
 } {
