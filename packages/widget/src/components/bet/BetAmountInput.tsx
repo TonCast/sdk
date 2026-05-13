@@ -2,9 +2,12 @@ import { parseUnits } from "@toncast/sdk";
 import type { useBet } from "@toncast/sdk-react";
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../../i18n/I18nProvider";
-import { useFormatNumber } from "../../i18n/useFormatNumber";
 import { useT } from "../../i18n/useT";
-import { AmbiguousLocalizedDecimalError, parseLocalizedDecimal } from "../../utils/format";
+import {
+  AmbiguousLocalizedDecimalError,
+  formatRawLocalized,
+  parseLocalizedDecimal,
+} from "../../utils/format";
 import { Slider } from "../ui/Slider";
 import { BetStepper } from "./BetStepper";
 
@@ -20,32 +23,29 @@ interface Props {
  * Market-mode amount input + slider + range hint.
  *
  * The displayed `draft` is locale-formatted (grouping + decimal separator) via
- * `useFormatNumber().raw(...)`. `parseUnits` requires `.`-decimal canonical
+ * {@link formatRawLocalized}. `parseUnits` requires `.`-decimal canonical
  * input, so on blur we route the draft through {@link parseLocalizedDecimal}
  * to strip group separators and convert the locale's decimal mark back to
  * `.` before delegating to the SDK parser.
  *
  * If {@link parseLocalizedDecimal} throws {@link AmbiguousLocalizedDecimalError}
  * (e.g. `35.572` under `de-DE`), we show a locale hint and skip applying the amount.
+ *
+ * The reformat-on-language-change effect skips when the input is currently
+ * focused — otherwise the user's in-flight typing would be wiped if the host
+ * flipped the locale mid-edit.
  */
 export function BetAmountInput({ bet, sourceSym, sourceDecimals }: Props) {
   const t = useT();
-  const fmt = useFormatNumber();
   const { lang } = useI18n();
   const [draft, setDraft] = useState<string>("");
   const [parseHint, setParseHint] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // Stash the live formatter so the effect depends only on the inputs that
-  // semantically drive a redraw (mode, source, amount, decimals, language).
-  // `fmt` itself is rederived on every `lang` change — including it would
-  // either trip Biome's exhaustive-deps rule or cause an extra resync.
-  const fmtRef = useRef(fmt);
-  fmtRef.current = fmt;
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `lang` is intentionally listed so the displayed value re-formats when the user switches language; the formatter itself is read off `fmtRef` to avoid an extra resync on every formatter identity churn.
   useEffect(() => {
     if (bet.mode !== "market" || !bet.source) return;
-    setDraft(fmtRef.current.raw(bet.sourceAmount, sourceDecimals, 4));
+    if (inputRef.current && document.activeElement === inputRef.current) return;
+    setDraft(formatRawLocalized(bet.sourceAmount, sourceDecimals, lang, 4));
   }, [bet.mode, bet.source, bet.sourceAmount, sourceDecimals, lang]);
 
   return (
@@ -58,6 +58,7 @@ export function BetAmountInput({ bet, sourceSym, sourceDecimals }: Props) {
         onIncrement={bet.ticketsStepper.increment}
       >
         <input
+          ref={inputRef}
           type="text"
           inputMode="decimal"
           className="tc-input tc-stepper-input"

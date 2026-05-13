@@ -24,15 +24,18 @@ function makeFakeClient(): FakeClient {
 function Probe({
   client,
   widget,
+  ownsClient = false,
 }: {
   client: FakeClient;
   widget: Parameters<typeof useSyncClientFromConfig>[1];
+  ownsClient?: boolean;
 }) {
   // The hook only needs setLanguage / setReferral — the cast keeps the test
   // free of the full `ToncastClient` surface.
   useSyncClientFromConfig(
     client as unknown as Parameters<typeof useSyncClientFromConfig>[0],
     widget,
+    { ownsClient },
   );
   return null;
 }
@@ -119,5 +122,44 @@ describe("useSyncClientFromConfig", () => {
     mount(<Probe client={c} widget={{ language: "en" }} />);
     expect(warn).toHaveBeenCalledWith("[ToncastWidget] setLanguage failed", expect.any(Error));
     warn.mockRestore();
+  });
+
+  describe("standalone clearing (ownsClient: true)", () => {
+    it("clears referral with setReferral(undefined) when removed from config", () => {
+      const c = makeFakeClient();
+      mount(<Probe client={c} widget={{ referral: { address: "UQ_a", pct: 3 } }} ownsClient />);
+      expect(c.setReferral).toHaveBeenCalledWith({ address: "UQ_a", pct: 3 });
+
+      rerender(<Probe client={c} widget={{}} ownsClient />);
+      expect(c.setReferral).toHaveBeenCalledTimes(2);
+      expect(c.setReferral).toHaveBeenLastCalledWith(undefined);
+    });
+
+    it("does not call setReferral(undefined) on a fresh mount with no referral", () => {
+      const c = makeFakeClient();
+      mount(<Probe client={c} widget={{}} ownsClient />);
+      expect(c.setReferral).not.toHaveBeenCalled();
+    });
+
+    it("re-applies referral after a clear → set transition", () => {
+      const c = makeFakeClient();
+      mount(<Probe client={c} widget={{ referral: { address: "UQ_a", pct: 3 } }} ownsClient />);
+      rerender(<Probe client={c} widget={{}} ownsClient />);
+      rerender(<Probe client={c} widget={{ referral: { address: "UQ_b", pct: 5 } }} ownsClient />);
+      expect(c.setReferral).toHaveBeenCalledTimes(3);
+      expect(c.setReferral).toHaveBeenNthCalledWith(1, { address: "UQ_a", pct: 3 });
+      expect(c.setReferral).toHaveBeenNthCalledWith(2, undefined);
+      expect(c.setReferral).toHaveBeenNthCalledWith(3, { address: "UQ_b", pct: 5 });
+    });
+  });
+
+  describe("integrated mode (ownsClient: false)", () => {
+    it("does NOT clear referral when widget.referral is removed", () => {
+      const c = makeFakeClient();
+      mount(<Probe client={c} widget={{ referral: { address: "UQ_a", pct: 3 } }} />);
+      expect(c.setReferral).toHaveBeenCalledTimes(1);
+      rerender(<Probe client={c} widget={{}} />);
+      expect(c.setReferral).toHaveBeenCalledTimes(1);
+    });
   });
 });

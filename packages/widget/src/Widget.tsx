@@ -163,6 +163,10 @@ function StandaloneClientLayer({
   widget: ToncastWidgetConfig["widget"];
   children: React.ReactNode;
 }) {
+  // Single source of truth: construct the client without `language` / `referral`
+  // and let `useSyncClientFromConfig` apply them via setLanguage / setReferral.
+  // This avoids a duplicate apply on initial mount and keeps clearing semantics
+  // (PR-24 L-1) routed through one code path.
   const clientRef = useRef<ToncastClient | null>(null);
   if (!clientRef.current) {
     clientRef.current = new ToncastClient({
@@ -173,13 +177,10 @@ function StandaloneClientLayer({
         apiKey: desc?.apiKey,
         network: desc?.network,
       }),
-      referral: widget?.referral,
-      language: widget?.language,
     });
   }
-  useSyncClientFromConfig(clientRef.current, widget);
+  useSyncClientFromConfig(clientRef.current, widget, { ownsClient: true });
 
-  // Clean up when this layer unmounts (key change = new client-critical config).
   useEffect(() => {
     return () => {
       clientRef.current?.clearUserAddress();
@@ -209,7 +210,7 @@ function IntegratedClientLayer({
   widget: ToncastWidgetConfig["widget"];
   children: React.ReactNode;
 }) {
-  useSyncClientFromConfig(client, widget);
+  useSyncClientFromConfig(client, widget, { ownsClient: false });
   return (
     <ToncastProvider client={client}>
       <I18nProvider>{children}</I18nProvider>
