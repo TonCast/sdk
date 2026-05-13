@@ -2,14 +2,10 @@ import { Address } from "@ton/core";
 import { RADIUS_DEFAULT, RADIUS_MAX } from "@toncast/widget/constants";
 import { parseHttpUrl, stripTrailingSlashes } from "@toncast/widget/url";
 import { type ConstructorConfig, DEFAULT_CONFIG, type ThemeConfig } from "../types";
+import { normalizeGridColumnForDevice } from "./themeRules";
 
 const VALID_DENSITIES: ThemeConfig["density"][] = ["compact", "default", "comfortable"];
 const VALID_SCHEMES: ThemeConfig["colorScheme"][] = ["light", "dark", "system"];
-
-function normalizeGridColumn(raw: unknown, fallback: number): number {
-  const n = Number(raw);
-  return Number.isFinite(n) ? Math.min(6, Math.max(1, Math.round(n))) : fallback;
-}
 
 /**
  * Clamps a radius value to [0, RADIUS_MAX]. Non-finite input falls back to
@@ -91,9 +87,9 @@ export function normalizeConfig(parsed: Partial<ConstructorConfig>): Constructor
         : DEFAULT_CONFIG.theme.density,
       radius: clampRadius(t?.radius, DEFAULT_CONFIG.theme.radius),
       grid: {
-        mobile: normalizeGridColumn(t?.grid?.mobile, DEFAULT_CONFIG.theme.grid.mobile),
-        tablet: normalizeGridColumn(t?.grid?.tablet, DEFAULT_CONFIG.theme.grid.tablet),
-        desktop: normalizeGridColumn(t?.grid?.desktop, DEFAULT_CONFIG.theme.grid.desktop),
+        mobile: normalizeGridColumnForDevice("mobile", t?.grid?.mobile),
+        tablet: normalizeGridColumnForDevice("tablet", t?.grid?.tablet),
+        desktop: normalizeGridColumnForDevice("desktop", t?.grid?.desktop),
       },
       light: { ...DEFAULT_CONFIG.theme.light, ...(t?.light ?? {}) },
       dark: { ...DEFAULT_CONFIG.theme.dark, ...(t?.dark ?? {}) },

@@ -119,15 +119,15 @@ describe("normalizeConfig", () => {
     ).toBe(DEFAULT_CONFIG.theme.radius);
   });
 
-  it("clamps grid columns to [1, 6] and falls back when NaN", () => {
+  it("normalizes grid columns to device-specific allowed ranges and falls back when NaN", () => {
     const out = normalizeConfig({
       theme: {
         ...DEFAULT_CONFIG.theme,
-        grid: { mobile: 0, tablet: 999, desktop: NaN as unknown as number },
+        grid: { mobile: 6, tablet: 1, desktop: NaN as unknown as number },
       },
     });
-    expect(out.theme.grid.mobile).toBe(1);
-    expect(out.theme.grid.tablet).toBe(6);
+    expect(out.theme.grid.mobile).toBe(3);
+    expect(out.theme.grid.tablet).toBe(2);
     expect(out.theme.grid.desktop).toBe(DEFAULT_CONFIG.theme.grid.desktop);
   });
 

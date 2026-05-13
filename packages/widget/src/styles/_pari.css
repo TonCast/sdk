@@ -34,7 +34,12 @@
   width: 100%;
   aspect-ratio: 1 / 1;
   background:
-    linear-gradient(135deg, transparent 0 42%, var(--tc-bg-hover) 42% 58%, transparent 58%),
+    linear-gradient(
+      135deg,
+      transparent 0 42%,
+      var(--tc-bg-hover) 42% 58%,
+      transparent 58%
+    ),
     var(--tc-bg-muted);
   display: block;
 }
@@ -105,6 +110,52 @@
   text-overflow: ellipsis;
 }
 
+@container (max-width: 479px) {
+  .tc-pari-body {
+    padding: 8px 8px 6px;
+    gap: 4px;
+  }
+
+  .tc-pari-name {
+    font-size: 12px;
+    line-height: 1.3;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    min-height: calc(2 * 1.3em);
+  }
+
+  .tc-pari-meta {
+    flex-direction: var(--tc-pari-mobile-meta-direction, row);
+    align-items: var(--tc-pari-mobile-meta-align, center);
+    justify-content: var(--tc-pari-mobile-meta-justify, space-between);
+    gap: var(--tc-pari-mobile-meta-gap, 8px);
+    font-size: 10px;
+  }
+
+  .tc-pari-meta-item {
+    max-width: 100%;
+  }
+
+  .tc-pari-meta svg {
+    width: 10px;
+    height: 10px;
+    margin-right: 2px;
+    flex-shrink: 0;
+  }
+
+  .tc-pari-btns {
+    grid-template-columns: var(--tc-pari-mobile-actions-columns, 1fr 1fr);
+    gap: var(--tc-pari-mobile-actions-gap, 6px);
+    padding: 0 8px 8px;
+  }
+
+  .tc-pari-btns .tc-btn {
+    min-height: 28px;
+    padding: 0 4px;
+    font-size: var(--tc-pari-mobile-actions-font-size, 12px);
+  }
+}
+
 /* ===== PARI LIST ===== */
 .tc-pari-grid {
   display: grid;
@@ -115,6 +166,28 @@
 @container (min-width: 480px) {
   .tc-pari-grid {
     grid-template-columns: repeat(var(--tc-grid-tablet), minmax(0, 1fr));
+  }
+}
+
+@container (min-width: 480px) and (max-width: 759px) {
+  .tc-pari-meta {
+    flex-direction: var(--tc-pari-tablet-meta-direction, row);
+    align-items: var(--tc-pari-tablet-meta-align, center);
+    justify-content: var(--tc-pari-tablet-meta-justify, space-between);
+    gap: var(--tc-pari-tablet-meta-gap, 8px);
+  }
+
+  .tc-pari-meta-item {
+    max-width: 100%;
+  }
+
+  .tc-pari-btns {
+    grid-template-columns: var(--tc-pari-tablet-actions-columns, 1fr 1fr);
+    gap: var(--tc-pari-tablet-actions-gap, 6px);
+  }
+
+  .tc-pari-btns .tc-btn {
+    font-size: var(--tc-pari-tablet-actions-font-size, 12px);
   }
 }
 

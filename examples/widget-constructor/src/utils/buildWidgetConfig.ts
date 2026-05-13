@@ -2,22 +2,19 @@ import type { ToncastWidgetConfig, ToncastWidgetLayout } from "@toncast/widget";
 import { stripTrailingSlashes } from "@toncast/widget/url";
 import type { ConstructorConfig } from "../types";
 import { buildCssVarsConfig } from "./generateZip";
+import { normalizeGridColumnForDevice } from "./themeRules";
 
 interface BuildOpts {
   /** Pre-resolved absolute http(s) URL — caller decides fallback (DEV_DOMAIN, placeholder). */
   domain: string;
 }
 
-function normalizeGridColumn(value: number, fallback: number): number {
-  return Number.isFinite(value) ? Math.max(1, Math.min(6, Math.round(value))) : fallback;
-}
-
 function buildLayout(config: ConstructorConfig): ToncastWidgetLayout {
   return {
     grid: {
-      mobile: normalizeGridColumn(config.theme.grid.mobile, 1),
-      tablet: normalizeGridColumn(config.theme.grid.tablet, 2),
-      desktop: normalizeGridColumn(config.theme.grid.desktop, 3),
+      mobile: normalizeGridColumnForDevice("mobile", config.theme.grid.mobile),
+      tablet: normalizeGridColumnForDevice("tablet", config.theme.grid.tablet),
+      desktop: normalizeGridColumnForDevice("desktop", config.theme.grid.desktop),
     },
   };
 }

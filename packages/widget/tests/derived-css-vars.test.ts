@@ -179,7 +179,22 @@ describe("buildCssVarStyle", () => {
     expect(style["--tc-grid-mobile"]).toBe("2");
     expect(style["--tc-grid-tablet"]).toBe("3");
     expect(style["--tc-grid-desktop"]).toBe("4");
+    expect(style["--tc-pari-mobile-meta-direction"]).toBe("column");
+    expect(style["--tc-pari-mobile-actions-columns"]).toBe("1fr");
+    expect(style["--tc-pari-tablet-meta-direction"]).toBe("row");
+    expect(style["--tc-pari-tablet-actions-columns"]).toBe("1fr 1fr");
     expect(style["--tc-grid-cols"]).toBeUndefined();
+  });
+
+  it("stacks tablet pari card info and actions only above three columns", () => {
+    const style = buildCssVarStyle(undefined, "light", undefined, {
+      grid: { mobile: 1, tablet: 4, desktop: 3 },
+    }) as Record<string, string>;
+
+    expect(style["--tc-pari-mobile-meta-direction"]).toBe("row");
+    expect(style["--tc-pari-mobile-actions-columns"]).toBe("1fr 1fr");
+    expect(style["--tc-pari-tablet-meta-direction"]).toBe("column");
+    expect(style["--tc-pari-tablet-actions-columns"]).toBe("1fr");
   });
 
   it("clamps invalid responsive layout grid values to defaults", () => {
@@ -190,6 +205,8 @@ describe("buildCssVarStyle", () => {
     expect(style["--tc-grid-mobile"]).toBe("1");
     expect(style["--tc-grid-tablet"]).toBe("2");
     expect(style["--tc-grid-desktop"]).toBe("3");
+    expect(style["--tc-pari-mobile-meta-direction"]).toBe("row");
+    expect(style["--tc-pari-tablet-meta-direction"]).toBe("row");
   });
 
   it("ignores removed gridCols cssVar input", () => {

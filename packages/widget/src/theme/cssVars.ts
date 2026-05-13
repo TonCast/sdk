@@ -8,7 +8,9 @@ import type {
 import { deriveCssVars } from "./cssVarBuilder";
 
 type StyleVars = Record<string, string>;
-type DeriveOptions = NonNullable<ToncastWidgetConfig["widget"]>["deriveCssVars"];
+type DeriveOptions = NonNullable<
+  ToncastWidgetConfig["widget"]
+>["deriveCssVars"];
 
 const DEFAULT_GRID_LAYOUT = {
   mobile: 1,
@@ -21,13 +23,49 @@ function normalizeColumns(value: number | undefined, fallback: number): number {
   return Math.max(1, Math.min(6, Math.trunc(value)));
 }
 
-function applyLayoutVars(layout: ToncastWidgetLayout | undefined, style: StyleVars): void {
+/** Maps breakpoint grid density to pari card compact layout variables. */
+function applyPariCardLayoutVars(
+  device: "mobile" | "tablet",
+  shouldStack: boolean,
+  style: StyleVars,
+): void {
+  const prefix = `--tc-pari-${device}`;
+  style[`${prefix}-meta-direction`] = shouldStack ? "column" : "row";
+  style[`${prefix}-meta-align`] = shouldStack ? "flex-start" : "center";
+  style[`${prefix}-meta-justify`] = shouldStack
+    ? "flex-start"
+    : "space-between";
+  style[`${prefix}-meta-gap`] = shouldStack ? "2px" : "8px";
+  style[`${prefix}-actions-columns`] = shouldStack ? "1fr" : "1fr 1fr";
+  style[`${prefix}-actions-gap`] = shouldStack ? "4px" : "6px";
+  style[`${prefix}-actions-font-size`] = shouldStack ? "11px" : "12px";
+}
+
+function applyLayoutVars(
+  layout: ToncastWidgetLayout | undefined,
+  style: StyleVars,
+): void {
   const grid = layout?.grid;
   if (!grid) return;
 
-  style["--tc-grid-mobile"] = String(normalizeColumns(grid.mobile, DEFAULT_GRID_LAYOUT.mobile));
-  style["--tc-grid-tablet"] = String(normalizeColumns(grid.tablet, DEFAULT_GRID_LAYOUT.tablet));
-  style["--tc-grid-desktop"] = String(normalizeColumns(grid.desktop, DEFAULT_GRID_LAYOUT.desktop));
+  const mobileColumns = normalizeColumns(
+    grid.mobile,
+    DEFAULT_GRID_LAYOUT.mobile,
+  );
+  const tabletColumns = normalizeColumns(
+    grid.tablet,
+    DEFAULT_GRID_LAYOUT.tablet,
+  );
+  const desktopColumns = normalizeColumns(
+    grid.desktop,
+    DEFAULT_GRID_LAYOUT.desktop,
+  );
+
+  style["--tc-grid-mobile"] = String(mobileColumns);
+  style["--tc-grid-tablet"] = String(tabletColumns);
+  style["--tc-grid-desktop"] = String(desktopColumns);
+  applyPariCardLayoutVars("mobile", mobileColumns > 1, style);
+  applyPariCardLayoutVars("tablet", tabletColumns > 3, style);
 }
 
 export function buildCssVarStyle(

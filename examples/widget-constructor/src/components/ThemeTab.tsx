@@ -6,6 +6,13 @@ import {
   type ThemeColorSet,
   type ThemeConfig,
 } from "../types";
+import {
+  type ConstructorThemeChoice,
+  colorSchemeToThemeSelection,
+  GRID_COLUMN_OPTIONS_BY_DEVICE,
+  selectionToColorScheme,
+  toggleThemeSelection,
+} from "../utils/themeRules";
 import { ColorField } from "./ui/ColorField";
 import { SegmentedButtonGroup } from "./ui/SegmentedButtonGroup";
 
@@ -19,8 +26,11 @@ const sectionLabelCls = "text-xs font-semibold text-slate-400 mb-2 uppercase tra
 const COLOR_SCHEME_OPTIONS = [
   { value: "light", label: "Light", icon: "☀️" },
   { value: "dark", label: "Dark", icon: "🌙" },
-  { value: "system", label: "System", icon: "🖥️" },
-] as const;
+] as const satisfies ReadonlyArray<{
+  value: ConstructorThemeChoice;
+  label: string;
+  icon: string;
+}>;
 
 const RADIUS_OPTIONS = [
   { value: 0, label: "0" },
@@ -42,14 +52,11 @@ const GRID_DEVICES = [
   { key: "desktop", label: "Desktop" },
 ] as const;
 
-const GRID_COLUMN_OPTIONS = [
-  { value: 1, label: "1" },
-  { value: 2, label: "2" },
-  { value: 3, label: "3" },
-  { value: 4, label: "4" },
-  { value: 5, label: "5" },
-  { value: 6, label: "6" },
-] as const;
+const GRID_COLUMN_OPTIONS_BY_DEVICE_UI = {
+  mobile: GRID_COLUMN_OPTIONS_BY_DEVICE.mobile.map((value) => ({ value, label: String(value) })),
+  tablet: GRID_COLUMN_OPTIONS_BY_DEVICE.tablet.map((value) => ({ value, label: String(value) })),
+  desktop: GRID_COLUMN_OPTIONS_BY_DEVICE.desktop.map((value) => ({ value, label: String(value) })),
+} as const;
 
 /** Reusable color set editor (brand + semantic colors). */
 function ColorSetEditor({
@@ -109,6 +116,10 @@ export function ThemeTab({ theme, onChange }: Props) {
   const setGrid = (key: keyof ThemeConfig["grid"], value: number) =>
     set("grid", { ...theme.grid, [key]: value });
 
+  const themeSelection = colorSchemeToThemeSelection(theme.colorScheme);
+  const activeThemeChoices = COLOR_SCHEME_OPTIONS.filter(
+    (option) => themeSelection[option.value],
+  ).map((option) => option.value);
   const showLight = theme.colorScheme === "light" || theme.colorScheme === "system";
   const showDark = theme.colorScheme === "dark" || theme.colorScheme === "system";
 
@@ -118,14 +129,24 @@ export function ThemeTab({ theme, onChange }: Props) {
       <div>
         <p className={sectionLabelCls}>Color scheme</p>
         <SegmentedButtonGroup
-          value={theme.colorScheme}
-          onChange={(v) => set("colorScheme", v)}
+          multi
+          value={activeThemeChoices}
+          onChange={(values) => {
+            const toggled = COLOR_SCHEME_OPTIONS.reduce(
+              (selection, option) =>
+                selection[option.value] === values.includes(option.value)
+                  ? selection
+                  : toggleThemeSelection(selection, option.value),
+              themeSelection,
+            );
+            set("colorScheme", selectionToColorScheme(toggled));
+          }}
           options={COLOR_SCHEME_OPTIONS}
           size="lg"
         />
         {theme.colorScheme === "system" && (
           <p className="mt-1.5 text-[10px] text-slate-600">
-            Configure colors for each mode independently below.
+            Auto-switches between both palettes with prefers-color-scheme.
           </p>
         )}
       </div>
@@ -197,7 +218,7 @@ export function ThemeTab({ theme, onChange }: Props) {
               <SegmentedButtonGroup
                 value={theme.grid[key]}
                 onChange={(v) => setGrid(key, v)}
-                options={GRID_COLUMN_OPTIONS}
+                options={GRID_COLUMN_OPTIONS_BY_DEVICE_UI[key]}
                 itemAriaLabel={(o) => `${label} grid ${o.label} columns`}
               />
             </div>
