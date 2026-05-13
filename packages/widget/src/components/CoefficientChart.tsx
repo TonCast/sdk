@@ -1,4 +1,5 @@
 import type { CoefficientHistoryPoint } from "@toncast/sdk";
+import { useFormatNumber } from "../i18n/useFormatNumber";
 import { useT } from "../i18n/useT";
 
 const VIEW_W = 600;
@@ -26,6 +27,7 @@ function buildPath(history: readonly CoefficientHistoryPoint[]) {
 
 export function CoefficientChart({ history }: { history: readonly CoefficientHistoryPoint[] }) {
   const t = useT();
+  const fmt = useFormatNumber();
   const last = history.at(-1);
   const first = history[0];
   const delta = last && first ? last.coefficient - first.coefficient : 0;
@@ -46,10 +48,15 @@ export function CoefficientChart({ history }: { history: readonly CoefficientHis
     <div>
       <div className="tc-chart-header">
         <span>{t("chart.title")}</span>
-        {lastPct !== null && <span className="tc-chart-meta">{lastPct.toFixed(0)}%</span>}
+        {lastPct !== null && (
+          <span className="tc-chart-meta">
+            {fmt.decimal(lastPct, { maximumFractionDigits: 0 })}%
+          </span>
+        )}
         {history.length > 1 && (
           <span className={trendUp ? "tc-chart-trend-up" : "tc-chart-trend-down"}>
-            {trendUp ? t("chart.trendUp") : t("chart.trendDown")} {Math.abs(delta)}
+            {trendUp ? t("chart.trendUp") : t("chart.trendDown")}{" "}
+            {fmt.decimal(Math.abs(delta), { maximumFractionDigits: 0 })}
           </span>
         )}
       </div>

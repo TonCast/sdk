@@ -1,4 +1,6 @@
 import type { Bet, BetStatus } from "@toncast/sdk";
+import { useI18n } from "../../i18n/I18nProvider";
+import { useFormatNumber } from "../../i18n/useFormatNumber";
 import { useT } from "../../i18n/useT";
 
 /** Badge CSS class per `BetStatus` (widget stylesheet). */
@@ -31,8 +33,11 @@ export function BetRowBadges({ bet }: { bet: Bet }) {
 /** Stake, ticket count, and date — shared by list and pari-detail rows. */
 export function BetRowBetSummary({ bet }: { bet: Bet }) {
   const t = useT();
-  const amountTon = (bet.amount / 1e9).toFixed(2);
-  const date = new Date(bet.createdAt * 1000).toLocaleDateString(undefined, {
+  const fmt = useFormatNumber();
+  const { lang } = useI18n();
+  // `bet.amount` is plain `number` of nano TON in the SDK type, so divide here.
+  const amountTon = fmt.decimal(bet.amount / 1e9);
+  const date = new Date(bet.createdAt * 1000).toLocaleDateString(lang, {
     day: "numeric",
     month: "short",
     year: "numeric",

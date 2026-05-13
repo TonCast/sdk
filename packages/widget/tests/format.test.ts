@@ -1,13 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { formatRaw, formatTimeLeft, shortAddr, ton } from "../src/utils/format";
+import {
+  formatDecimal,
+  formatRaw,
+  formatRawLocalized,
+  formatTimeLeft,
+  formatTon,
+  parseLocalizedDecimal,
+  shortAddr,
+} from "../src/utils/format";
 
-describe("format.ton", () => {
-  it("converts nano TON bigint to TON decimal string", () => {
-    expect(ton(0n)).toBe("0");
-    expect(ton(1_000_000_000n)).toBe("1");
-    expect(ton(1_500_000_000n)).toBe("1.5");
-  });
-});
+// describe("format.ton", () => {
+//   it("converts nano TON bigint to TON decimal string", () => {
+//     expect(ton(0n)).toBe("0");
+//     expect(ton(1_000_000_000n)).toBe("1");
+//     expect(ton(1_500_000_000n)).toBe("1.5");
+//   });
+// });
 
 describe("format.formatRaw", () => {
   it("returns whole when fractional is zero", () => {
@@ -46,6 +54,70 @@ describe("format.shortAddr", () => {
 
   it("respects custom head/tail lengths", () => {
     expect(shortAddr("0xABCDEF1234567890", 4, 4)).toBe("0xAB…7890");
+  });
+});
+
+describe("format.formatTon (locale-aware)", () => {
+  it("groups thousands per locale", () => {
+    // 1234 TON = 1234 * 1e9 nano. Whole number, no fraction.
+    expect(formatTon(1_234n * 1_000_000_000n, "en-US")).toBe("1,234");
+    // de-DE uses dot as thousands separator. Use \u202f-tolerant containment.
+    expect(formatTon(1_234n * 1_000_000_000n, "de-DE")).toMatch(/^1[.\u202f]234$/);
+  });
+
+  it("preserves fractional part with locale separators", () => {
+    expect(formatTon(1_234_500_000n, "en-US")).toBe("1.2345");
+    // de-DE → comma as decimal separator
+    expect(formatTon(1_234_500_000n, "de-DE")).toBe("1,2345");
+  });
+
+  it("falls back gracefully on bogus locale", () => {
+    // The platform may either accept the tag (modern Node) or throw — in both
+    // cases we get a usable string instead of a crash.
+    expect(formatTon(1_500_000_000n, "definitely-not-a-locale")).toMatch(/1[.,]5/);
+  });
+});
+
+describe("format.formatRawLocalized", () => {
+  it("keeps locale separators and obeys maxFracDigits", () => {
+    expect(formatRawLocalized(1_234_500_000n, 9, "en-US", 4)).toBe("1.2345");
+    expect(formatRawLocalized(1_234_500_000n, 9, "de-DE", 4)).toBe("1,2345");
+  });
+});
+
+describe("format.parseLocalizedDecimal", () => {
+  it("is a no-op for canonical .-decimal input", () => {
+    expect(parseLocalizedDecimal("35.572", "en-US")).toBe("35.572");
+    expect(parseLocalizedDecimal("35.572", "ru-RU")).toBe("35.572");
+  });
+
+  it("converts comma-decimal locales back to .-decimal", () => {
+    expect(parseLocalizedDecimal("35,572", "ru-RU")).toBe("35.572");
+    expect(parseLocalizedDecimal("35,572", "de-DE")).toBe("35.572");
+  });
+
+  it("strips locale group separators (incl. NBSP / NNBSP)", () => {
+    // ru-RU groups with U+00A0 (NBSP) → "1\u00a0234,5"
+    expect(parseLocalizedDecimal("1\u00a0234,5", "ru-RU")).toBe("1234.5");
+    // de-DE groups with "."
+    expect(parseLocalizedDecimal("1.234.567,89", "de-DE")).toBe("1234567.89");
+    // en-US groups with ","
+    expect(parseLocalizedDecimal("1,234.5", "en-US")).toBe("1234.5");
+  });
+});
+
+describe("format.formatDecimal", () => {
+  it("formats numbers with locale separators and fraction control", () => {
+    expect(formatDecimal(1234.5, "en-US", { maximumFractionDigits: 2 })).toBe("1,234.50");
+    expect(formatDecimal(1234.5, "de-DE", { maximumFractionDigits: 2 })).toMatch(
+      /^1[.\u202f]234,50$/,
+    );
+    expect(formatDecimal(1.234, "en-US", { maximumFractionDigits: 0 })).toBe("1");
+  });
+
+  it("returns the raw string for non-finite input", () => {
+    expect(formatDecimal(Number.NaN, "en-US")).toBe("NaN");
+    expect(formatDecimal(Number.POSITIVE_INFINITY, "en-US")).toBe("Infinity");
   });
 });
 

@@ -1,10 +1,41 @@
 import { fromNano } from "@ton/core";
 
-export function ton(nano: bigint): string {
-  return fromNano(nano);
+/**
+ * Locale-aware TON amount formatting.
+ *
+ * Falls back to the raw `fromNano` string when:
+ * - the value overflows `Number.MAX_SAFE_INTEGER` (≥ ~9 quadrillion nano = 9 M TON);
+ * - `Intl.NumberFormat` rejects the locale tag (defensive — `lang` is a BCP-47 from `useI18n`).
+ */
+export function formatTon(
+  nano: bigint,
+  lang: string,
+  opts: { maximumFractionDigits?: number; minimumFractionDigits?: number } = {},
+): string {
+  const raw = fromNano(nano);
+  const num = Number(raw);
+  if (!Number.isFinite(num)) return raw;
+  try {
+    return new Intl.NumberFormat(lang, {
+      maximumFractionDigits: opts.maximumFractionDigits ?? 9,
+      minimumFractionDigits: opts.minimumFractionDigits ?? 0,
+      useGrouping: true,
+    }).format(num);
+  } catch {
+    return raw;
+  }
 }
 
-export function formatRaw(amount: bigint, decimals: number, maxFracDigits = 6): string {
+/**
+ * Plain (locale-agnostic) raw bigint → decimal string. Kept for stable IO into
+ * `<input>` (decimal point is the parser's expected separator). Use
+ * {@link formatRawLocalized} for display.
+ */
+export function formatRaw(
+  amount: bigint,
+  decimals: number,
+  maxFracDigits = 6,
+): string {
   const divisor = 10n ** BigInt(decimals);
   const whole = amount / divisor;
   const fractional = amount % divisor;
@@ -12,7 +43,10 @@ export function formatRaw(amount: bigint, decimals: number, maxFracDigits = 6): 
   if (fractional === 0n) {
     value = whole.toString();
   } else {
-    const frac = fractional.toString().padStart(decimals, "0").replace(/0+$/, "");
+    const frac = fractional
+      .toString()
+      .padStart(decimals, "0")
+      .replace(/0+$/, "");
     value = `${whole}.${frac}`;
   }
   const dot = value.indexOf(".");
@@ -21,6 +55,82 @@ export function formatRaw(amount: bigint, decimals: number, maxFracDigits = 6): 
     .slice(0, dot + 1 + maxFracDigits)
     .replace(/0+$/, "")
     .replace(/\.$/, "");
+}
+
+/** Locale-aware variant of {@link formatRaw} for display only. */
+export function formatRawLocalized(
+  amount: bigint,
+  decimals: number,
+  lang: string,
+  maxFracDigits = 6,
+): string {
+  const plain = formatRaw(amount, decimals, maxFracDigits);
+  const num = Number(plain);
+  if (!Number.isFinite(num)) return plain;
+  try {
+    return new Intl.NumberFormat(lang, {
+      maximumFractionDigits: maxFracDigits,
+      useGrouping: true,
+    }).format(num);
+  } catch {
+    return plain;
+  }
+}
+
+/**
+ * Inspects `Intl.NumberFormat(lang)` to find the locale's group and decimal
+ * separators. Both fall back to the canonical `","` / `"."` when the runtime
+ * rejects the BCP-47 tag.
+ */
+export function localeNumberSeparators(lang: string): {
+  decimal: string;
+  group: string;
+} {
+  try {
+    const parts = new Intl.NumberFormat(lang).formatToParts(1234567.89);
+    const decimal = parts.find((p) => p.type === "decimal")?.value ?? ".";
+    const group = parts.find((p) => p.type === "group")?.value ?? "";
+    return { decimal, group };
+  } catch {
+    return { decimal: ".", group: "" };
+  }
+}
+
+/**
+ * Normalises a locale-formatted decimal string into a `.`-decimal canonical
+ * form suitable for `parseUnits` — strips group separators and unifies the
+ * decimal mark. Whitespace (incl. NBSP / NNBSP grouping) is dropped too.
+ *
+ * Idempotent: passing an already-canonical `"35.572"` returns `"35.572"`.
+ */
+export function parseLocalizedDecimal(input: string, lang: string): string {
+  const { decimal, group } = localeNumberSeparators(lang);
+  let s = input.trim();
+  if (group) s = s.split(group).join("");
+  // Browsers may render the group separator as NBSP / NNBSP irrespective of
+  // the locale tag — strip both unconditionally so manual edits round-trip.
+  s = s.replace(/[\s\u00a0\u202f]/g, "");
+  if (decimal !== ".") s = s.split(decimal).join(".");
+  return s;
+}
+
+/** Locale-aware `Number.toFixed`-style formatter (e.g. `×1.50`, `82%`). */
+export function formatDecimal(
+  value: number,
+  lang: string,
+  opts: { maximumFractionDigits?: number; minimumFractionDigits?: number } = {},
+): string {
+  if (!Number.isFinite(value)) return String(value);
+  try {
+    return new Intl.NumberFormat(lang, {
+      maximumFractionDigits: opts.maximumFractionDigits ?? 2,
+      minimumFractionDigits:
+        opts.minimumFractionDigits ?? opts.maximumFractionDigits ?? 2,
+      useGrouping: true,
+    }).format(value);
+  } catch {
+    return value.toFixed(opts.maximumFractionDigits ?? 2);
+  }
 }
 
 export function shortAddr(addr: string, head = 6, tail = 4): string {

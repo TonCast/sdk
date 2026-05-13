@@ -3,6 +3,7 @@ import { ODDS_MAX, ODDS_MIN, pariCoverUrl, yesOddsToDecimalOdds } from "@toncast
 import { useEffect, useReducer } from "react";
 import { MINUTE_TICK_MS } from "../constants";
 import { useNav } from "../context";
+import { useFormatNumber } from "../i18n/useFormatNumber";
 import { useT } from "../i18n/useT";
 import { formatTimeLeft } from "../utils/format";
 import { useReliablePariCoverUrl } from "../utils/useReliablePariCoverUrl";
@@ -56,6 +57,7 @@ function ClockIcon() {
 
 export function PariCard({ pari }: { pari: Pari }) {
   const t = useT();
+  const fmt = useFormatNumber();
   const { navigate } = useNav();
   const img = pariCoverUrl(pari.image);
   const { displaySrc, onImgError } = useReliablePariCoverUrl(img);
@@ -70,8 +72,8 @@ export function PariCard({ pari }: { pari: Pari }) {
     yesOdds >= ODDS_MIN &&
     yesOdds <= ODDS_MAX &&
     yesOdds % 2 === 0;
-  const yesDecimal = oddsOk ? yesOddsToDecimalOdds(yesOdds, true).toFixed(2) : null;
-  const noDecimal = oddsOk ? yesOddsToDecimalOdds(yesOdds, false).toFixed(2) : null;
+  const yesDecimal = oddsOk ? fmt.decimal(yesOddsToDecimalOdds(yesOdds, true)) : null;
+  const noDecimal = oddsOk ? fmt.decimal(yesOddsToDecimalOdds(yesOdds, false)) : null;
   const timeLeft = formatTimeLeft(pari.endTime, t as Parameters<typeof formatTimeLeft>[1]);
   const ended = pari.endTime - Date.now() / 1000 <= 0;
 
@@ -99,7 +101,7 @@ export function PariCard({ pari }: { pari: Pari }) {
               {timeLeft}
             </span>
             <span className="tc-pari-meta-item tc-pari-meta-volume">
-              {(pari.yesVolume + pari.noVolume).toFixed(1)} TON
+              {fmt.decimal(pari.yesVolume + pari.noVolume, { maximumFractionDigits: 1 })} TON
             </span>
           </div>
         </div>

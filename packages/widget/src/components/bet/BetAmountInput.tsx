@@ -1,8 +1,10 @@
 import { parseUnits } from "@toncast/sdk";
 import type { useBet } from "@toncast/sdk-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useI18n } from "../../i18n/I18nProvider";
+import { useFormatNumber } from "../../i18n/useFormatNumber";
 import { useT } from "../../i18n/useT";
-import { formatRaw } from "../../utils/format";
+import { parseLocalizedDecimal } from "../../utils/format";
 import { Slider } from "../ui/Slider";
 import { BetStepper } from "./BetStepper";
 
@@ -14,16 +16,33 @@ interface Props {
   sourceDecimals: number;
 }
 
-/** Market-mode amount input + slider + range hint. */
+/**
+ * Market-mode amount input + slider + range hint.
+ *
+ * The displayed `draft` is locale-formatted (grouping + decimal separator) via
+ * `useFormatNumber().raw(...)`. `parseUnits` requires `.`-decimal canonical
+ * input, so on blur we route the draft through {@link parseLocalizedDecimal}
+ * to strip group separators and convert the locale's decimal mark back to
+ * `.` before delegating to the SDK parser.
+ */
 export function BetAmountInput({ bet, sourceSym, sourceDecimals }: Props) {
   const t = useT();
+  const fmt = useFormatNumber();
+  const { lang } = useI18n();
   const [draft, setDraft] = useState<string>("");
 
+  // Stash the live formatter so the effect depends only on the inputs that
+  // semantically drive a redraw (mode, source, amount, decimals, language).
+  // `fmt` itself is rederived on every `lang` change — including it would
+  // either trip Biome's exhaustive-deps rule or cause an extra resync.
+  const fmtRef = useRef(fmt);
+  fmtRef.current = fmt;
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `lang` is intentionally listed so the displayed value re-formats when the user switches language; the formatter itself is read off `fmtRef` to avoid an extra resync on every formatter identity churn.
   useEffect(() => {
     if (bet.mode !== "market" || !bet.source) return;
-    setDraft(formatRaw(bet.sourceAmount, sourceDecimals, 4));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bet.mode, bet.source, bet.sourceAmount, sourceDecimals]); // derived display only
+    setDraft(fmtRef.current.raw(bet.sourceAmount, sourceDecimals, 4));
+  }, [bet.mode, bet.source, bet.sourceAmount, sourceDecimals, lang]);
 
   return (
     <div className="tc-form-col-sm">
@@ -44,7 +63,7 @@ export function BetAmountInput({ bet, sourceSym, sourceDecimals }: Props) {
           onBlur={() => {
             let typed: bigint;
             try {
-              typed = parseUnits(draft, sourceDecimals);
+              typed = parseUnits(parseLocalizedDecimal(draft, lang), sourceDecimals);
             } catch {
               return;
             }

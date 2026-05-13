@@ -3,6 +3,7 @@ import { TON_ADDRESS } from "@toncast/sdk";
 import { type BetMode, useBet, useTonConnectClient } from "@toncast/sdk-react";
 import { useEffect, useRef, useState } from "react";
 import { BET_REFRESH_DELAY_MS, BET_TX_VALID_FOR_SECONDS } from "../constants";
+import { useFormatNumber } from "../i18n/useFormatNumber";
 import { useT } from "../i18n/useT";
 import { useTcState } from "../tc-bridge";
 import { BetAmountInput } from "./bet/BetAmountInput";
@@ -35,6 +36,7 @@ export interface BetCardProps {
 
 export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps) {
   const t = useT();
+  const fmt = useFormatNumber();
   const { address, restored, connect, instance: tc } = useTcState();
   const connected = Boolean(address);
   const queryClient = useQueryClient();
@@ -150,7 +152,7 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
                   onDecrement={bet.oddsStepper.decrement}
                   onIncrement={bet.oddsStepper.increment}
                 >
-                  <StepperReadout>×{bet.quote.decimalOdds.toFixed(2)}</StepperReadout>
+                  <StepperReadout>×{fmt.decimal(bet.quote.decimalOdds)}</StepperReadout>
                 </BetStepper>
                 <BetCoefficientSlider bet={bet} />
               </>

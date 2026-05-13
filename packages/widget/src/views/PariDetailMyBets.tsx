@@ -74,7 +74,7 @@ export function PariDetailMyBets({ pariId, userAddress }: PariDetailMyBetsProps)
                   onClick={() => void query.fetchNextPage()}
                   disabled={query.isFetchingNextPage}
                 >
-                  {t("common.showMore")}
+                  {t("pagination.loadMore")}
                 </Button>
               </div>
             )}

@@ -1,7 +1,7 @@
 import { formatBetQuoteReason } from "@toncast/sdk";
 import type { useBet } from "@toncast/sdk-react";
+import { useFormatNumber } from "../../i18n/useFormatNumber";
 import { useT } from "../../i18n/useT";
-import { ton } from "../../utils/format";
 import { Skeleton } from "../ui/Skeleton";
 
 type Bet = ReturnType<typeof useBet>;
@@ -9,6 +9,7 @@ type Bet = ReturnType<typeof useBet>;
 /** Quote breakdown rendered below the action button in BetCard. */
 export function BetQuoteBox({ bet, sourceSym }: { bet: Bet; sourceSym: string }) {
   const t = useT();
+  const fmt = useFormatNumber();
   return (
     <div className="tc-quote-box">
       {!bet.quote.data && bet.quote.underlying.isFetching ? (
@@ -34,7 +35,9 @@ export function BetQuoteBox({ bet, sourceSym }: { bet: Bet; sourceSym: string })
             <div>
               <div className="tc-quote-row tc-quote-row-success">
                 <span>{t("bet.matched", { n: bet.quote.totals.matchedTickets })}</span>
-                <span className="tc-font-mono">{ton(bet.quote.totals.matchedTicketCost)} TON</span>
+                <span className="tc-font-mono">
+                  {fmt.ton(bet.quote.totals.matchedTicketCost)} TON
+                </span>
               </div>
               {bet.quote.matched.map((m) => (
                 <div
@@ -42,9 +45,9 @@ export function BetQuoteBox({ bet, sourceSym }: { bet: Bet; sourceSym: string })
                   className="tc-quote-row tc-quote-row-indent"
                 >
                   <span className="tc-quote-row-label tc-text-xs">
-                    • {m.tickets} @ {m.yesOdds}% (×{m.decimalOdds.toFixed(2)})
+                    • {m.tickets} @ {m.yesOdds}% (×{fmt.decimal(m.decimalOdds)})
                   </span>
-                  <span className="tc-font-mono tc-text-xs">{ton(m.stake)}</span>
+                  <span className="tc-font-mono tc-text-xs">{fmt.ton(m.stake)}</span>
                 </div>
               ))}
             </div>
@@ -53,28 +56,28 @@ export function BetQuoteBox({ bet, sourceSym }: { bet: Bet; sourceSym: string })
             <div className="tc-quote-row-placed-block">
               <div className="tc-quote-row tc-quote-row-warn">
                 <span>{t("bet.placed", { n: bet.quote.placed.tickets })}</span>
-                <span className="tc-font-mono">{ton(bet.quote.placed.cost)} TON</span>
+                <span className="tc-font-mono">{fmt.ton(bet.quote.placed.cost)} TON</span>
               </div>
               <div className="tc-text-xs tc-text-muted tc-quote-row-indent">
                 {t("bet.placed.note", {
                   odds: bet.quote.placed.yesOdds,
-                  mult: bet.quote.placed.decimalOdds.toFixed(2),
+                  mult: fmt.decimal(bet.quote.placed.decimalOdds),
                 })}
               </div>
             </div>
           )}
           <hr className="tc-divider" />
-          <QuoteRow label={t("bet.total")} value={`${ton(bet.quote.totalCost)} TON`} accent />
+          <QuoteRow label={t("bet.total")} value={`${fmt.ton(bet.quote.totalCost)} TON`} accent />
           {bet.quote.walletReserve > 0n && (
             <>
               <QuoteRow
                 label={t("bet.walletReserve")}
-                value={`${ton(bet.quote.walletReserve)} TON`}
+                value={`${fmt.ton(bet.quote.walletReserve)} TON`}
                 muted
               />
               <QuoteRow
                 label={t("bet.required")}
-                value={`${ton(bet.quote.required)} TON`}
+                value={`${fmt.ton(bet.quote.required)} TON`}
                 warn={!bet.quote.isFeasible && bet.quote.reason === "insufficient_balance"}
               />
             </>
@@ -82,7 +85,7 @@ export function BetQuoteBox({ bet, sourceSym }: { bet: Bet; sourceSym: string })
           <hr className="tc-divider" />
           <QuoteRow
             label={t("bet.winnings", { side: t(`side.${bet.side}` as const) })}
-            value={`${ton(bet.quote.winnings)} TON`}
+            value={`${fmt.ton(bet.quote.winnings)} TON`}
             accent
           />
         </>

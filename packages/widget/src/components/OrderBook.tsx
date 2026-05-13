@@ -1,4 +1,5 @@
 import { type OddsState, orderBookLadder } from "@toncast/sdk";
+import { useFormatNumber } from "../i18n/useFormatNumber";
 import { useT } from "../i18n/useT";
 import { SkeletonList } from "./ui/SkeletonList";
 
@@ -37,6 +38,7 @@ export function OrderBook({ oddsState }: { oddsState: OddsState | null }) {
 }
 
 function Row({ bucket: r, yesMax, noMax }: { bucket: Bucket; yesMax: number; noMax: number }) {
+  const fmt = useFormatNumber();
   const yesPct = r.yesDepth > 0 ? (r.yesDepth / yesMax) * 100 : 0;
   const noPct = r.noDepth > 0 ? (r.noDepth / noMax) * 100 : 0;
 
@@ -47,7 +49,7 @@ function Row({ bucket: r, yesMax, noMax }: { bucket: Bucket; yesMax: number; noM
         {r.yesDepth > 0 && (
           <div className="tc-ob-bar-text tc-ob-bar-text-yes">
             <span className="tc-font-semibold">{r.yesDepth}</span>
-            <span className="tc-text-muted">×{r.yesPayout.toFixed(2)}</span>
+            <span className="tc-text-muted">×{fmt.decimal(r.yesPayout)}</span>
           </div>
         )}
       </div>
@@ -59,7 +61,7 @@ function Row({ bucket: r, yesMax, noMax }: { bucket: Bucket; yesMax: number; noM
         <div className="tc-ob-bar-fill tc-ob-bar-fill-no" style={{ width: `${noPct}%` }} />
         {r.noDepth > 0 && (
           <div className="tc-ob-bar-text tc-ob-bar-text-no">
-            <span className="tc-text-muted">×{r.noPayout.toFixed(2)}</span>
+            <span className="tc-text-muted">×{fmt.decimal(r.noPayout)}</span>
             <span className="tc-font-semibold">{r.noDepth}</span>
           </div>
         )}

@@ -32,6 +32,7 @@ import type { ClientStandaloneDescriptor, ToncastWidgetConfig } from "./types";
 import { cn } from "./utils/cn";
 import { stableJsonStringify } from "./utils/stableJsonStringify";
 import { usePrefersColorSchemeDark } from "./utils/usePrefersColorSchemeDark";
+import { useSyncClientFromConfig } from "./utils/useSyncClientFromConfig";
 import { MyBetsView } from "./views/MyBets";
 import { PariDetailView } from "./views/PariDetail";
 import { ParisListView } from "./views/ParisList";
@@ -144,18 +145,22 @@ function WidgetShell() {
 
 /**
  * Isolated component that holds a single standalone ToncastClient.
- * Rendered with a `key` by ToncastLayer — React remounts it (and resets TanStack
- * Query cache) whenever client-critical config changes: baseUrl, wsUrl, endpoint, apiKey,
- * network, language, or referral. All other config changes (theme, cssVars, …) do not affect
- * the key, so the client survives cosmetic re-renders.
+ *
+ * Rendered with a `key` by ToncastLayer — React remounts it (and resets the
+ * TanStack-Query cache) only when **data-source identity** changes:
+ * `baseUrl`, `wsUrl`, `endpoint`, `apiKey`, or `network`. Soft config bits
+ * such as `widget.language` / `widget.referral` are **not** part of the key
+ * — they are pushed into the live client via `useSyncClientFromConfig`, so
+ * a language/referral switch keeps the WS subscriptions and Query cache
+ * alive.
  */
 function StandaloneClientLayer({
   desc,
-  config,
+  widget,
   children,
 }: {
   desc: ClientStandaloneDescriptor | undefined;
-  config: ToncastWidgetConfig;
+  widget: ToncastWidgetConfig["widget"];
   children: React.ReactNode;
 }) {
   const clientRef = useRef<ToncastClient | null>(null);
@@ -168,10 +173,11 @@ function StandaloneClientLayer({
         apiKey: desc?.apiKey,
         network: desc?.network,
       }),
-      referral: config.widget?.referral,
-      language: config.widget?.language,
+      referral: widget?.referral,
+      language: widget?.language,
     });
   }
+  useSyncClientFromConfig(clientRef.current, widget);
 
   // Clean up when this layer unmounts (key change = new client-critical config).
   useEffect(() => {
@@ -188,6 +194,29 @@ function StandaloneClientLayer({
   );
 }
 
+/**
+ * Integrated counterpart of `StandaloneClientLayer` — wraps the host-provided
+ * `ToncastClient` and pushes `widget.language` / `widget.referral` into it
+ * via `useSyncClientFromConfig`. Without this hook the host's client would
+ * silently ignore those config fields (M-2).
+ */
+function IntegratedClientLayer({
+  client,
+  widget,
+  children,
+}: {
+  client: ToncastClient;
+  widget: ToncastWidgetConfig["widget"];
+  children: React.ReactNode;
+}) {
+  useSyncClientFromConfig(client, widget);
+  return (
+    <ToncastProvider client={client}>
+      <I18nProvider>{children}</I18nProvider>
+    </ToncastProvider>
+  );
+}
+
 /** Wraps children with the correct ToncastProvider + I18n layer. */
 function ToncastLayer({
   config,
@@ -199,15 +228,15 @@ function ToncastLayer({
   // Integrated: host controls the client — always use the latest instance.
   if (config.client?.type === "integrated") {
     return (
-      <ToncastProvider client={config.client.instance}>
-        <I18nProvider>{children}</I18nProvider>
-      </ToncastProvider>
+      <IntegratedClientLayer client={config.client.instance} widget={config.widget}>
+        {children}
+      </IntegratedClientLayer>
     );
   }
 
-  // Standalone: build a stable key from client-critical config. When any of
-  // these change the StandaloneClientLayer remounts, creating a fresh client
-  // and resetting TanStack Query cache (correct — the data source changed).
+  // Standalone: key the layer by data-source identity only. Language/referral
+  // are pushed in via setLanguage/setReferral so a language switch does not
+  // remount the client (preserves WS subs + query cache).
   const desc = config.client as ClientStandaloneDescriptor | undefined;
   const clientKey = [
     desc?.baseUrl ?? "",
@@ -215,13 +244,10 @@ function ToncastLayer({
     desc?.endpoint ?? "",
     desc?.apiKey ?? "",
     desc?.network ?? "mainnet",
-    config.widget?.language ?? "",
-    config.widget?.referral?.address ?? "",
-    String(config.widget?.referral?.pct ?? ""),
   ].join("|");
 
   return (
-    <StandaloneClientLayer key={clientKey} desc={desc} config={config}>
+    <StandaloneClientLayer key={clientKey} desc={desc} widget={config.widget}>
       {children}
     </StandaloneClientLayer>
   );

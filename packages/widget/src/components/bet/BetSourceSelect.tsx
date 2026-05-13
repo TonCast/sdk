@@ -1,7 +1,7 @@
 import { TON_ADDRESS } from "@toncast/sdk";
 import type { useBet } from "@toncast/sdk-react";
+import { useFormatNumber } from "../../i18n/useFormatNumber";
 import { useT } from "../../i18n/useT";
-import { formatRaw } from "../../utils/format";
 import { NativeSelect } from "../ui/Select";
 import { Skeleton } from "../ui/Skeleton";
 
@@ -10,6 +10,7 @@ type Bet = ReturnType<typeof useBet>;
 /** Source-coin picker with a skeleton fallback while balances load. */
 export function BetSourceSelect({ bet }: { bet: Bet }) {
   const t = useT();
+  const fmt = useFormatNumber();
 
   if (!bet.summary.data) {
     return (
@@ -23,7 +24,7 @@ export function BetSourceSelect({ bet }: { bet: Bet }) {
   const options = bet.coins.map((cap) => {
     const sym = cap.source.symbol ?? (cap.source.address === TON_ADDRESS ? "TON" : "?");
     const decimals = cap.source.decimals ?? 9;
-    const native = `${formatRaw(cap.source.amount, decimals, 4)} ${sym}`;
+    const native = `${fmt.raw(cap.source.amount, decimals, 4)} ${sym}`;
     const pricing = cap.reason === "pricing_in_progress";
     return {
       value: cap.source.address,

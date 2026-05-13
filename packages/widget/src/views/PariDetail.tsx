@@ -12,6 +12,7 @@ import { OrderBook } from "../components/OrderBook";
 import { Skeleton } from "../components/ui/Skeleton";
 import { DESCRIPTION_PREVIEW_CHARS } from "../constants";
 import { useEmitBet, useNav, type WidgetView } from "../context";
+import { useFormatNumber } from "../i18n/useFormatNumber";
 import { useT } from "../i18n/useT";
 import { useTcState } from "../tc-bridge";
 import { useReliablePariCoverUrl } from "../utils/useReliablePariCoverUrl";
@@ -53,7 +54,7 @@ function ExpandableDescription({ text }: { text: string }) {
           aria-controls={descId}
           onClick={() => setExpanded((v) => !v)}
         >
-          {expanded ? t("common.showLess") : t("common.showMore")}
+          {expanded ? t("detail.collapseDescription") : t("detail.expandDescription")}
         </button>
       )}
     </div>
@@ -92,6 +93,7 @@ function OutcomeBanner({ pari }: { pari: Pari }) {
 
 export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "detail" }> }) {
   const t = useT();
+  const fmt = useFormatNumber();
   const { back } = useNav();
   const { address } = useTcState();
   // Bridges BetCard's positional `onBetSent` signature into the public `bet`
@@ -173,10 +175,10 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
             <ExpandableDescription text={snap.pari.description} />
             <div className="tc-detail-meta">
               <span>
-                {t("pari.meta.yesVol")} <strong>{snap.pari.yesVolume.toFixed(2)} TON</strong>
+                {t("pari.meta.yesVol")} <strong>{fmt.decimal(snap.pari.yesVolume)} TON</strong>
               </span>
               <span>
-                {t("pari.meta.noVol")} <strong>{snap.pari.noVolume.toFixed(2)} TON</strong>
+                {t("pari.meta.noVol")} <strong>{fmt.decimal(snap.pari.noVolume)} TON</strong>
               </span>
               {snap.pari.bestYesOdds !== null && (
                 <span>
