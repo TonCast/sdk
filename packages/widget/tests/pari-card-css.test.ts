@@ -19,4 +19,14 @@ describe("pari card responsive CSS", () => {
     expect(css).toContain("grid-template-columns: var(--tc-pari-tablet-actions-columns, 1fr 1fr);");
     expect(css).not.toContain("grid-column: 2;");
   });
+
+  it("renders compact pari meta as wrap-safe chips", async () => {
+    const css = await readFile(pariCssPath, "utf8");
+
+    expect(css).toContain("flex-wrap: wrap;");
+    expect(css).toContain("background: var(--tc-bg-muted);");
+    expect(css).toContain("border: 1px solid var(--tc-border);");
+    expect(css).toContain("border-radius: 999px;");
+    expect(css).toContain("padding: 2px 6px;");
+  });
 });

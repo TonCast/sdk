@@ -179,7 +179,9 @@ describe("buildCssVarStyle", () => {
     expect(style["--tc-grid-mobile"]).toBe("2");
     expect(style["--tc-grid-tablet"]).toBe("3");
     expect(style["--tc-grid-desktop"]).toBe("4");
-    expect(style["--tc-pari-mobile-meta-direction"]).toBe("column");
+    expect(style["--tc-pari-mobile-meta-direction"]).toBe("row");
+    expect(style["--tc-pari-mobile-meta-justify"]).toBe("flex-start");
+    expect(style["--tc-pari-mobile-meta-gap"]).toBe("4px");
     expect(style["--tc-pari-mobile-actions-columns"]).toBe("1fr");
     expect(style["--tc-pari-tablet-meta-direction"]).toBe("row");
     expect(style["--tc-pari-tablet-actions-columns"]).toBe("1fr 1fr");
@@ -193,7 +195,9 @@ describe("buildCssVarStyle", () => {
 
     expect(style["--tc-pari-mobile-meta-direction"]).toBe("row");
     expect(style["--tc-pari-mobile-actions-columns"]).toBe("1fr 1fr");
-    expect(style["--tc-pari-tablet-meta-direction"]).toBe("column");
+    expect(style["--tc-pari-tablet-meta-direction"]).toBe("row");
+    expect(style["--tc-pari-tablet-meta-justify"]).toBe("flex-start");
+    expect(style["--tc-pari-tablet-meta-gap"]).toBe("4px");
     expect(style["--tc-pari-tablet-actions-columns"]).toBe("1fr");
   });
 
