@@ -24,10 +24,11 @@ function readVersion(relPath: string): string {
   return pkg.version;
 }
 
-function parseSemver(v: string): { major: number; minor: number; patch: string } {
-  const m = /^(\d+)\.(\d+)\.(.+)$/.exec(v);
+function parseSemver(v: string): { major: number; minor: number; patch: number } {
+  const core = v.trim().replace(/[-+].*$/, "");
+  const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(core);
   if (!m) throw new Error(`Unparseable version: ${v}`);
-  return { major: Number(m[1]), minor: Number(m[2]), patch: m[3] ?? "" };
+  return { major: Number(m[1]), minor: Number(m[2]), patch: Number(m[3]) };
 }
 
 describe("widget-loader / widget version sync", () => {
@@ -42,5 +43,10 @@ describe("widget-loader / widget version sync", () => {
     if (loader.major === 0 && widget.major === 0) {
       expect(loader.minor).toBe(widget.minor);
     }
+  });
+
+  it("parses semver prerelease / build metadata using the numeric core only", () => {
+    expect(parseSemver("0.1.0-rc.1")).toEqual({ major: 0, minor: 1, patch: 0 });
+    expect(parseSemver("0.2.3+build.4")).toEqual({ major: 0, minor: 2, patch: 3 });
   });
 });

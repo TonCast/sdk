@@ -55,10 +55,7 @@ export function useReliablePariCoverUrl(
 
   attemptRef.current = attempt;
 
-  const safeMaxRetries = useMemo(
-    () => normalizeMaxRetries(maxRetries),
-    [maxRetries],
-  );
+  const safeMaxRetries = useMemo(() => normalizeMaxRetries(maxRetries), [maxRetries]);
 
   const clearRetryTimer = useCallback(() => {
     if (timerRef.current === null) return;
@@ -67,6 +64,7 @@ export function useReliablePariCoverUrl(
     timerRef.current = null;
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `baseSrc` must reset retry state when the cover URL changes; Biome incorrectly flags it as redundant.
   useEffect(() => {
     versionRef.current += 1;
 
@@ -96,9 +94,7 @@ export function useReliablePariCoverUrl(
     }
 
     const currentVersion = versionRef.current;
-    const delay =
-      BASE_DELAY_MS * 2 ** currentAttempt +
-      Math.floor(Math.random() * JITTER_MS);
+    const delay = BASE_DELAY_MS * 2 ** currentAttempt + Math.floor(Math.random() * JITTER_MS);
 
     setStatus("retrying");
 

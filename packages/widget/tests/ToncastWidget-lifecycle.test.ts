@@ -1,13 +1,24 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ToncastWidget } from "../src/ToncastWidget";
-import type { ToncastWidgetConfig } from "../src/types";
+import type { ToncastWidgetConfig, ToncastWidgetEventMap } from "../src/types";
 
 const STYLE_ID = "toncast-widget-styles";
 
 const baseConfig: ToncastWidgetConfig = {
   tonconnect: { type: "standalone", options: { domain: "https://example.com" } },
 };
+
+/** Test subclass to access private `emit` for listener lifecycle assertions. */
+class TestableWidget extends ToncastWidget {
+  testEmit<K extends keyof ToncastWidgetEventMap>(
+    event: K,
+    payload: ToncastWidgetEventMap[K],
+  ): void {
+    // biome-ignore lint/suspicious/noExplicitAny: tests intentionally cross access boundary
+    (this as any).emit(event, payload);
+  }
+}
 
 function makeContainer(): HTMLDivElement {
   const el = document.createElement("div");
@@ -112,5 +123,29 @@ describe("ToncastWidget lifecycle", () => {
       widget: { onBet: () => undefined },
     };
     expect(_bad).toBeDefined();
+  });
+});
+
+describe("ToncastWidget.dispose", () => {
+  it("clears listeners so emit no longer invokes them", () => {
+    const w = new TestableWidget(baseConfig);
+    const bet = vi.fn();
+    w.on("bet", bet);
+    w.dispose();
+    w.testEmit("bet", { pariId: "P", amount: 1n, side: "yes" });
+    expect(bet).not.toHaveBeenCalled();
+  });
+
+  it("is idempotent", () => {
+    const w = new TestableWidget(baseConfig);
+    expect(() => {
+      w.dispose();
+      w.dispose();
+    }).not.toThrow();
+  });
+
+  it("is safe before mount()", () => {
+    const w = new TestableWidget(baseConfig);
+    expect(() => w.dispose()).not.toThrow();
   });
 });

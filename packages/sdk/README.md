@@ -2,7 +2,7 @@
 
 Universal, transport-agnostic SDK for the Toncast prediction-market protocol. Reads paris (markets), categories, bets, and **builds** ready-to-sign bet transactions via [`@toncast/tx-sdk`](https://github.com/TonCast/tx-sdk) (TON or any jetton routed through STON.fi). The integrator hands the prepared transactions to whichever wallet bridge they use — TonConnect, custom signer, server-side wallet, anything.
 
-> **Status: 0.0.1 (pre–1.0.0).** REST + WebSocket are implemented against the live Toncast API. Until `1.0.0`, **pin an exact** `npm` version of `@toncast/sdk` — minor bumps may include breaking changes. See [CHANGELOG.md](../../CHANGELOG.md) and [docs/PUBLIC_API.md](../../docs/PUBLIC_API.md).
+> **Status: 0.0.1 (pre–1.0.0).** REST + WebSocket are implemented against the live Toncast API. Until `1.0.0`, **pin an exact** `npm` version of `@toncast/sdk` — minor bumps may include breaking changes. See [CHANGELOG.md](../../CHANGELOG.md).
 >
 > **Embeddable UI:** use [`@toncast/widget`](https://www.npmjs.com/package/@toncast/widget) and/or [`@toncast/widget-loader`](https://www.npmjs.com/package/@toncast/widget-loader) (CDN bundle). React apps may prefer [`@toncast/sdk-react`](https://www.npmjs.com/package/@toncast/sdk-react).
 

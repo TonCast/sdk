@@ -83,7 +83,7 @@ export function PariCard({ pari }: { pari: Pari }) {
         {showImage ? (
           <img
             src={displaySrc ?? ""}
-            alt=""
+            alt={pari.name}
             loading="lazy"
             className="tc-pari-cover"
             onError={onImgError}

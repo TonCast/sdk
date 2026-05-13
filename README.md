@@ -140,6 +140,8 @@ Wrap your tree in `TonConnectUIProvider` with a valid manifest URL for your doma
 
 For visual setup and exported snippets, use [`examples/widget-constructor/`](./examples/widget-constructor/).
 
+> **Container `id` convention.** `mount(container)` accepts any `Element`. The `#toncast-widget` id used in every snippet above is just a convention: `widget-constructor`’s exported `style.css` scopes per-instance overrides under `#toncast-widget { … }`. Keep that id (or rewrite the CSS scope) when reusing the exported stylesheet.
+
 ### Subscribing to `bet` events
 
 The successful-bet event is exposed identically through both surfaces:
@@ -195,7 +197,7 @@ to disable all derivation, or use `deriveCssVars: { colors: false }` /
 
 - **Building anything?** Start with [`packages/sdk/README.md`](./packages/sdk/README.md) — full API surface, betting flow, advanced jetton discovery.
 - **Building a React UI?** Read [`packages/sdk-react/README.md`](./packages/sdk-react/README.md) — quick start + every hook in one page.
-- **Public API & versioning (pre–1.0.0):** [`docs/PUBLIC_API.md`](./docs/PUBLIC_API.md).
+- **Public API & versioning (pre–1.0.0):** see each package `README.md` and root [`CHANGELOG.md`](./CHANGELOG.md).
 - **Releases:** [`RELEASING.md`](./RELEASING.md) and [`CHANGELOG.md`](./CHANGELOG.md).
 - **Want to see it work?** Run the demo: `npm run dev --workspace @toncast/react-app-example`. Source in [`examples/react-app/`](./examples/react-app).
 

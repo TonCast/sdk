@@ -1,7 +1,11 @@
-import { DEFAULT_PARI_CHART_PARAMS, type Pari, pariCoverUrl } from "@toncast/sdk";
+import {
+  type CoefficientHistoryPoint,
+  DEFAULT_PARI_CHART_PARAMS,
+  type Pari,
+  pariCoverUrl,
+} from "@toncast/sdk";
 import { useSubscribe } from "@toncast/sdk-react";
-import { useState } from "react";
-import { useReliablePariCoverUrl } from "../utils/useReliablePariCoverUrl";
+import { useMemo, useState } from "react";
 import { BetCard } from "../components/BetCard";
 import { CoefficientChart } from "../components/CoefficientChart";
 import { OrderBook } from "../components/OrderBook";
@@ -10,12 +14,22 @@ import { DESCRIPTION_PREVIEW_CHARS } from "../constants";
 import { useEmitBet, useNav, type WidgetView } from "../context";
 import { useT } from "../i18n/useT";
 import { useTcState } from "../tc-bridge";
+import { useReliablePariCoverUrl } from "../utils/useReliablePariCoverUrl";
 import { PariDetailMyBets } from "./PariDetailMyBets";
 
 function isSettledOutcome(pari: Pari): boolean {
   const r = pari.result.trim().toLowerCase();
   return r === "yes" || r === "no" || r === "draw";
 }
+
+/**
+ * Stable empty array for `<CoefficientChart history={…} />`.
+ *
+ * Reusing the same reference avoids creating a fresh `[]` on every render of
+ * `PariDetailView` while data is loading — keeps consumers' identity checks
+ * (`useMemo`, `React.memo`) stable.
+ */
+const EMPTY_HISTORY: readonly CoefficientHistoryPoint[] = Object.freeze([]);
 
 const descId = "tc-detail-desc-body";
 
@@ -83,15 +97,25 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
   // Bridges BetCard's positional `onBetSent` signature into the public `bet`
   // event payload shape so hosts only ever see one schema.
   const emitBet = useEmitBet();
-  const onBet = emitBet
-    ? (pariId: string, amount: bigint, side: "yes" | "no") => emitBet({ pariId, amount, side })
-    : undefined;
+  const onBet = useMemo(
+    () =>
+      emitBet
+        ? (pariId: string, amount: bigint, side: "yes" | "no") => emitBet({ pariId, amount, side })
+        : undefined,
+    [emitBet],
+  );
   const {
     data: snap,
     isLoading,
     isError,
     error,
   } = useSubscribe(view.pariId, DEFAULT_PARI_CHART_PARAMS);
+
+  const img =
+    !isError && snap?.pari
+      ? pariCoverUrl(snap.pari.image, "w=600,h=600,fit=contain,format=webp,quality=90")
+      : null;
+  const { displaySrc, onImgError } = useReliablePariCoverUrl(img);
 
   if (isError) {
     return (
@@ -107,11 +131,6 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
       </div>
     );
   }
-
-  const img = snap?.pari
-    ? pariCoverUrl(snap.pari.image, "w=600,h=600,fit=contain,format=webp,quality=90")
-    : null;
-  const { displaySrc, onImgError } = useReliablePariCoverUrl(img);
 
   return (
     <div className="tc-form-col">
@@ -134,7 +153,7 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
                   />
                   <img
                     src={displaySrc}
-                    alt=""
+                    alt={snap.pari.name}
                     loading="eager"
                     className="tc-detail-img"
                     onError={onImgError}
@@ -184,11 +203,13 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
         </div>
       )}
 
-      {address && snap?.pari ? <PariDetailMyBets pariId={view.pariId} userAddress={address} /> : null}
+      {address && snap?.pari ? (
+        <PariDetailMyBets pariId={view.pariId} userAddress={address} />
+      ) : null}
 
       {/* Chart */}
       <div className="tc-card tc-card-body">
-        <CoefficientChart history={snap?.coefficientHistory ?? []} />
+        <CoefficientChart history={snap?.coefficientHistory ?? EMPTY_HISTORY} />
       </div>
 
       {/* Order book */}

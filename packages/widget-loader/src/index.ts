@@ -57,6 +57,11 @@ export interface ToncastWidgetInstance {
   mount(container: Element): void;
   unmount(): void;
   /**
+   * Unmounts if still mounted and clears all `on()` listeners. Call when discarding
+   * the instance; do not use the instance after `dispose()`.
+   */
+  dispose(): void;
+  /**
    * Re-render the widget with an updated config without unmounting.
    * Changes to `baseUrl`, `wsUrl`, `endpoint`, `apiKey`, `network`, `language`, or `referral` will
    * create a fresh ToncastClient — a brief loading state will appear.
@@ -138,6 +143,23 @@ function removeConflictingLoaderScripts(src: string, cacheKey: string): void {
   }
 }
 
+/**
+ * Tags injected before `data-tc-widget-loader-key` existed were treated as the
+ * default-empty-options key via {@link effectiveScriptKey}. Stamp an explicit
+ * key when the current load uses that default key so later loads with SRI/nonce
+ * reliably remove this tag instead of colliding ambiguously.
+ */
+function stampLegacyLoaderScriptKeys(src: string, cacheKey: string): void {
+  const defaultKey = makeLoaderCacheKey(src, {});
+  if (cacheKey !== defaultKey) return;
+  for (const el of Array.from(document.scripts)) {
+    if (el.getAttribute("data-tc-widget-loader") !== src) continue;
+    if (!el.hasAttribute(LOADER_KEY_ATTR)) {
+      el.setAttribute(LOADER_KEY_ATTR, defaultKey);
+    }
+  }
+}
+
 function findLoaderScript(src: string, cacheKey: string): HTMLScriptElement | null {
   for (const el of Array.from(document.scripts)) {
     if (el.getAttribute("data-tc-widget-loader") !== src) continue;
@@ -152,6 +174,8 @@ function findLoaderScript(src: string, cacheKey: string): HTMLScriptElement | nu
  * Cache key includes `cdnUrl`, `integrity`, `crossOrigin`, and `nonce`. Changing SRI or CSP nonce
  * therefore yields a separate cached constructor and replaces any older `<script>` tag for the same URL.
  * Legacy tags created before `data-tc-widget-loader-key` existed are treated as the default-empty-options key.
+ * Each `load()` call with the default cache key re-stamps those tags with an explicit key so later loads
+ * with SRI/nonce can remove them deterministically.
  *
  * Loads are serialized so `window.ToncastWidget` reads match the script that just finished when mixing URLs/options on one page.
  */
@@ -195,6 +219,10 @@ async function loadUncached(
   const ctor: ToncastWidgetConstructor = g.ToncastWidget?.ToncastWidget ?? g.ToncastWidget;
 
   if (typeof ctor !== "function") {
+    // Drop the script so a retry does not short-circuit on findLoaderScript().
+    for (const el of Array.from(document.scripts)) {
+      if (el.getAttribute("data-tc-widget-loader") === cdnUrl) el.remove();
+    }
     throw new Error(
       "[ToncastWidgetLoader] CDN bundle loaded but window.ToncastWidget is not a constructor. " +
         "Check the CDN URL or bundle version.",
@@ -216,6 +244,7 @@ async function load(
     );
   }
   const cacheKey = makeLoaderCacheKey(cdnUrl, options);
+  stampLegacyLoaderScriptKeys(cdnUrl, cacheKey);
   const cached = ctorCache.get(cacheKey);
   if (cached) return cached;
 

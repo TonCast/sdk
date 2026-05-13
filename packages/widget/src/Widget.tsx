@@ -12,7 +12,13 @@ import {
 } from "react";
 import { NavBar } from "./components/NavBar";
 import { WidgetHeader } from "./components/WidgetHeader";
-import { BetEmitterProvider, ConfigProvider, NavProvider, useNav } from "./context";
+import {
+  BetEmitterProvider,
+  ConfigProvider,
+  NavProvider,
+  useNav,
+  useWidgetConfig,
+} from "./context";
 import { I18nProvider } from "./i18n/I18nProvider";
 import { useT } from "./i18n/useT";
 import {
@@ -36,7 +42,12 @@ import { ParisListView } from "./views/ParisList";
  * since class components cannot call hooks directly.
  */
 class ErrorBoundary extends Component<
-  { children: ReactNode; errorText: string; retryText: string },
+  {
+    children: ReactNode;
+    errorText: string;
+    retryText: string;
+    onRenderError?: (error: Error, info: ErrorInfo) => void;
+  },
   { error: Error | null }
 > {
   state = { error: null };
@@ -47,6 +58,7 @@ class ErrorBoundary extends Component<
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("[ToncastWidget] Uncaught render error:", error, info.componentStack);
+    this.props.onRenderError?.(error, info);
   }
 
   render() {
@@ -71,8 +83,13 @@ class ErrorBoundary extends Component<
 /** Functional wrapper that supplies translated strings to the class ErrorBoundary. */
 function WidgetErrorBoundary({ children }: { children: ReactNode }) {
   const t = useT();
+  const config = useWidgetConfig();
   return (
-    <ErrorBoundary errorText={t("error.somethingWentWrong")} retryText={t("error.retry")}>
+    <ErrorBoundary
+      errorText={t("error.somethingWentWrong")}
+      retryText={t("error.retry")}
+      onRenderError={config.widget?.onRenderError}
+    >
       {children}
     </ErrorBoundary>
   );
@@ -222,9 +239,14 @@ export interface WidgetProps {
    * point matches your integration.
    */
   onBet?: (payload: { pariId: string; amount: bigint; side: "yes" | "no" }) => void;
+  /**
+   * Called when the widget `ErrorBoundary` catches a render error. Overrides
+   * `config.widget.onRenderError` when both are set.
+   */
+  onRenderError?: (error: Error, info: ErrorInfo) => void;
 }
 
-export function Widget({ config, className, style, onBet }: WidgetProps) {
+export function Widget({ config, className, style, onBet, onRenderError }: WidgetProps) {
   const configTheme = config.widget?.theme;
   const prefersDark = usePrefersColorSchemeDark({
     enabled: configTheme === "system",
@@ -249,10 +271,19 @@ export function Widget({ config, className, style, onBet }: WidgetProps) {
   );
 
   // Inject effectiveTheme into config so child components (e.g. WidgetHeader) can read it.
-  const configWithTheme: ToncastWidgetConfig = {
-    ...config,
-    widget: { ...config.widget, theme: effectiveTheme },
-  };
+  // `config` identity may change every parent render if the host passes an inline object —
+  // we only stabilize against our own `effectiveTheme` flip without deep-equality on `config`.
+  const configWithTheme = useMemo<ToncastWidgetConfig>(
+    () => ({
+      ...config,
+      widget: {
+        ...config.widget,
+        theme: effectiveTheme,
+        onRenderError: onRenderError ?? config.widget?.onRenderError,
+      },
+    }),
+    [config, effectiveTheme, onRenderError],
+  );
 
   const inner = (
     <ToncastLayer config={config}>

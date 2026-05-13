@@ -6,7 +6,7 @@ import {
   densityPresetToCssCustomProperties,
   WIDGET_DENSITY_PRESETS,
 } from "@toncast/widget/density-presets";
-import { stripTrailingSlashes } from "@toncast/widget/url";
+import { parseHttpUrl, stripTrailingSlashes } from "@toncast/widget/url";
 import { WIDGET_CDN_JS_URL } from "@toncast/widget-loader";
 import widgetIifeCss from "../../../../packages/widget/src/styles/widget.css?raw";
 import {
@@ -76,14 +76,27 @@ function appendPaletteCssVars(
   }
 }
 
-/** Builds tonconnect-manifest.json content. */
+/** Returns the trimmed value when it parses as an absolute http(s) URL, otherwise `null`. */
+function safeHttpUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+  return trimmed && parseHttpUrl(trimmed) ? stripTrailingSlashes(trimmed) : null;
+}
+
+/**
+ * Builds tonconnect-manifest.json content.
+ *
+ * `url` and `iconUrl` are validated as absolute http(s) URLs — invalid input
+ * falls back to `PLACEHOLDER_DOMAIN` and `${url}/icon-192.png` so the exported
+ * manifest stays well-formed (TonConnect rejects relative or non-http URLs).
+ */
 export function buildManifestJson(config: ConstructorConfig): string {
-  const cleanDomain = stripTrailingSlashes(config.domain || PLACEHOLDER_DOMAIN);
+  const url = safeHttpUrl(config.domain) ?? PLACEHOLDER_DOMAIN;
+  const iconUrl = safeHttpUrl(config.iconUrl) ?? `${url}/icon-192.png`;
   return JSON.stringify(
     {
-      url: cleanDomain,
-      name: config.appName || "My App",
-      iconUrl: config.iconUrl || `${cleanDomain}/icon-192.png`,
+      url,
+      name: config.appName.trim() || "My App",
+      iconUrl,
     },
     null,
     2,

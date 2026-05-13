@@ -6,6 +6,8 @@
  * with `@toncast/widget`'s exports — keep both in sync in the same release.
  */
 
+import type { ErrorInfo } from "react";
+
 export type SupportedLanguage = "en" | "ru" | "hi" | "es" | "zh" | "fr" | "de" | "pt" | "fa" | "ar";
 
 export type ToncastWidgetDensity = "compact" | "default" | "comfortable";
@@ -200,6 +202,8 @@ export interface ToncastWidgetConfig<
      * Pass an empty array `[]` to hide the picker entirely.
      */
     languages?: SupportedLanguage[];
+    /** Host hook for render errors caught by the widget error boundary. */
+    onRenderError?: (error: Error, info: ErrorInfo) => void;
   };
 }
 

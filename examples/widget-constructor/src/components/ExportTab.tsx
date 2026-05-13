@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { ConstructorConfig } from "../types";
+import { copyTextToClipboard } from "../utils/copyTextToClipboard";
 import {
   buildJsSnippet,
   buildManifestJson,
@@ -19,23 +20,31 @@ function CopyButton({ text }: { text: string }) {
     };
   }, []);
 
+  const statusMsg =
+    state === "copied" ? "Copied to clipboard" : state === "error" ? "Copy failed" : "";
+
   return (
-    <button
-      type="button"
-      onClick={async () => {
-        if (timerRef.current !== null) clearTimeout(timerRef.current);
-        try {
-          await navigator.clipboard.writeText(text);
-          setState("copied");
-        } catch {
-          setState("error");
-        }
-        timerRef.current = setTimeout(() => setState("idle"), 2000);
-      }}
-      className="text-xs px-2.5 py-1 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors font-medium"
-    >
-      {state === "copied" ? "✓ Copied" : state === "error" ? "✗ Failed" : "Copy"}
-    </button>
+    <div className="flex items-center gap-2">
+      <span className="sr-only" aria-live="polite">
+        {statusMsg}
+      </span>
+      <button
+        type="button"
+        onClick={async () => {
+          if (timerRef.current !== null) clearTimeout(timerRef.current);
+          try {
+            await copyTextToClipboard(text);
+            setState("copied");
+          } catch {
+            setState("error");
+          }
+          timerRef.current = setTimeout(() => setState("idle"), 2000);
+        }}
+        className="text-xs px-2.5 py-1 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors font-medium"
+      >
+        {state === "copied" ? "✓ Copied" : state === "error" ? "✗ Failed" : "Copy"}
+      </button>
+    </div>
   );
 }
 

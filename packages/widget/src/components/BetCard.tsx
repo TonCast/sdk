@@ -53,25 +53,36 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
 
+  /** Aborts in-flight confirm/send when the card unmounts or the user retries. */
+  const confirmFlowRef = useRef<AbortController | null>(null);
+
   // Cancel the delayed refresh timer on unmount.
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     return () => {
+      confirmFlowRef.current?.abort();
       if (refreshTimerRef.current !== null) clearTimeout(refreshTimerRef.current);
     };
   }, []);
 
   const handleConfirm = async () => {
     if (!tc) return;
+    confirmFlowRef.current?.abort();
+    const flow = new AbortController();
+    confirmFlowRef.current = flow;
+    const { signal } = flow;
+
     setSendError(null);
     setSending(true);
     try {
       const confirmed = await bet.confirmCurrent({ financialRiskAcknowledged: true });
+      if (signal.aborted) return;
       if (!confirmed) return;
       await tc.sendTransaction({
         messages: confirmed.messages,
         validUntil: Math.floor(Date.now() / 1000) + BET_TX_VALID_FOR_SECONDS,
       });
+      if (signal.aborted) return;
       onBetSent?.(pariId, bet.quote.totalCost, bet.side);
       void queryClient.invalidateQueries({ queryKey: ["toncast", "betting", "bets"] });
       void bet.refresh();
@@ -81,6 +92,7 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
         void bet.refresh();
       }, BET_REFRESH_DELAY_MS);
     } catch (err) {
+      if (signal.aborted) return;
       setSendError(formatBetSendError(err));
     } finally {
       setSending(false);

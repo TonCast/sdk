@@ -4,8 +4,10 @@ import {
   buildCssVarsConfig,
   buildIndexHtml,
   buildJsSnippet,
+  buildManifestJson,
   buildReactSnippet,
   buildStyleCss,
+  PLACEHOLDER_DOMAIN,
   previewBackdropFromConfig,
 } from "../src/utils/generateZip";
 
@@ -45,6 +47,36 @@ describe("widget export snippets", () => {
 
     expect(buildIndexHtml(c)).toContain('"baseUrl": "https://api.staging.toncast.test"');
     expect(buildJsSnippet(c)).toContain('"baseUrl": "https://api.staging.toncast.test"');
+  });
+
+  it("manifest: rejects non-http(s) url and iconUrl, falls back to safe defaults", () => {
+    const manifest = JSON.parse(
+      buildManifestJson(
+        config({
+          domain: "javascript:alert(1)",
+          iconUrl: "ftp://evil/x.png",
+          appName: "  ",
+        }),
+      ),
+    );
+    expect(manifest.url).toBe(PLACEHOLDER_DOMAIN);
+    expect(manifest.iconUrl).toBe(`${PLACEHOLDER_DOMAIN}/icon-192.png`);
+    expect(manifest.name).toBe("My App");
+  });
+
+  it("manifest: keeps valid http(s) url and iconUrl, strips trailing slashes", () => {
+    const manifest = JSON.parse(
+      buildManifestJson(
+        config({
+          domain: "https://app.example.com/",
+          iconUrl: "https://cdn.example.com/icon.png///",
+          appName: "Example",
+        }),
+      ),
+    );
+    expect(manifest.url).toBe("https://app.example.com");
+    expect(manifest.iconUrl).toBe("https://cdn.example.com/icon.png");
+    expect(manifest.name).toBe("Example");
   });
 
   it("emits wsUrl when apiWsUrl is configured", () => {

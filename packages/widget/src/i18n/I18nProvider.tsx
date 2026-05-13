@@ -1,6 +1,6 @@
 import type { SupportedLanguage } from "@toncast/sdk";
 import { useToncastLanguage } from "@toncast/sdk-react";
-import { createContext, type ReactNode, useContext } from "react";
+import { createContext, type ReactNode, useContext, useMemo } from "react";
 
 interface I18nContextValue {
   lang: SupportedLanguage;
@@ -10,7 +10,8 @@ interface I18nContextValue {
 const I18nContext = createContext<I18nContextValue | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const value = useToncastLanguage();
+  const { lang, setLang } = useToncastLanguage();
+  const value = useMemo(() => ({ lang, setLang }), [lang, setLang]);
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 

@@ -1,3 +1,17 @@
+/**
+ * Constructor-side theme & layout option helpers.
+ *
+ * Single source of truth for:
+ * - allowed grid column counts per device (mobile/tablet/desktop) and the
+ *   normalisation that snaps arbitrary input to the nearest allowed value;
+ * - the bidirectional mapping between the public widget `colorScheme`
+ *   (`"light" | "dark" | "system"`) and the constructor UI's two-checkbox
+ *   Light/Dark selection state.
+ *
+ * Pure & UI-agnostic: imported by `normalizeConfig`, `buildWidgetConfig`, and
+ * the `ThemeTab` component. No React or DOM dependencies — keep it that way so
+ * unit tests stay fast and the module remains easy to reason about.
+ */
 import type { Device, ThemeConfig } from "../types";
 
 export type ConstructorThemeChoice = "light" | "dark";

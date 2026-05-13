@@ -6,7 +6,7 @@ React hooks for [`@toncast/sdk`](../sdk) — built on top of [`@tanstack/react-q
 
 Use **`toncastQueryKeys`** for every `prefetchQuery`, `setQueryData`, and targeted `invalidateQueries` so keys match the built-in hooks exactly (including `serializeKey` for params with `bigint`).
 
-> **Status: 0.0.1 (pre–1.0.0).** Pin exact versions until `1.0.0`. See [CHANGELOG.md](../../CHANGELOG.md), [docs/PUBLIC_API.md](../../docs/PUBLIC_API.md), and repository [`AGENTS.md`](../../AGENTS.md) for betting and address handling.
+> **Status: 0.0.1 (pre–1.0.0).** Pin exact versions until `1.0.0`. See [CHANGELOG.md](../../CHANGELOG.md) and repository [`AGENTS.md`](../../AGENTS.md) for betting and address handling.
 
 > Pattern lifted from [`@ston-fi/omniston-sdk-react`](https://github.com/ston-fi/omniston-sdk) — thin wrappers around TanStack Query, single Observable adapter for streaming endpoints.
 

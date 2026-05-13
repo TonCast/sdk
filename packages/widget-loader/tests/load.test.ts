@@ -16,6 +16,7 @@ type FakeHeadChild = {
   src?: string;
   rel?: string;
   setAttribute: (name: string, value: string) => void;
+  removeAttribute: (name: string) => void;
 };
 
 function installFakeDocument(options?: { querySelectorThrows: boolean }) {
@@ -41,6 +42,12 @@ function installFakeDocument(options?: { querySelectorThrows: boolean }) {
           if (name === "src") this.src = value;
           if (name === "href") this.href = value;
           if (name === "rel") this.rel = value;
+        },
+        removeAttribute(name) {
+          delete this.attrs[name];
+          if (name === "src") this.src = undefined;
+          if (name === "href") this.href = undefined;
+          if (name === "rel") this.rel = undefined;
         },
       };
       return el;
@@ -122,6 +129,25 @@ describe("ToncastWidgetLoader.load", () => {
     expect(doc.scripts[0]?.getAttribute("data-tc-widget-loader-key")).toContain(
       "https://cdn.example/widget.js",
     );
+  });
+
+  it("re-stamps script tags missing data-tc-widget-loader-key on a subsequent default load()", async () => {
+    const doc = installFakeDocument();
+    class Widget {}
+    vi.stubGlobal("ToncastWidget", { ToncastWidget: Widget });
+    const loader = await importFreshLoader();
+    const src = "https://cdn.example/widget.js";
+
+    const first = loader.load(src);
+    doc.scripts[0]?.onload?.();
+    await first;
+
+    doc.scripts[0]?.removeAttribute("data-tc-widget-loader-key");
+    expect(doc.scripts[0]?.hasAttribute("data-tc-widget-loader-key")).toBe(false);
+
+    await expect(loader.load(src)).resolves.toBe(Widget);
+    expect(doc.scripts).toHaveLength(1);
+    expect(doc.scripts[0]?.getAttribute("data-tc-widget-loader-key")).toContain(src);
   });
 
   it("allows retrying after a failed script load", async () => {
@@ -249,6 +275,26 @@ describe("ToncastWidgetLoader.load", () => {
     const loaded = loader.load("https://cdn.example/widget.js");
     doc.scripts[0]?.onload?.();
     await expect(loaded).rejects.toThrowError(/is not a constructor/);
+    expect(doc.scripts).toHaveLength(0);
+  });
+
+  it("after invalid ctor the script is gone so a retry injects a fresh tag", async () => {
+    const doc = installFakeDocument();
+    vi.stubGlobal("ToncastWidget", { ToncastWidget: 42 });
+    const loader = await importFreshLoader();
+
+    const first = loader.load("https://cdn.example/widget.js");
+    expect(doc.scripts).toHaveLength(1);
+    doc.scripts[0]?.onload?.();
+    await expect(first).rejects.toThrowError(/is not a constructor/);
+    expect(doc.scripts).toHaveLength(0);
+
+    class Widget {}
+    vi.stubGlobal("ToncastWidget", { ToncastWidget: Widget });
+    const second = loader.load("https://cdn.example/widget.js");
+    expect(doc.scripts).toHaveLength(1);
+    doc.scripts[0]?.onload?.();
+    await expect(second).resolves.toBe(Widget);
   });
 
   it("rejects with a timeout error and removes the script tag when timeoutMs elapses", async () => {

@@ -6,7 +6,7 @@ const VIEW_H = 200;
 const PAD_X = 8;
 const PAD_Y = 16;
 
-function buildPath(history: CoefficientHistoryPoint[]) {
+function buildPath(history: readonly CoefficientHistoryPoint[]) {
   const xs = history.map((p) => p.timestamp);
   const minX = Math.min(...xs);
   const maxX = Math.max(...xs);
@@ -24,7 +24,7 @@ function buildPath(history: CoefficientHistoryPoint[]) {
   return { path, lastX, lastY };
 }
 
-export function CoefficientChart({ history }: { history: CoefficientHistoryPoint[] }) {
+export function CoefficientChart({ history }: { history: readonly CoefficientHistoryPoint[] }) {
   const t = useT();
   const last = history.at(-1);
   const first = history[0];

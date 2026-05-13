@@ -51,9 +51,16 @@ export function WidgetHeader() {
   // widget.languages === [] → hide picker entirely.
   // widget.languages === undefined → show all.
   const configuredLangs = config.widget?.languages;
+  /** Stable key so inline `languages={[...]}` from the host does not retrigger effects every render. */
+  const languagesKey =
+    configuredLangs === undefined ? "__all__" : configuredLangs.slice().join(",");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `languagesKey` fingerprints list contents so inline `languages={[...]}` from the host does not reallocate `availableLangs` every render; listing `configuredLangs` would defeat that.
   const availableLangs: SupportedLanguage[] = useMemo(
-    () => (configuredLangs !== undefined ? configuredLangs : [...SUPPORTED_LANGUAGES]),
-    [configuredLangs],
+    () =>
+      configuredLangs !== undefined
+        ? configuredLangs
+        : ([...SUPPORTED_LANGUAGES] as SupportedLanguage[]),
+    [languagesKey],
   );
 
   const showPicker = availableLangs.length > 1;
@@ -61,7 +68,7 @@ export function WidgetHeader() {
   // Auto-reset to first available language if current is not in the list.
   useEffect(() => {
     const first = availableLangs[0];
-    if (first && !availableLangs.includes(lang)) {
+    if (first && !availableLangs.includes(lang) && first !== lang) {
       setLang(first);
     }
   }, [availableLangs, lang, setLang]);

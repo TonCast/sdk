@@ -58,6 +58,10 @@ function removeStyles(): void {
 
 type EventListener<T> = T extends void ? () => void : (payload: T) => void;
 
+/**
+ * Imperative host for the betting UI. Use `mount` / `unmount` for DOM attachment;
+ * use `dispose()` when discarding the instance to release all `on()` listeners.
+ */
 export class ToncastWidget {
   private config: ToncastWidgetConfig;
   private root: Root | null = null;
@@ -115,6 +119,19 @@ export class ToncastWidget {
       removeStyles();
     }
     this.emit("unmount", undefined);
+  }
+
+  /**
+   * Unregisters all `on()` listeners and unmounts if still mounted.
+   * Call when discarding the instance; do not use the instance after `dispose()`.
+   * Listeners intentionally survive `unmount()` alone so `mount`/`unmount`/`mount`
+   * cycles keep handlers — use `off()` for selective removal without dispose.
+   */
+  dispose(): void {
+    if (this.root) this.unmount();
+    for (const k of Object.keys(this.listeners) as Array<keyof ToncastWidgetEventMap>) {
+      delete this.listeners[k];
+    }
   }
 
   /**

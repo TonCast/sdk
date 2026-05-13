@@ -12,7 +12,15 @@ import {
   useTonAddress,
   useTonConnectUI,
 } from "@tonconnect/ui-react";
-import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { tryTonConnectManifestUrl } from "./domain";
 import { tonConnectThemeFromWidget } from "./tonconnectTheme";
 
@@ -40,6 +48,16 @@ export function useTcState(): TcState {
   return ctx;
 }
 
+const brokenStandaloneNoop = () => {};
+/** Stable context value when manifest URL is invalid — avoids re-rendering all `useTcState` consumers every parent tick. */
+const BROKEN_STANDALONE_STATE: TcState = {
+  address: "",
+  restored: true,
+  connect: brokenStandaloneNoop,
+  disconnect: brokenStandaloneNoop,
+  instance: null,
+};
+
 /** Keeps TonConnect UI theme in sync (TonConnectUI is a global singleton). */
 function TonConnectThemeSync({ theme }: { theme: Theme }) {
   const [tc] = useTonConnectUI();
@@ -56,27 +74,25 @@ function StandaloneBridge({ children }: { children: ReactNode }) {
   const address = useTonAddress();
   const restored = useIsConnectionRestored();
 
-  const state: TcState = {
-    address: address ?? "",
-    restored,
-    connect: () => void tc.openModal(),
-    disconnect: () => void tc.disconnect(),
-    instance: tc,
-  };
+  const connect = useCallback(() => void tc.openModal(), [tc]);
+  const disconnect = useCallback(() => void tc.disconnect(), [tc]);
+  const state = useMemo<TcState>(
+    () => ({
+      address: address ?? "",
+      restored,
+      connect,
+      disconnect,
+      instance: tc,
+    }),
+    [address, restored, connect, disconnect, tc],
+  );
 
   return <TcBridgeCtx.Provider value={state}>{children}</TcBridgeCtx.Provider>;
 }
 
 /** TonConnect unavailable — wallet UI is inert until the host fixes `domain`. */
 function BrokenStandaloneBridge({ children }: { children: ReactNode }) {
-  const state: TcState = {
-    address: "",
-    restored: true,
-    connect: () => {},
-    disconnect: () => {},
-    instance: null,
-  };
-  return <TcBridgeCtx.Provider value={state}>{children}</TcBridgeCtx.Provider>;
+  return <TcBridgeCtx.Provider value={BROKEN_STANDALONE_STATE}>{children}</TcBridgeCtx.Provider>;
 }
 
 export function StandaloneProvider({
@@ -141,13 +157,18 @@ export function IntegratedProvider({
     instance.uiOptions = { uiPreferences: { theme: tonConnectThemeFromWidget(widgetTheme) } };
   }, [instance, widgetTheme]);
 
-  const state: TcState = {
-    address,
-    restored,
-    connect: () => void instance.openModal(),
-    disconnect: () => void instance.disconnect(),
-    instance,
-  };
+  const connect = useCallback(() => void instance.openModal(), [instance]);
+  const disconnect = useCallback(() => void instance.disconnect(), [instance]);
+  const state = useMemo<TcState>(
+    () => ({
+      address,
+      restored,
+      connect,
+      disconnect,
+      instance,
+    }),
+    [address, restored, connect, disconnect, instance],
+  );
 
   return <TcBridgeCtx.Provider value={state}>{children}</TcBridgeCtx.Provider>;
 }

@@ -1,5 +1,6 @@
 import type { SupportedLanguage, ToncastClient } from "@toncast/sdk";
 import type { TonConnectUI } from "@tonconnect/ui-react";
+import type { ErrorInfo } from "react";
 
 export type TcStandaloneDescriptor = {
   type: "standalone";
@@ -236,6 +237,12 @@ export interface ToncastWidgetConfig {
      * Pass an empty array [] to hide the picker entirely.
      */
     languages?: SupportedLanguage[];
+    /**
+     * Called from the widget `ErrorBoundary` after a render error is caught
+     * (`componentDidCatch`). Use for analytics or remote logging — does not
+     * replace the inline retry UI.
+     */
+    onRenderError?: (error: Error, info: ErrorInfo) => void;
   };
 }
 
