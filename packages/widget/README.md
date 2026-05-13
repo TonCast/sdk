@@ -50,3 +50,7 @@ When you discard the imperative instance entirely, call **`dispose()`** — it u
 ## Render error hook
 
 For host-side logging or analytics, set **`widget.onRenderError`** on the config object, or pass **`onRenderError`** on `<Widget />` from `@toncast/widget/react` (the prop overrides `config.widget.onRenderError` when both are set). It is invoked from the internal `ErrorBoundary` after a render error is caught — the inline retry card is still shown to the user.
+
+## Bet amount input (locales)
+
+In locales where the decimal separator is a **comma** (e.g. German), a lone **dot** with exactly three digits after it (e.g. `35.572`) is treated as **ambiguous** (English-style fraction vs. thousands). The amount field shows a hint and does not apply the value until the user uses the locale’s decimal mark (e.g. `35,572` for thirty-five point five seven two).

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  AmbiguousLocalizedDecimalError,
   formatDecimal,
   formatRaw,
   formatRawLocalized,
@@ -86,9 +87,14 @@ describe("format.formatRawLocalized", () => {
 });
 
 describe("format.parseLocalizedDecimal", () => {
-  it("is a no-op for canonical .-decimal input", () => {
+  it("is a no-op for canonical .-decimal input in dot-decimal locales", () => {
     expect(parseLocalizedDecimal("35.572", "en-US")).toBe("35.572");
-    expect(parseLocalizedDecimal("35.572", "ru-RU")).toBe("35.572");
+  });
+
+  it("throws for ambiguous dot form in comma-decimal locales", () => {
+    expect(() => parseLocalizedDecimal("35.572", "de-DE")).toThrow(AmbiguousLocalizedDecimalError);
+    expect(() => parseLocalizedDecimal("35.572", "ru-RU")).toThrow(AmbiguousLocalizedDecimalError);
+    expect(() => parseLocalizedDecimal("1.234", "de-DE")).toThrow(AmbiguousLocalizedDecimalError);
   });
 
   it("converts comma-decimal locales back to .-decimal", () => {

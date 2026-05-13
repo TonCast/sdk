@@ -15,9 +15,12 @@ import type { ToncastWidgetConfig } from "../types";
  * Behaviour:
  * - `language` is applied only when defined; we never silently overwrite the
  *   host's preference with `undefined`.
- * - `referral` is applied (or cleared with `undefined`) only after it has been
- *   set at least once via this hook — so an integrator that manages referral
- *   directly on the client is not stomped by an absent `widget.referral`.
+ * - `referral` is applied only when both `address` and `pct` are defined; an
+ *   absent `widget.referral` does not clear the client (see PR-24 for
+ *   standalone clearing).
+ * - SDK validation failures (`setLanguage` / `setReferral`) are caught and
+ *   logged with `console.warn` so the widget keeps rendering instead of
+ *   tripping the error boundary.
  */
 export function useSyncClientFromConfig(
   client: ToncastClient,
@@ -26,7 +29,11 @@ export function useSyncClientFromConfig(
   const language = widget?.language;
   useEffect(() => {
     if (language === undefined) return;
-    client.setLanguage(language);
+    try {
+      client.setLanguage(language);
+    } catch (err) {
+      console.warn("[ToncastWidget] setLanguage failed", err);
+    }
   }, [client, language]);
 
   const referralAddr = widget?.referral?.address;
@@ -35,6 +42,10 @@ export function useSyncClientFromConfig(
     if (referralAddr === undefined || referralPct === undefined) {
       return;
     }
-    client.setReferral({ address: referralAddr, pct: referralPct });
+    try {
+      client.setReferral({ address: referralAddr, pct: referralPct });
+    } catch (err) {
+      console.warn("[ToncastWidget] setReferral failed", err);
+    }
   }, [client, referralAddr, referralPct]);
 }

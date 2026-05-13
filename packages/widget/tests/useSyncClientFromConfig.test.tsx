@@ -98,4 +98,26 @@ describe("useSyncClientFromConfig", () => {
     rerender(<Probe client={c} widget={{ language: "en" }} />);
     expect(c.setReferral).not.toHaveBeenCalled();
   });
+
+  it("logs a warning when setReferral throws (invalid config) instead of crashing", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const c = makeFakeClient();
+    c.setReferral.mockImplementation(() => {
+      throw new Error("invalid referral");
+    });
+    mount(<Probe client={c} widget={{ referral: { address: "UQ_x", pct: 99 } }} />);
+    expect(warn).toHaveBeenCalledWith("[ToncastWidget] setReferral failed", expect.any(Error));
+    warn.mockRestore();
+  });
+
+  it("logs a warning when setLanguage throws", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const c = makeFakeClient();
+    c.setLanguage.mockImplementation(() => {
+      throw new Error("bad language");
+    });
+    mount(<Probe client={c} widget={{ language: "en" }} />);
+    expect(warn).toHaveBeenCalledWith("[ToncastWidget] setLanguage failed", expect.any(Error));
+    warn.mockRestore();
+  });
 });

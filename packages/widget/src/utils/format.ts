@@ -1,5 +1,13 @@
 import { fromNano } from "@ton/core";
 
+/** Thrown when a string like `35.572` cannot be parsed safely for the locale. */
+export class AmbiguousLocalizedDecimalError extends Error {
+  readonly name = "AmbiguousLocalizedDecimalError";
+  constructor(message = "ambiguous-localized-decimal") {
+    super(message);
+  }
+}
+
 /**
  * Locale-aware TON amount formatting.
  *
@@ -31,11 +39,7 @@ export function formatTon(
  * `<input>` (decimal point is the parser's expected separator). Use
  * {@link formatRawLocalized} for display.
  */
-export function formatRaw(
-  amount: bigint,
-  decimals: number,
-  maxFracDigits = 6,
-): string {
+export function formatRaw(amount: bigint, decimals: number, maxFracDigits = 6): string {
   const divisor = 10n ** BigInt(decimals);
   const whole = amount / divisor;
   const fractional = amount % divisor;
@@ -43,10 +47,7 @@ export function formatRaw(
   if (fractional === 0n) {
     value = whole.toString();
   } else {
-    const frac = fractional
-      .toString()
-      .padStart(decimals, "0")
-      .replace(/0+$/, "");
+    const frac = fractional.toString().padStart(decimals, "0").replace(/0+$/, "");
     value = `${whole}.${frac}`;
   }
   const dot = value.indexOf(".");
@@ -101,11 +102,29 @@ export function localeNumberSeparators(lang: string): {
  * form suitable for `parseUnits` — strips group separators and unifies the
  * decimal mark. Whitespace (incl. NBSP / NNBSP grouping) is dropped too.
  *
- * Idempotent: passing an already-canonical `"35.572"` returns `"35.572"`.
+ * Idempotent: passing an already-canonical `"35.572"` returns `"35.572"` for
+ * locales that use `.` as the decimal separator (e.g. `en-US`).
+ *
+ * For locales where the decimal separator is **not** `.` (e.g. `de-DE`), a
+ * lone `.` with exactly three digits after it is **ambiguous** (English-style
+ * fraction vs. thousands grouping) and throws {@link AmbiguousLocalizedDecimalError}.
  */
 export function parseLocalizedDecimal(input: string, lang: string): string {
   const { decimal, group } = localeNumberSeparators(lang);
   let s = input.trim();
+
+  if (decimal !== "." && !s.includes(decimal) && s.includes(".")) {
+    const dotCount = (s.match(/\./g) ?? []).length;
+    if (dotCount === 1) {
+      const dot = s.indexOf(".");
+      const left = s.slice(0, dot);
+      const right = s.slice(dot + 1);
+      if (/^\d+$/.test(left) && /^\d+$/.test(right) && right.length === 3) {
+        throw new AmbiguousLocalizedDecimalError();
+      }
+    }
+  }
+
   if (group) s = s.split(group).join("");
   // Browsers may render the group separator as NBSP / NNBSP irrespective of
   // the locale tag — strip both unconditionally so manual edits round-trip.
@@ -124,8 +143,7 @@ export function formatDecimal(
   try {
     return new Intl.NumberFormat(lang, {
       maximumFractionDigits: opts.maximumFractionDigits ?? 2,
-      minimumFractionDigits:
-        opts.minimumFractionDigits ?? opts.maximumFractionDigits ?? 2,
+      minimumFractionDigits: opts.minimumFractionDigits ?? opts.maximumFractionDigits ?? 2,
       useGrouping: true,
     }).format(value);
   } catch {

@@ -58,6 +58,8 @@ const en = {
   "bet.loadingPrice": "loading…",
   "bet.maxOf": "{current} / {max}",
   "bet.oneTicket": "1 ticket",
+  "bet.ambiguousDecimal":
+    "Ambiguous number: use your locale’s decimal separator (e.g. 35,572 in German) — a dot with three digits after it can mean thousands or a fraction.",
 
   "page.bets.title": "My Bets",
   "page.bets.empty": "No bets yet.",
@@ -170,6 +172,8 @@ const ru = {
   "bet.loadingPrice": "загрузка…",
   "bet.maxOf": "{current} / {max}",
   "bet.oneTicket": "1 билет",
+  "bet.ambiguousDecimal":
+    "Неоднозначное число: для дробной части используйте запятую (например 35,572) — точка с тремя цифрами после неё может означать и тысячи, и дробь.",
 
   "page.bets.title": "Мои ставки",
   "page.bets.empty": "Ставок пока нет.",
@@ -274,6 +278,7 @@ const hi = {
   "bet.loadingPrice": "लोड हो रहा है…",
   "bet.maxOf": "{current} / {max}",
   "bet.oneTicket": "1 टिकट",
+  "bet.ambiguousDecimal": "अस्पष्ट संख्या: दशमलव के लिए स्थानीय अल्पविराम का प्रयोग करें (उदा. 35,572)।",
   "page.bets.title": "मेरी बाज़ियाँ",
   "page.bets.empty": "अभी कोई बाज़ी नहीं।",
   "page.bets.connectPrompt": "बाज़ियाँ देखने वॉलेट कनेक्ट करें।",
@@ -368,6 +373,8 @@ const es = {
   "bet.loadingPrice": "cargando…",
   "bet.maxOf": "{current} / {max}",
   "bet.oneTicket": "1 boleto",
+  "bet.ambiguousDecimal":
+    "Número ambiguo: usa la coma decimal de tu idioma (p. ej. 35,572) — un punto con tres cifras puede ser miles o decimales.",
   "page.bets.title": "Mis apuestas",
   "page.bets.empty": "Aún no hay apuestas.",
   "page.bets.connectPrompt": "Conecta tu cartera para ver las apuestas.",
@@ -462,6 +469,7 @@ const zh = {
   "bet.loadingPrice": "加载中…",
   "bet.maxOf": "{current} / {max}",
   "bet.oneTicket": "1 张",
+  "bet.ambiguousDecimal": "数字有歧义：请使用当前语言的小数分隔符（例如德语用 35,572）。",
   "page.bets.title": "我的投注",
   "page.bets.empty": "暂无投注。",
   "page.bets.connectPrompt": "连接钱包以查看投注。",
@@ -556,6 +564,8 @@ const fr = {
   "bet.loadingPrice": "chargement…",
   "bet.maxOf": "{current} / {max}",
   "bet.oneTicket": "1 ticket",
+  "bet.ambiguousDecimal":
+    "Nombre ambigu : utilisez le séparateur décimal local (ex. 35,572 en allemand).",
   "page.bets.title": "Mes paris",
   "page.bets.empty": "Aucun pari pour le moment.",
   "page.bets.connectPrompt": "Connectez votre portefeuille pour voir les paris.",
@@ -650,6 +660,8 @@ const de = {
   "bet.loadingPrice": "lädt…",
   "bet.maxOf": "{current} / {max}",
   "bet.oneTicket": "1 Ticket",
+  "bet.ambiguousDecimal":
+    "Zahl unklar: Dezimaltrennzeichen ist das Komma (z. B. 35,572) — ein Punkt mit drei Nachkommastellen ist mehrdeutig.",
   "page.bets.title": "Meine Wetten",
   "page.bets.empty": "Noch keine Wetten.",
   "page.bets.connectPrompt": "Wallet verbinden, um Wetten zu sehen.",
@@ -744,6 +756,7 @@ const pt = {
   "bet.loadingPrice": "carregando…",
   "bet.maxOf": "{current} / {max}",
   "bet.oneTicket": "1 bilhete",
+  "bet.ambiguousDecimal": "Número ambíguo: use a vírgula como separador decimal (ex.: 35,572).",
   "page.bets.title": "Minhas apostas",
   "page.bets.empty": "Ainda não há apostas.",
   "page.bets.connectPrompt": "Conecte sua carteira para ver apostas.",
@@ -838,6 +851,7 @@ const fa = {
   "bet.loadingPrice": "در حال بارگذاری…",
   "bet.maxOf": "{current} / {max}",
   "bet.oneTicket": "۱ بلیت",
+  "bet.ambiguousDecimal": "عدد مبهم: از جداکننده اعشاری زبان خود استفاده کنید (مثلاً ۳۵٬۵۷۲).",
   "page.bets.title": "شرط‌های من",
   "page.bets.empty": "هنوز شرطی نیست.",
   "page.bets.connectPrompt": "برای دیدن شرط‌ها کیف را وصل کنید.",
@@ -932,6 +946,7 @@ const ar = {
   "bet.loadingPrice": "جارٍ التحميل…",
   "bet.maxOf": "{current} / {max}",
   "bet.oneTicket": "تذكرة واحدة",
+  "bet.ambiguousDecimal": "رقم غامض: استخدم فاصلة عشرية حسب لغتك (مثل ٣٥٬٥٧٢ في الألمانية).",
   "page.bets.title": "رهاناتي",
   "page.bets.empty": "لا رهانات بعد.",
   "page.bets.connectPrompt": "صِل محفظتك لعرض الرهانات.",
