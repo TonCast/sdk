@@ -211,4 +211,29 @@ describe("widget export snippets", () => {
     const html = buildIndexHtml(c);
     expect(html).toContain("background: #111827");
   });
+
+  it("buildIndexHtml keeps themed background while sizing the widget as a safe-area app shell", () => {
+    const c = config({
+      theme: {
+        ...DEFAULT_CONFIG.theme,
+        colorScheme: "dark",
+        dark: { ...DEFAULT_CONFIG.theme.dark, bg: "#111827" },
+      },
+    });
+
+    const html = buildIndexHtml(c);
+
+    expect(html).toContain("background: #111827");
+    expect(html).toContain(
+      '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />',
+    );
+    expect(html).toMatch(
+      /body \{[\s\S]*min-height: 100vh;[\s\S]*min-height: 100dvh;[\s\S]*place-items: center;[\s\S]*padding: 0;/,
+    );
+    expect(html).toMatch(
+      /#toncast-widget \{[\s\S]*width: min\([\s\S]*100vw,[\s\S]*calc\(100vw - env\(safe-area-inset-left, 0px\) - env\(safe-area-inset-right, 0px\)\),[\s\S]*920px[\s\S]*\);[\s\S]*height: calc\([\s\S]*100dvh - env\(safe-area-inset-top, 0px\) - env\(safe-area-inset-bottom, 0px\)[\s\S]*\);[\s\S]*min-height: 0;/,
+    );
+    expect(html).not.toContain("padding: 16px;");
+    expect(html).not.toContain("@media (max-width: 640px)");
+  });
 });

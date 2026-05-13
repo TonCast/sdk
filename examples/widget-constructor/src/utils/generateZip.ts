@@ -218,7 +218,7 @@ export function buildIndexHtml(config: ConstructorConfig): string {
   const bodyBgDark = (darkRaw && safeHexColor(darkRaw)) || HOST_BACKDROP_DARK;
   const bodyBackground = isDark ? bodyBgDark : bodyBgLight;
   const systemDarkCss = isSystem
-    ? `\n      @media (prefers-color-scheme: dark) {\n        body { background: ${bodyBgDark}; }\n      }`
+    ? `\n      @media (prefers-color-scheme: dark) {\n        html, body { background: ${bodyBgDark}; }\n      }`
     : "";
 
   const iifeCssLink =
@@ -229,21 +229,34 @@ export function buildIndexHtml(config: ConstructorConfig): string {
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>${escapeHtml(config.appName || "Toncast Widget")}</title>${cssLink}
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
+      html {
+        min-height: 100%;
+        background: ${bodyBackground};
+      }
       body {
         font-family: system-ui, -apple-system, sans-serif;
         min-height: 100vh;
-        display: flex;
-        align-items: flex-start;
-        justify-content: center;
-        padding: 24px 16px;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 0;
         background: ${bodyBackground};
       }${systemDarkCss}
       #toncast-widget {
-        width: min(100%, 920px);
+        width: min(
+          100vw,
+          calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)),
+          920px
+        );
+        height: 100vh;
+        height: calc(
+          100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+        );
+        min-height: 0;
       }
     </style>
   </head>
