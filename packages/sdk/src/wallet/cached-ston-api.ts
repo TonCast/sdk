@@ -222,8 +222,8 @@ function makeKey(args: {
   offer: string;
   ask: string;
   slippage: string;
-  dexV2?: boolean;
-  dexVersion?: SimulateParams["dexVersion"];
+  dexV2?: boolean | undefined;
+  dexVersion?: SimulateParams["dexVersion"] | undefined;
   direction: "forward" | "reverse";
 }): string {
   const v2 = args.dexV2 === false ? "0" : "1";

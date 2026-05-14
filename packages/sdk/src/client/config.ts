@@ -1,4 +1,5 @@
 import type { Client as TonClient } from "@ston-fi/sdk";
+import type { HttpTransport } from "../http/transport";
 import type { JettonDiscoveryOptions } from "../wallet/jetton-discovery";
 
 /**
@@ -23,8 +24,8 @@ export interface Logger {
 export interface TonConnectMessage {
   address: string;
   amount: string;
-  payload?: string;
-  stateInit?: string;
+  payload?: string | undefined;
+  stateInit?: string | undefined;
 }
 
 /**
@@ -34,8 +35,8 @@ export interface TonConnectMessage {
  */
 export interface TonConnectTransaction {
   validUntil: number;
-  network?: string;
-  from?: string;
+  network?: string | undefined;
+  from?: string | undefined;
   messages: TonConnectMessage[];
 }
 
@@ -49,25 +50,31 @@ export interface ReferralConfig {
 
 export interface PrefetchConfig {
   /** Warm localised categories. */
-  categories?: boolean;
+  categories?: boolean | undefined;
   /** Warm wallet TON/jetton balances when `userAddress` + `tonClient` are available. */
-  coins?: boolean;
+  coins?: boolean | undefined;
   /** Warm STON.fi swap markets after a jetton balance is detected. */
-  swapMarkets?: boolean;
+  swapMarkets?: boolean | undefined;
 }
+
+export type ToncastBackgroundTask =
+  | "prefetch.categories"
+  | "prefetch.coins"
+  | "prefetch.swapMarkets"
+  | "language.listener";
 
 export interface ToncastClientOptions {
   /** REST API base URL. */
-  baseUrl?: string;
+  baseUrl?: string | undefined;
   /**
    * WebSocket origin (`wss://host` or `ws://host`, no path). The SDK appends
    * paths such as `/ws/pari-list` and `/ws/<pariId>`.
    *
    * When omitted, derived from {@link baseUrl} (same host; `https`→`wss`, `http`→`ws`).
    */
-  wsUrl?: string;
+  wsUrl?: string | undefined;
   /** Default user wallet address. Optional — public endpoints work without it. */
-  userAddress?: string;
+  userAddress?: string | undefined;
   /**
    * `Client` from `@ston-fi/sdk` (extends `@ton/ton`'s TonClient).
    * Required for jetton-funded bets and `coins.list()`.
@@ -76,26 +83,26 @@ export interface ToncastClientOptions {
    * for TON balance / get-method calls) — `coins.list()` reuses the same
    * endpoint + API key to query toncenter's jetton index internally.
    */
-  tonClient?: TonClient;
+  tonClient?: TonClient | undefined;
   /**
    * **Advanced override** for jetton discovery providers. Most integrations
    * leave this `undefined` — defaults work without configuration.
    * See `JettonDiscoveryOptions` for the full shape.
    */
-  jettonDiscovery?: JettonDiscoveryOptions;
+  jettonDiscovery?: JettonDiscoveryOptions | undefined;
   /**
    * Default referral attribution applied to every bet prepared through `betting.*`.
    * Per-call `referral` / `referralPct` overrides this. Useful for integrators
    * that always want bets attributed to their own wallet.
    */
-  referral?: ReferralConfig;
+  referral?: ReferralConfig | undefined;
   /**
    * Preferred language for API responses (Accept-Language header).
    * Accepts any BCP-47 tag — normalised to one of SUPPORTED_LANGUAGES, falls back to "en".
    * If omitted, the SDK reads the persisted choice (see `persistLanguage`),
    * then falls back to `navigator.language` (browser) or "en" (Node).
    */
-  language?: string;
+  language?: string | undefined;
   /**
    * Persist the active language to `localStorage` so a refresh / new tab
    * keeps the user's choice.
@@ -106,21 +113,28 @@ export interface ToncastClientOptions {
    *
    * Server / SSR environments default to `false` (no `localStorage`).
    */
-  persistLanguage?: boolean | string;
+  persistLanguage?: boolean | string | undefined;
   /** Optional logger. Defaults to no-op. */
-  logger?: Logger;
+  logger?: Logger | undefined;
+  /** Receives failures from optional background work. User-initiated calls still reject normally. */
+  onBackgroundError?: ((error: unknown, task: ToncastBackgroundTask) => void) | undefined;
+  /**
+   * Advanced: replace REST transport for tests, SSR adapters, tracing, or custom fetch policies.
+   * Import the contract as `import type { HttpTransport } from "@toncast/sdk"`.
+   */
+  transport?: HttpTransport | undefined;
   /** Total HTTP attempts (1 initial + N-1 retries) per request. Default 3. */
-  maxAttempts?: number;
+  maxAttempts?: number | undefined;
   /** Base delay between retries in ms (doubled per attempt). Default 1000. */
-  retryDelayMs?: number;
+  retryDelayMs?: number | undefined;
   /** Per-request timeout in ms. Default 15000. Set `0` to disable. */
-  requestTimeoutMs?: number;
+  requestTimeoutMs?: number | undefined;
   /**
    * How long live streams stay warm after their last subscriber leaves.
    * Default `30000`. Set `0` to stop immediately or `false` to keep streams
    * alive until `stop()` / `client.dispose()`.
    */
-  streamIdleTimeoutMs?: number | false;
+  streamIdleTimeoutMs?: number | false | undefined;
   /**
    * Eagerly fetch reference/wallet data. Default `false` — constructing a
    * client is pure unless prefetch is requested explicitly.
@@ -128,7 +142,7 @@ export interface ToncastClientOptions {
    * `true` enables the legacy full warm-up. Prefer the object form in
    * production so each network side effect is intentional.
    */
-  prefetch?: boolean | PrefetchConfig;
+  prefetch?: boolean | PrefetchConfig | undefined;
 }
 
 export const DEFAULT_BASE_URL = "https://toncast.me/api";

@@ -8,15 +8,15 @@ import type { ParisListSocket, SocketHandle } from "./paris-list-socket";
 
 export interface StreamListParams {
   /** Which mutually-exclusive feed to return. Default: `"active"`. */
-  feed?: ParisFeed;
+  feed?: ParisFeed | undefined;
   /** Filter by category. Default: all. */
-  categoryId?: number;
+  categoryId?: number | undefined;
   /** Free-text search. **Forces polling-only mode** (broadcast doesn't carry search-filtered events). */
-  search?: string;
+  search?: string | undefined;
   /** Page size. Default 20. */
-  pageSize?: number;
+  pageSize?: number | undefined;
   /** Polling tick when WS is down or `search` is set. Default 5000. */
-  pollIntervalMs?: number;
+  pollIntervalMs?: number | undefined;
 }
 
 export type ParisStreamStatus =
@@ -38,7 +38,7 @@ export interface ParisStreamDeps {
   getLanguage: () => SupportedLanguage;
   logger: Logger;
   streamIdleTimeoutMs: number | false;
-  onDispose?: () => void;
+  onDispose?: (() => void) | undefined;
 }
 
 /** Active subscription for `onSnapshot`. */

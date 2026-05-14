@@ -1,8 +1,15 @@
 import type { z } from "zod";
 import type { Logger } from "../client/config";
-import { ToncastApiError, ToncastValidationError } from "../errors";
+import {
+  ToncastApiError,
+  ToncastNotFoundError,
+  ToncastRateLimitError,
+  ToncastUnauthorizedError,
+  ToncastValidationError,
+} from "../errors";
 import type { SupportedLanguage } from "../i18n/languages";
 import { withRetry } from "../utils/retry";
+import { FetchHttpTransport, type HttpTransport } from "./transport";
 
 export interface HttpClientOptions {
   baseUrl: string;
@@ -15,6 +22,8 @@ export interface HttpClientOptions {
   retryDelayMs: number;
   /** Per-request timeout in ms. Set 0 to disable. */
   requestTimeoutMs: number;
+  /** Advanced override for tests, tracing, SSR adapters, or custom fetch policies. */
+  transport?: HttpTransport | undefined;
 }
 
 export interface RequestOptions<T> {
@@ -24,12 +33,16 @@ export interface RequestOptions<T> {
   query?: Record<string, string | number | boolean | object | undefined | null>;
   body?: unknown;
   schema?: z.ZodType<T>;
-  signal?: AbortSignal;
+  signal?: AbortSignal | undefined;
 }
 
 /** Minimal fetch wrapper with retry, optional zod validation, and Toncast-aware error mapping. */
 export class HttpClient {
-  constructor(private readonly opts: HttpClientOptions) {}
+  private readonly transport: HttpTransport;
+
+  constructor(private readonly opts: HttpClientOptions) {
+    this.transport = opts.transport ?? new FetchHttpTransport();
+  }
 
   async request<T>(req: RequestOptions<T>): Promise<T> {
     const url = this.buildUrl(req.path, req.query);
@@ -39,31 +52,43 @@ export class HttpClient {
       const init: RequestInit = {
         method: req.method ?? "GET",
         headers: this.buildHeaders(hasBody),
-        signal: timeout.signal,
       };
+      if (timeout.signal) init.signal = timeout.signal;
       if (hasBody) {
         init.body = JSON.stringify(req.body);
       }
 
       return await withRetry(
         async () => {
-          const res = await fetch(url, init);
-          if (!res.ok) {
-            const text = await res.text().catch(() => "");
-            let detail = text;
-            try {
-              const parsed = JSON.parse(text) as { error?: unknown };
-              if (typeof parsed?.error === "string") detail = parsed.error;
-            } catch {
-              // body wasn't JSON — keep raw text
+          const transportReq = {
+            method: (req.method ?? "GET") as "GET" | "POST" | "PUT" | "DELETE",
+            url,
+            headers: init.headers as Record<string, string>,
+          };
+          if (hasBody) Object.assign(transportReq, { body: req.body });
+          if (timeout.signal) Object.assign(transportReq, { signal: timeout.signal });
+          const res = await this.transport.request(transportReq);
+          if (res.status < 200 || res.status >= 300) {
+            const detail = extractErrorDetail(res.body);
+            const message = `HTTP ${res.status} ${res.statusText ?? ""}: ${detail}`;
+            const requestId = getHeader(res.headers, "x-request-id");
+            if (res.status === 429) {
+              throw new ToncastRateLimitError(
+                message,
+                req.path,
+                parseRetryAfterMs(res.headers),
+                requestId,
+              );
             }
-            throw new ToncastApiError(
-              `HTTP ${res.status} ${res.statusText}: ${detail}`,
-              res.status,
-              req.path,
-            );
+            if (res.status === 401) {
+              throw new ToncastUnauthorizedError(message, req.path, { requestId });
+            }
+            if (res.status === 404) {
+              throw new ToncastNotFoundError(message, req.path, { requestId });
+            }
+            throw new ToncastApiError(message, res.status, req.path, { requestId });
           }
-          const data = (await res.json()) as unknown;
+          const data = res.body;
           if (!req.schema) return data as T;
           const parsed = req.schema.safeParse(data);
           if (!parsed.success) {
@@ -77,7 +102,7 @@ export class HttpClient {
         {
           maxAttempts: this.opts.maxAttempts,
           delayMs: this.opts.retryDelayMs,
-          signal: timeout.signal,
+          ...(timeout.signal ? { signal: timeout.signal } : {}),
         },
       );
     } finally {
@@ -114,11 +139,38 @@ export class HttpClient {
   }
 }
 
+function extractErrorDetail(body: unknown): string {
+  if (typeof body === "string") return body;
+  if (body && typeof body === "object" && "error" in body) {
+    const error = (body as { error?: unknown }).error;
+    if (typeof error === "string") return error;
+  }
+  return body == null ? "" : JSON.stringify(body);
+}
+
+function getHeader(headers: Record<string, string>, name: string): string | undefined {
+  const lower = name.toLowerCase();
+  for (const [key, value] of Object.entries(headers)) {
+    if (key.toLowerCase() === lower) return value;
+  }
+  return undefined;
+}
+
+function parseRetryAfterMs(headers: Record<string, string>): number | undefined {
+  const raw = getHeader(headers, "retry-after");
+  if (!raw) return undefined;
+  const seconds = Number(raw);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const date = Date.parse(raw);
+  if (!Number.isNaN(date)) return Math.max(0, date - Date.now());
+  return undefined;
+}
+
 function createTimeoutSignal(
   parent: AbortSignal | undefined,
   timeoutMs: number,
 ): { signal?: AbortSignal; cleanup: () => void } {
-  if (!parent && timeoutMs <= 0) return { signal: undefined, cleanup: () => {} };
+  if (!parent && timeoutMs <= 0) return { cleanup: () => {} };
   const controller = new AbortController();
   let done = false;
 

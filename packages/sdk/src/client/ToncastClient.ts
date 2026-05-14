@@ -16,13 +16,25 @@ import {
   type ReferralConfig,
   resolveWsUrlFromApiBaseUrl,
   type TonClient,
+  type ToncastBackgroundTask,
   type ToncastClientOptions,
 } from "./config";
 
 /**
- * Main facade for all Toncast functionality.
- * Holds the user wallet address so subresources can read it via a shared getter,
- * and lets callers swap it at runtime (wallet reconnect, address change).
+ * Entry point for Toncast REST reads, live streams, wallet balances, and bet quote preparation.
+ *
+ * API surface: {@link CategoriesResource}, {@link ParisResource}, {@link BetsResource},
+ * {@link CoinsResource}, and {@link BettingResource}.
+ *
+ * @remarks
+ * For tests or custom fetch policies, pass {@link ToncastClientOptions.transport}
+ * (`import type { HttpTransport } from "@toncast/sdk"`).
+ *
+ * User-initiated REST calls reject with `ToncastApiError` subclasses (including
+ * `ToncastUnauthorizedError`, `ToncastNotFoundError`, `ToncastRateLimitError`) or
+ * `ToncastValidationError` when the response fails schema validation. WebSocket
+ * failures use `ToncastWsError`. Invalid constructor options (e.g. referral shape)
+ * throw `ToncastError` synchronously.
  */
 export class ToncastClient {
   readonly categories: CategoriesResource;
@@ -36,11 +48,15 @@ export class ToncastClient {
   private referral: ReferralConfig | undefined;
   private readonly tonClient: TonClient | undefined;
   private readonly logger: Logger;
+  private readonly onBackgroundError:
+    | ((error: unknown, task: ToncastBackgroundTask) => void)
+    | undefined;
   private readonly http: HttpClient;
   private readonly prefetch: Required<PrefetchConfig>;
   private readonly languageStorageKey: string | null;
   private readonly languageListeners = new Set<(lang: SupportedLanguage) => void>();
 
+  /** @param options Client configuration; fields are optional unless the flows you call require them (e.g. `tonClient` for jetton betting). */
   constructor(options: ToncastClientOptions = {}) {
     this.userAddress = options.userAddress
       ? parseTonAddress(options.userAddress, "userAddress")
@@ -52,6 +68,7 @@ export class ToncastClient {
     this.referral = validateReferral(options.referral);
     this.tonClient = options.tonClient;
     this.logger = options.logger ?? noopLogger;
+    this.onBackgroundError = options.onBackgroundError;
 
     const resolvedBaseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
     this.http = new HttpClient({
@@ -61,6 +78,7 @@ export class ToncastClient {
       maxAttempts: options.maxAttempts ?? 3,
       retryDelayMs: options.retryDelayMs ?? 1000,
       requestTimeoutMs: options.requestTimeoutMs ?? 15_000,
+      transport: options.transport,
     });
 
     const getUserAddress = (): string | undefined => this.userAddress;
@@ -97,21 +115,6 @@ export class ToncastClient {
   }
 
   /**
-   * Fire-and-forget warm-up of static reference data (currently just
-   * `categories`). Runs on construction and on `setLanguage()` — categories
-   * are language-keyed in their cache, so a language switch needs its own
-   * fetch.
-   *
-   * Why we do this in the SDK instead of leaving it to the integrator:
-   * categories are needed by ~every UI surface and the request is tiny
-   * (~1-2 KB). Letting it race the first paris fetch instead of waiting
-   * for a component mount removes a visible UX hiccup ("paris appear,
-   * categories pop in 200 ms later").
-   *
-   * Failures are swallowed — a real call later will retry through the
-   * normal retry policy and surface its own error.
-   */
-  /**
    * Bootstrap-only prefetch — runs once from the constructor. Includes
    * categories (cheap) AND triggers `prefetchCoins` which conditionally
    * pulls the 4 MB STON.fi markets snapshot only when a connected wallet
@@ -134,7 +137,7 @@ export class ToncastClient {
     // SDK throwing on construction. The next real call retries through the
     // normal HTTP retry policy.
     void this.categories.list().catch((err) => {
-      this.logger.warn("prefetch categories failed", err);
+      this.reportBackgroundError(err, "prefetch.categories");
     });
   }
 
@@ -166,13 +169,13 @@ export class ToncastClient {
         if (!hasJetton) return;
         if (!this.prefetch.swapMarkets) return;
         return this.betting.prefetchSwapMarkets(coins).catch((err) => {
-          this.logger.warn("prefetch swap markets failed", err);
+          this.reportBackgroundError(err, "prefetch.swapMarkets");
         });
       })
       .catch((err) => {
         // Cache stays empty; next user-driven call re-tries through the
         // normal retry policy and surfaces its own error.
-        this.logger.warn("prefetch coins failed", err);
+        this.reportBackgroundError(err, "prefetch.coins");
       });
   }
 
@@ -222,7 +225,7 @@ export class ToncastClient {
       try {
         fn(next);
       } catch (err) {
-        this.logger.warn("language listener threw", err);
+        this.reportBackgroundError(err, "language.listener");
       }
     }
   }
@@ -257,6 +260,11 @@ export class ToncastClient {
   dispose(): void {
     this.paris.dispose();
     this.languageListeners.clear();
+  }
+
+  private reportBackgroundError(err: unknown, task: ToncastBackgroundTask): void {
+    this.logger.warn(`${task} failed`, err);
+    this.onBackgroundError?.(err, task);
   }
 }
 

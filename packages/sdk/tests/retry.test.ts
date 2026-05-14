@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ToncastApiError, ToncastValidationError } from "../src/errors";
+import { ToncastApiError, ToncastRateLimitError, ToncastValidationError } from "../src/errors";
 import { withRetry } from "../src/utils/retry";
 
 describe("withRetry", () => {
@@ -32,6 +32,7 @@ describe("withRetry", () => {
 
   it("retries 429 and then succeeds", async () => {
     vi.useFakeTimers();
+    vi.spyOn(Math, "random").mockReturnValue(0);
     const op = vi
       .fn<() => Promise<string>>()
       .mockRejectedValueOnce(new ToncastApiError("rate limit", 429, "/x"))
@@ -40,6 +41,22 @@ describe("withRetry", () => {
     const promise = withRetry(op, { maxAttempts: 2, delayMs: 10, rateLimitBackoffMultiplier: 1 });
     await vi.advanceTimersByTimeAsync(10);
 
+    await expect(promise).resolves.toBe("ok");
+    expect(op).toHaveBeenCalledTimes(2);
+  });
+
+  it("uses retryAfterMs from rate limit errors before falling back to exponential delay", async () => {
+    vi.useFakeTimers();
+    const op = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new ToncastRateLimitError("rate limit", "/x", 250))
+      .mockResolvedValueOnce("ok");
+
+    const promise = withRetry(op, { maxAttempts: 2, delayMs: 10, rateLimitBackoffMultiplier: 1 });
+    await vi.advanceTimersByTimeAsync(249);
+    expect(op).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1);
     await expect(promise).resolves.toBe("ok");
     expect(op).toHaveBeenCalledTimes(2);
   });

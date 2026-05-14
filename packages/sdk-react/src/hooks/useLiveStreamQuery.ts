@@ -1,4 +1,4 @@
-import type { Observer, Subscribable, Subscription } from "@toncast/sdk";
+import type { Observer, Subscribable, Subscription } from "@toncast/sdk/core";
 import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { serializeKey } from "../utils/serializeKey";
 

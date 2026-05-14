@@ -1,23 +1,27 @@
 import { type UseMutationResult, type UseQueryResult, useQueryClient } from "@tanstack/react-query";
 import {
-  type BetOptionFailureReason,
   type BetQuote,
   type BetSummary,
-  type BreakdownTotals,
   type CoinCapacity,
   type ConfirmedQuote,
   type ConfirmQuoteParams,
-  fixedTicketsForBudget,
+  type PriceCoinsOptions,
+  TON_ADDRESS,
+} from "@toncast/sdk";
+import {
+  type BetOptionFailureReason,
+  type BreakdownTotals,
   ODDS_MAX,
   ODDS_MIN,
   ODDS_STEP,
-  type PriceCoinsOptions,
+} from "@toncast/sdk/betting";
+import {
+  fixedTicketsForBudget,
   sameSideMedianYesOdds,
   sliderPositionToYesOdds,
   stepOdds,
-  TON_ADDRESS,
   yesOddsToSliderPosition,
-} from "@toncast/sdk";
+} from "@toncast/sdk/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useToncastClient } from "../client/useToncastClient";
 import {

@@ -50,6 +50,10 @@ export class CategoriesResource {
    * would let the first caller's unmount/HMR/refetch cancel the request for
    * everyone else and force a re-fetch on the next call. The payload is tiny
    * (~1 KB) and runs at most once per language per process.
+   *
+   * @throws On HTTP failure: `ToncastApiError` and subclasses (`ToncastUnauthorizedError`,
+   * `ToncastNotFoundError`, `ToncastRateLimitError`, …) from the shared client. On invalid JSON
+   * shape: `ToncastValidationError`.
    */
   async list(): Promise<Category[]> {
     const lang = this.deps.getLanguage();

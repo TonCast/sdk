@@ -1,5 +1,6 @@
 import type { Pari } from "@toncast/sdk";
-import { ODDS_MAX, ODDS_MIN, pariCoverUrl, yesOddsToDecimalOdds } from "@toncast/sdk";
+import { pariCoverUrl, yesOddsToDecimalOdds } from "@toncast/sdk";
+import { ODDS_MAX, ODDS_MIN } from "@toncast/sdk/betting";
 import { Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";

@@ -1,11 +1,42 @@
 export type {
+  BetOptionFailureReason,
+  BetQuote,
+  BreakdownTotals,
+  BuildJettonBetTxParams,
+  BuildTonBetTxParams,
+  MarketStrategyResult,
+  OddsState,
+  PricedCoin,
+  TxParams,
+} from "@toncast/tx-sdk";
+export {
+  availableForBet,
+  availableTickets,
+  breakdownTotals,
+  buildJettonBetTx,
+  buildTonBetTx,
+  calcBetCost,
+  calcWinnings,
+  computeFixedBets,
+  computeLimitBets,
+  computeMarketBets,
+  DEFAULT_WALLET_RESERVE,
+  ODDS_MAX,
+  ODDS_MIN,
+  ODDS_STEP,
+  PARI_EXECUTION_FEE,
+  TonClient,
+  ticketCost,
+  yesOddsToDecimalOdds,
+  yesOddsToProbabilityPct,
+} from "@toncast/tx-sdk";
+export type {
   BetSummary,
   CoinCapacity,
   ConfirmedQuote,
   ConfirmQuoteParams,
   MarketCapacity,
   PriceCoinsOptions,
-  QuoteCommon,
   QuoteFixedBetParams,
   QuoteLimitBetParams,
   QuoteMarketBetParams,
@@ -15,8 +46,3 @@ export {
   toTonConnectMessage,
   toTonConnectMessages,
 } from "./betting/placeBet";
-export {
-  type BetReasonContext,
-  betQuoteReasonKey,
-  formatBetQuoteReason,
-} from "./betting/reasons";

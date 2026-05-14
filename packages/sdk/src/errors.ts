@@ -3,9 +3,9 @@
 
 /**
  * Base error class for every failure surfaced by `@toncast/sdk`.
- * Subclasses (`ToncastApiError`, `ToncastWsError`, `ToncastValidationError`)
- * narrow the kind of failure; `code` is a stable string identifier suitable
- * for switch-cases or telemetry.
+ * Subclasses (`ToncastApiError`, `ToncastUnauthorizedError`, `ToncastNotFoundError`,
+ * `ToncastRateLimitError`, `ToncastWsError`, `ToncastValidationError`) narrow the
+ * kind of failure; `code` is a stable string identifier suitable for switch-cases or telemetry.
  */
 export class ToncastError extends Error {
   constructor(
@@ -18,16 +18,55 @@ export class ToncastError extends Error {
   }
 }
 
+export interface ToncastApiErrorOptions {
+  requestId?: string | undefined;
+  cause?: unknown;
+  code?: string | undefined;
+}
+
 /** HTTP-layer failure: non-2xx response from the Toncast REST API. */
 export class ToncastApiError extends ToncastError {
+  readonly requestId: string | undefined;
+
   constructor(
     message: string,
     public readonly status: number,
     public readonly endpoint: string,
+    options: ToncastApiErrorOptions = {},
+  ) {
+    super(message, options.code ?? `API_${status}`, options.cause);
+    this.name = "ToncastApiError";
+    this.requestId = options.requestId;
+  }
+}
+
+/** HTTP 401 — authentication required or credentials rejected when the API enforces auth. */
+export class ToncastUnauthorizedError extends ToncastApiError {
+  constructor(message: string, endpoint: string, options: ToncastApiErrorOptions = {}) {
+    super(message, 401, endpoint, { ...options, code: options.code ?? "UNAUTHORIZED" });
+    this.name = "ToncastUnauthorizedError";
+  }
+}
+
+/** HTTP 404 — requested REST path or resource does not exist. */
+export class ToncastNotFoundError extends ToncastApiError {
+  constructor(message: string, endpoint: string, options: ToncastApiErrorOptions = {}) {
+    super(message, 404, endpoint, { ...options, code: options.code ?? "NOT_FOUND" });
+    this.name = "ToncastNotFoundError";
+  }
+}
+
+/** HTTP 429 failure with retry metadata when the API supplies it. */
+export class ToncastRateLimitError extends ToncastApiError {
+  constructor(
+    message: string,
+    endpoint: string,
+    public readonly retryAfterMs?: number,
+    requestId?: string,
     cause?: unknown,
   ) {
-    super(message, `API_${status}`, cause);
-    this.name = "ToncastApiError";
+    super(message, 429, endpoint, { code: "RATE_LIMIT", requestId, cause });
+    this.name = "ToncastRateLimitError";
   }
 }
 

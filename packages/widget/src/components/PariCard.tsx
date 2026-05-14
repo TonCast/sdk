@@ -1,5 +1,6 @@
 import type { Pari } from "@toncast/sdk";
-import { ODDS_MAX, ODDS_MIN, pariCoverUrl, yesOddsToDecimalOdds } from "@toncast/sdk";
+import { pariCoverUrl, yesOddsToDecimalOdds } from "@toncast/sdk";
+import { ODDS_MAX, ODDS_MIN } from "@toncast/sdk/betting";
 import { useEffect, useReducer } from "react";
 import { MINUTE_TICK_MS } from "../constants";
 import { useNav } from "../context";

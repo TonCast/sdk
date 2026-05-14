@@ -1,4 +1,4 @@
-import { ToncastApiError, ToncastValidationError } from "../errors";
+import { ToncastApiError, ToncastRateLimitError, ToncastValidationError } from "../errors";
 
 export interface RetryOptions {
   /** Total attempts INCLUDING the first one. Default 3 (1 initial + 2 retries). */
@@ -8,16 +8,17 @@ export interface RetryOptions {
   /** Multiplier on top of `delayMs` when the previous failure was 429 / 5xx. Default 3. */
   rateLimitBackoffMultiplier?: number;
   /** Optional cancellation signal for retry sleeps. */
-  signal?: AbortSignal;
+  signal?: AbortSignal | undefined;
 }
 
 /**
  * Smart retry: retries every error by default, but applies a longer back-off
  * when the previous failure looks like rate-limiting (HTTP 429) or a server
- * problem (HTTP 5xx). Network/4xx errors get the standard exponential delay.
+ * problem (HTTP 5xx). Other `ToncastApiError` statuses (401, 404, …) are not retried.
  *
- * Honours `Retry-After` semantics indirectly via the multiplier — the backend
- * doesn't currently echo the header, but the multiplier gives it room to recover.
+ * For HTTP 429, {@link ToncastRateLimitError.retryAfterMs} is set from the
+ * `Retry-After` header when present (see `HttpClient`); `withRetry` waits that
+ * duration before the next attempt, otherwise exponential delay with jitter.
  */
 export async function withRetry<T>(fn: () => Promise<T>, opts: RetryOptions = {}): Promise<T> {
   const { delayMs = 1000, rateLimitBackoffMultiplier = 3 } = opts;
@@ -33,14 +34,23 @@ export async function withRetry<T>(fn: () => Promise<T>, opts: RetryOptions = {}
       if (!shouldRetry(err)) break;
       if (attempt === maxAttempts - 1) break;
 
+      const retryAfterMs =
+        err instanceof ToncastRateLimitError && err.retryAfterMs !== undefined
+          ? err.retryAfterMs
+          : undefined;
       const baseDelay = delayMs * 2 ** attempt;
       const isThrottle =
         err instanceof ToncastApiError && (err.status === 429 || err.status >= 500);
-      const wait = isThrottle ? baseDelay * rateLimitBackoffMultiplier : baseDelay;
+      const wait =
+        retryAfterMs ?? withJitter(isThrottle ? baseDelay * rateLimitBackoffMultiplier : baseDelay);
       await sleep(wait, opts.signal);
     }
   }
   throw lastErr;
+}
+
+function withJitter(ms: number): number {
+  return Math.round(ms + Math.random() * Math.min(100, ms * 0.1));
 }
 
 function shouldRetry(err: unknown): boolean {

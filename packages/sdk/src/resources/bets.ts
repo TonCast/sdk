@@ -20,22 +20,22 @@ export interface BetsResourceDeps {
 export interface ListForPariByUserParams {
   pariId: string;
   /** Defaults to the SDK's `userAddress`. */
-  userAddress?: string;
+  userAddress?: string | undefined;
   /** Backend default 20. */
-  pageSize?: number;
+  pageSize?: number | undefined;
   /** Opaque cursor — JSON-encoded into the `cursor` query param. */
-  cursor?: Cursor | null;
-  signal?: AbortSignal;
+  cursor?: Cursor | null | undefined;
+  signal?: AbortSignal | undefined;
 }
 
 export interface ListForUserParams {
   /** Defaults to the SDK's `userAddress`. */
-  userAddress?: string;
+  userAddress?: string | undefined;
   /** Backend default 20. */
-  pageSize?: number;
+  pageSize?: number | undefined;
   /** Opaque cursor — JSON-encoded into the `cursor` query param. */
-  cursor?: Cursor | null;
-  signal?: AbortSignal;
+  cursor?: Cursor | null | undefined;
+  signal?: AbortSignal | undefined;
 }
 
 /**
