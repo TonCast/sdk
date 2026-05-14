@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { TON_ADDRESS } from "@toncast/sdk";
+import { type BetFlowErrorDescriptor, classifyBetFlowError, TON_ADDRESS } from "@toncast/sdk";
 import { type BetMode, useBet, useTonConnectClient } from "@toncast/sdk-react";
 import { useEffect, useRef, useState } from "react";
 import { BET_REFRESH_DELAY_MS, BET_TX_VALID_FOR_SECONDS } from "../constants";
@@ -9,11 +9,11 @@ import { useTcState } from "../tc-bridge";
 import { BetAmountInput } from "./bet/BetAmountInput";
 import { BetCoefficientSlider } from "./bet/BetCoefficientSlider";
 import { BetConnectPrompt } from "./bet/BetConnectPrompt";
+import { BetFlowErrorAlert } from "./bet/BetFlowErrorAlert";
 import { BetQuoteBox } from "./bet/BetQuoteBox";
 import { BetSourceSelect } from "./bet/BetSourceSelect";
 import { BetStepper, StepperReadout } from "./bet/BetStepper";
 import { BetTicketsInput } from "./bet/BetTicketsInput";
-import { formatBetSendError } from "./bet/formatBetSendError";
 import { Button } from "./ui/Button";
 import { Skeleton } from "./ui/Skeleton";
 
@@ -53,7 +53,7 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
   const sourceDecimals = sourcePriced?.decimals ?? 9;
 
   const [sending, setSending] = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<BetFlowErrorDescriptor | null>(null);
 
   /** Aborts in-flight confirm/send when the card unmounts or the user retries. */
   const confirmFlowRef = useRef<AbortController | null>(null);
@@ -95,7 +95,9 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
       }, BET_REFRESH_DELAY_MS);
     } catch (err) {
       if (signal.aborted) return;
-      setSendError(formatBetSendError(err));
+      const classified = classifyBetFlowError(err);
+      console.error("[ToncastWidget] Bet send failed:", classified.technicalSummary);
+      setSendError(classified);
     } finally {
       setSending(false);
     }
@@ -181,7 +183,9 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
                 : t("bet.action", { side: t(`side.${bet.side}` as const) })}
             </Button>
 
-            {sendError && <div className="tc-error-sm">{sendError}</div>}
+            {sendError && (
+              <BetFlowErrorAlert descriptor={sendError} onDismiss={() => setSendError(null)} />
+            )}
 
             <BetQuoteBox bet={bet} sourceSym={sourceSym} />
           </>

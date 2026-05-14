@@ -62,6 +62,28 @@ const en = {
   "bet.maxOf": "{current} / {max} tickets",
   "bet.oneTicket": "1 ticket",
 
+  "bet.sendError.walletRejected": "You didn’t confirm the transaction in your wallet.",
+  "bet.sendError.walletFailed":
+    "Your wallet couldn’t send the transaction. Try again or switch wallet.",
+  "bet.sendError.network": "Network issue — check your connection and try again.",
+  "bet.sendError.unknown": "Something went wrong. Please try again.",
+  "bet.sendError.detailsToggle": "Technical details",
+  "bet.sendError.dismiss": "Close",
+  "bet.sendError.toncast.generic": "The bet couldn’t be placed. Please try again.",
+  "bet.sendError.toncast.SLIPPAGE_DRIFTED": "The price moved — adjust the bet and confirm again.",
+  "bet.sendError.toncast.QUOTE_INFEASIBLE":
+    "This bet isn’t possible at the current odds or balance.",
+  "bet.sendError.toncast.QUOTE_NOT_READY":
+    "Confirm the quote in your wallet first (required for this coin).",
+  "bet.sendError.toncast.QUOTE_PARAMS_MISSING": "Quote data is incomplete — refresh and try again.",
+  "bet.sendError.toncast.FINANCIAL_RISK_ACK_REQUIRED":
+    "Confirm the financial risk notice before placing the bet.",
+  "bet.sendError.toncast.USER_ADDRESS_REQUIRED": "Connect your wallet or set a sender address.",
+  "bet.sendError.toncast.NO_LIQUIDITY": "No matched liquidity for this side right now.",
+  "bet.sendError.toncast.INVALID_MARKET_TICKETS":
+    "Invalid ticket count — use a positive whole number.",
+  "bet.sendError.toncast.INVALID_ADDRESS": "Invalid TON address — check beneficiary or sender.",
+
   "page.bets.title": "My bets",
   "page.bets.empty": "You haven't placed any bets yet.",
   "page.bets.connectPrompt": "Connect a wallet to see your bet history.",
@@ -164,6 +186,31 @@ const ru = {
   "bet.maxOf": "{current} / {max} билетов",
   "bet.oneTicket": "1 билет",
 
+  "bet.sendError.walletRejected": "Вы не подтвердили транзакцию в кошельке.",
+  "bet.sendError.walletFailed":
+    "Кошелёк не смог отправить транзакцию. Попробуйте снова или смените кошелёк.",
+  "bet.sendError.network": "Проблема с сетью — проверьте подключение и попробуйте снова.",
+  "bet.sendError.unknown": "Что-то пошло не так. Попробуйте ещё раз.",
+  "bet.sendError.detailsToggle": "Технические подробности",
+  "bet.sendError.dismiss": "Закрыть",
+  "bet.sendError.toncast.generic": "Ставку не удалось разместить. Попробуйте снова.",
+  "bet.sendError.toncast.SLIPPAGE_DRIFTED": "Курс изменился — измените ставку и подтвердите снова.",
+  "bet.sendError.toncast.QUOTE_INFEASIBLE":
+    "Ставка невозможна при текущих коэффициентах или балансе.",
+  "bet.sendError.toncast.QUOTE_NOT_READY":
+    "Сначала подтвердите котировку в кошельке (требуется для этой монеты).",
+  "bet.sendError.toncast.QUOTE_PARAMS_MISSING":
+    "Неполные данные котировки — обновите и попробуйте снова.",
+  "bet.sendError.toncast.FINANCIAL_RISK_ACK_REQUIRED":
+    "Подтвердите предупреждение о рисках перед ставкой.",
+  "bet.sendError.toncast.USER_ADDRESS_REQUIRED":
+    "Подключите кошелёк или укажите адрес отправителя.",
+  "bet.sendError.toncast.NO_LIQUIDITY": "Нет совпадающей ликвидности по этой стороне.",
+  "bet.sendError.toncast.INVALID_MARKET_TICKETS":
+    "Неверное число билетов — укажите целое положительное число.",
+  "bet.sendError.toncast.INVALID_ADDRESS":
+    "Неверный TON-адрес — проверьте получателя или отправителя.",
+
   "page.bets.title": "Мои ставки",
   "page.bets.empty": "Вы ещё не сделали ни одной ставки.",
   "page.bets.connectPrompt": "Подключите кошелёк, чтобы увидеть историю ставок.",
@@ -262,6 +309,32 @@ const es = {
   "bet.maxOf": "{current} / {max} boletos",
   "bet.oneTicket": "1 boleto",
 
+  "bet.sendError.walletRejected": "No confirmaste la transacción en tu cartera.",
+  "bet.sendError.walletFailed":
+    "La cartera no pudo enviar la transacción. Inténtalo de nuevo o cambia de cartera.",
+  "bet.sendError.network": "Problema de red — comprueba la conexión e inténtalo de nuevo.",
+  "bet.sendError.unknown": "Algo salió mal. Inténtalo de nuevo.",
+  "bet.sendError.detailsToggle": "Detalles técnicos",
+  "bet.sendError.dismiss": "Cerrar",
+  "bet.sendError.toncast.generic": "No se pudo colocar la apuesta. Inténtalo de nuevo.",
+  "bet.sendError.toncast.SLIPPAGE_DRIFTED":
+    "El precio cambió — ajusta la apuesta y confirma otra vez.",
+  "bet.sendError.toncast.QUOTE_INFEASIBLE":
+    "Esta apuesta no es posible con las cuotas o el saldo actuales.",
+  "bet.sendError.toncast.QUOTE_NOT_READY":
+    "Primero confirma la cotización en la cartera (necesario para esta moneda).",
+  "bet.sendError.toncast.QUOTE_PARAMS_MISSING":
+    "Datos de cotización incompletos — actualiza e inténtalo de nuevo.",
+  "bet.sendError.toncast.FINANCIAL_RISK_ACK_REQUIRED":
+    "Confirma el aviso de riesgo financiero antes de apostar.",
+  "bet.sendError.toncast.USER_ADDRESS_REQUIRED":
+    "Conecta tu cartera o indica una dirección de emisor.",
+  "bet.sendError.toncast.NO_LIQUIDITY": "No hay liquidez emparejada para este lado ahora.",
+  "bet.sendError.toncast.INVALID_MARKET_TICKETS":
+    "Cantidad de boletos no válida — usa un entero positivo.",
+  "bet.sendError.toncast.INVALID_ADDRESS":
+    "Dirección TON no válida — revisa beneficiario o emisor.",
+
   "page.bets.title": "Mis apuestas",
   "page.bets.empty": "Aún no has hecho ninguna apuesta.",
   "page.bets.connectPrompt": "Conecta una cartera para ver tu historial de apuestas.",
@@ -354,6 +427,32 @@ const fr = {
   "bet.loadingPrice": "chargement du prix…",
   "bet.maxOf": "{current} / {max} tickets",
   "bet.oneTicket": "1 ticket",
+
+  "bet.sendError.walletRejected": "Vous n’avez pas confirmé la transaction dans le portefeuille.",
+  "bet.sendError.walletFailed":
+    "Le portefeuille n’a pas pu envoyer la transaction. Réessayez ou changez de portefeuille.",
+  "bet.sendError.network": "Problème réseau — vérifiez la connexion et réessayez.",
+  "bet.sendError.unknown": "Une erreur s’est produite. Réessayez.",
+  "bet.sendError.detailsToggle": "Détails techniques",
+  "bet.sendError.dismiss": "Fermer",
+  "bet.sendError.toncast.generic": "Impossible de placer le pari. Réessayez.",
+  "bet.sendError.toncast.SLIPPAGE_DRIFTED":
+    "Le prix a bougé — ajustez le pari et confirmez à nouveau.",
+  "bet.sendError.toncast.QUOTE_INFEASIBLE":
+    "Ce pari n’est pas possible avec les cotes ou le solde actuels.",
+  "bet.sendError.toncast.QUOTE_NOT_READY":
+    "Confirmez d’abord le devis dans le portefeuille (requis pour cette pièce).",
+  "bet.sendError.toncast.QUOTE_PARAMS_MISSING":
+    "Données de devis incomplètes — actualisez et réessayez.",
+  "bet.sendError.toncast.FINANCIAL_RISK_ACK_REQUIRED":
+    "Confirmez l’avertissement sur les risques financiers avant de parier.",
+  "bet.sendError.toncast.USER_ADDRESS_REQUIRED":
+    "Connectez le portefeuille ou définissez une adresse d’expéditeur.",
+  "bet.sendError.toncast.NO_LIQUIDITY": "Pas de liquidité assortie de ce côté pour le moment.",
+  "bet.sendError.toncast.INVALID_MARKET_TICKETS":
+    "Nombre de tickets invalide — utilisez un entier positif.",
+  "bet.sendError.toncast.INVALID_ADDRESS":
+    "Adresse TON invalide — vérifiez bénéficiaire ou expéditeur.",
 
   "page.bets.title": "Mes paris",
   "page.bets.empty": "Vous n’avez pas encore placé de pari.",
@@ -448,6 +547,32 @@ const de = {
   "bet.maxOf": "{current} / {max} Tickets",
   "bet.oneTicket": "1 Ticket",
 
+  "bet.sendError.walletRejected": "Sie haben die Transaktion im Wallet nicht bestätigt.",
+  "bet.sendError.walletFailed":
+    "Das Wallet konnte die Transaktion nicht senden. Erneut versuchen oder anderes Wallet.",
+  "bet.sendError.network": "Netzwerkproblem — Verbindung prüfen und erneut versuchen.",
+  "bet.sendError.unknown": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+  "bet.sendError.detailsToggle": "Technische Details",
+  "bet.sendError.dismiss": "Schließen",
+  "bet.sendError.toncast.generic":
+    "Die Wette konnte nicht platziert werden. Bitte erneut versuchen.",
+  "bet.sendError.toncast.SLIPPAGE_DRIFTED":
+    "Der Kurs hat sich geändert — Wette anpassen und erneut bestätigen.",
+  "bet.sendError.toncast.QUOTE_INFEASIBLE":
+    "Diese Wette ist mit aktuellen Quoten oder Guthaben nicht möglich.",
+  "bet.sendError.toncast.QUOTE_NOT_READY":
+    "Zuerst das Angebot im Wallet bestätigen (für diese Coin erforderlich).",
+  "bet.sendError.toncast.QUOTE_PARAMS_MISSING":
+    "Angebotsdaten unvollständig — aktualisieren und erneut versuchen.",
+  "bet.sendError.toncast.FINANCIAL_RISK_ACK_REQUIRED":
+    "Finanzrisiko-Hinweis vor der Wette bestätigen.",
+  "bet.sendError.toncast.USER_ADDRESS_REQUIRED": "Wallet verbinden oder Absenderadresse setzen.",
+  "bet.sendError.toncast.NO_LIQUIDITY": "Auf dieser Seite gerade keine passende Liquidität.",
+  "bet.sendError.toncast.INVALID_MARKET_TICKETS":
+    "Ungültige Ticketanzahl — positive ganze Zahl verwenden.",
+  "bet.sendError.toncast.INVALID_ADDRESS":
+    "Ungültige TON-Adresse — Empfänger oder Absender prüfen.",
+
   "page.bets.title": "Meine Wetten",
   "page.bets.empty": "Du hast noch keine Wetten platziert.",
   "page.bets.connectPrompt": "Wallet verbinden, um deine Wett-Historie zu sehen.",
@@ -541,6 +666,31 @@ const pt = {
   "bet.maxOf": "{current} / {max} tickets",
   "bet.oneTicket": "1 ticket",
 
+  "bet.sendError.walletRejected": "Você não confirmou a transação na carteira.",
+  "bet.sendError.walletFailed":
+    "A carteira não pôde enviar a transação. Tente de novo ou troque de carteira.",
+  "bet.sendError.network": "Problema de rede — verifique a conexão e tente novamente.",
+  "bet.sendError.unknown": "Algo deu errado. Tente novamente.",
+  "bet.sendError.detailsToggle": "Detalhes técnicos",
+  "bet.sendError.dismiss": "Fechar",
+  "bet.sendError.toncast.generic": "Não foi possível fazer a aposta. Tente novamente.",
+  "bet.sendError.toncast.SLIPPAGE_DRIFTED": "O preço mudou — ajuste a aposta e confirme de novo.",
+  "bet.sendError.toncast.QUOTE_INFEASIBLE":
+    "Esta aposta não é possível com as odds ou o saldo atuais.",
+  "bet.sendError.toncast.QUOTE_NOT_READY":
+    "Confirme primeiro a cotação na carteira (necessário para esta moeda).",
+  "bet.sendError.toncast.QUOTE_PARAMS_MISSING":
+    "Dados da cotação incompletos — atualize e tente de novo.",
+  "bet.sendError.toncast.FINANCIAL_RISK_ACK_REQUIRED":
+    "Confirme o aviso de risco financeiro antes de apostar.",
+  "bet.sendError.toncast.USER_ADDRESS_REQUIRED":
+    "Conecte a carteira ou defina um endereço de remetente.",
+  "bet.sendError.toncast.NO_LIQUIDITY": "Sem liquidez correspondente neste lado no momento.",
+  "bet.sendError.toncast.INVALID_MARKET_TICKETS":
+    "Quantidade de bilhetes inválida — use um inteiro positivo.",
+  "bet.sendError.toncast.INVALID_ADDRESS":
+    "Endereço TON inválido — verifique beneficiário ou remetente.",
+
   "page.bets.title": "Minhas apostas",
   "page.bets.empty": "Você ainda não fez nenhuma aposta.",
   "page.bets.connectPrompt": "Conecte uma carteira para ver o histórico de apostas.",
@@ -632,6 +782,23 @@ const zh = {
   "bet.maxOf": "{current} / {max} 票",
   "bet.oneTicket": "1 票",
 
+  "bet.sendError.walletRejected": "您未在钱包中确认交易。",
+  "bet.sendError.walletFailed": "钱包无法发送交易。请重试或更换钱包。",
+  "bet.sendError.network": "网络问题 — 请检查连接后重试。",
+  "bet.sendError.unknown": "出现问题，请重试。",
+  "bet.sendError.detailsToggle": "技术详情",
+  "bet.sendError.dismiss": "关闭",
+  "bet.sendError.toncast.generic": "无法完成投注，请重试。",
+  "bet.sendError.toncast.SLIPPAGE_DRIFTED": "价格已变动 — 请调整投注后再次确认。",
+  "bet.sendError.toncast.QUOTE_INFEASIBLE": "在当前赔率或余额下无法下注。",
+  "bet.sendError.toncast.QUOTE_NOT_READY": "请先在钱包中确认报价（此币种需要）。",
+  "bet.sendError.toncast.QUOTE_PARAMS_MISSING": "报价数据不完整 — 请刷新后重试。",
+  "bet.sendError.toncast.FINANCIAL_RISK_ACK_REQUIRED": "下注前请确认金融风险提示。",
+  "bet.sendError.toncast.USER_ADDRESS_REQUIRED": "请连接钱包或设置发送地址。",
+  "bet.sendError.toncast.NO_LIQUIDITY": "该方向当前没有可撮合流动性。",
+  "bet.sendError.toncast.INVALID_MARKET_TICKETS": "票数无效 — 请输入正整数。",
+  "bet.sendError.toncast.INVALID_ADDRESS": "TON 地址无效 — 请检查收款人或发送人。",
+
   "page.bets.title": "我的投注",
   "page.bets.empty": "您尚未下过任何投注。",
   "page.bets.connectPrompt": "连接钱包以查看投注记录。",
@@ -722,6 +889,23 @@ const hi = {
   "bet.loadingPrice": "मूल्य लोड हो रहा है…",
   "bet.maxOf": "{current} / {max} टिकट",
   "bet.oneTicket": "1 टिकट",
+
+  "bet.sendError.walletRejected": "आपने वॉलेट में लेनदेन की पुष्टि नहीं की।",
+  "bet.sendError.walletFailed": "वॉलेट लेनदेन नहीं भेज सका। फिर से कोशिश करें या वॉलेट बदलें।",
+  "bet.sendError.network": "नेटवर्क समस्या — कनेक्शन जाँचें और फिर कोशिश करें।",
+  "bet.sendError.unknown": "कुछ गलत हुआ। कृपया फिर कोशिश करें।",
+  "bet.sendError.detailsToggle": "तकनीकी विवरण",
+  "bet.sendError.dismiss": "बंद करें",
+  "bet.sendError.toncast.generic": "बेट नहीं लग सकी। कृपया फिर कोशिश करें।",
+  "bet.sendError.toncast.SLIPPAGE_DRIFTED": "मूल्य बदल गया — बेट समायोजित करके फिर पुष्टि करें।",
+  "bet.sendError.toncast.QUOTE_INFEASIBLE": "वर्तमान ऑड्स या बैलेंस पर यह बेट संभव नहीं।",
+  "bet.sendError.toncast.QUOTE_NOT_READY": "पहले वॉलेट में कोट पुष्टि करें (इस सिक्के के लिए आवश्यक)।",
+  "bet.sendError.toncast.QUOTE_PARAMS_MISSING": "कोट डेटा अधूरा है — रीफ़्रेश करके फिर कोशिश करें।",
+  "bet.sendError.toncast.FINANCIAL_RISK_ACK_REQUIRED": "बेट से पहले वित्तीय जोखिम सूचना पुष्टि करें।",
+  "bet.sendError.toncast.USER_ADDRESS_REQUIRED": "वॉलेट कनेक्ट करें या प्रेषक पता सेट करें।",
+  "bet.sendError.toncast.NO_LIQUIDITY": "इस तरफ़ अभी कोई मेल खाती तरलता नहीं।",
+  "bet.sendError.toncast.INVALID_MARKET_TICKETS": "अमान्य टिकट संख्या — धनात्मक पूर्णांक दर्ज करें।",
+  "bet.sendError.toncast.INVALID_ADDRESS": "अमान्य TON पता — लाभार्थी या प्रेषक जाँचें।",
 
   "page.bets.title": "मेरी बेट्स",
   "page.bets.empty": "आपने अभी तक कोई बेट नहीं लगाई।",
@@ -815,6 +999,25 @@ const fa = {
   "bet.maxOf": "{current} / {max} بلیط",
   "bet.oneTicket": "۱ بلیط",
 
+  "bet.sendError.walletRejected": "تراکنش را در کیف پول تأیید نکردید.",
+  "bet.sendError.walletFailed":
+    "کیف پول نتوانست تراکنش را بفرستد. دوباره امتحان کنید یا کیف را عوض کنید.",
+  "bet.sendError.network": "مشکل شبکه — اتصال را بررسی و دوباره تلاش کنید.",
+  "bet.sendError.unknown": "خطایی رخ داد. لطفاً دوباره تلاش کنید.",
+  "bet.sendError.detailsToggle": "جزئیات فنی",
+  "bet.sendError.dismiss": "بستن",
+  "bet.sendError.toncast.generic": "شرط بسته نشد. لطفاً دوباره تلاش کنید.",
+  "bet.sendError.toncast.SLIPPAGE_DRIFTED": "قیمت تغییر کرد — شرط را تنظیم و دوباره تأیید کنید.",
+  "bet.sendError.toncast.QUOTE_INFEASIBLE": "با شانس‌ها یا موجودی فعلی این شرط ممکن نیست.",
+  "bet.sendError.toncast.QUOTE_NOT_READY":
+    "ابتدا قیمت را در کیف پول تأیید کنید (برای این کوین لازم است).",
+  "bet.sendError.toncast.QUOTE_PARAMS_MISSING": "دادهٔ قیمت ناقص است — تازه‌سازی و دوباره تلاش کنید.",
+  "bet.sendError.toncast.FINANCIAL_RISK_ACK_REQUIRED": "قبل از شرط، هشدار ریسک مالی را تأیید کنید.",
+  "bet.sendError.toncast.USER_ADDRESS_REQUIRED": "کیف را وصل کنید یا آدرس فرستنده را تنظیم کنید.",
+  "bet.sendError.toncast.NO_LIQUIDITY": "الان نقدینگی منطبق برای این طرف نیست.",
+  "bet.sendError.toncast.INVALID_MARKET_TICKETS": "تعداد بلیت نامعتبر — عدد صحیح مثبت وارد کنید.",
+  "bet.sendError.toncast.INVALID_ADDRESS": "آدرس TON نامعتبر — ذینفع یا فرستنده را بررسی کنید.",
+
   "page.bets.title": "شرط‌های من",
   "page.bets.empty": "هنوز هیچ شرطی نبسته‌اید.",
   "page.bets.connectPrompt": "برای دیدن تاریخچهٔ شرط‌ها کیف پول را وصل کنید.",
@@ -905,6 +1108,23 @@ const ar = {
   "bet.loadingPrice": "جارٍ تحميل السعر…",
   "bet.maxOf": "{current} / {max} تذكرة",
   "bet.oneTicket": "تذكرة واحدة",
+
+  "bet.sendError.walletRejected": "لم تُؤكّد المعاملة في المحفظة.",
+  "bet.sendError.walletFailed": "تعذّر على المحفظة إرسال المعاملة. أعد المحاولة أو غيّر المحفظة.",
+  "bet.sendError.network": "مشكلة في الشبكة — تحقّق من الاتصال وأعد المحاولة.",
+  "bet.sendError.unknown": "حدث خطأ ما. يُرجى إعادة المحاولة.",
+  "bet.sendError.detailsToggle": "تفاصيل تقنية",
+  "bet.sendError.dismiss": "إغلاق",
+  "bet.sendError.toncast.generic": "تعذّر وضع الرهان. أعد المحاولة.",
+  "bet.sendError.toncast.SLIPPAGE_DRIFTED": "تغيّر السعر — عدّل الرهان وأكّد مجددًا.",
+  "bet.sendError.toncast.QUOTE_INFEASIBLE": "هذا الرهان غير ممكن بالاحتمالات أو الرصيد الحالي.",
+  "bet.sendError.toncast.QUOTE_NOT_READY": "أكّد عرض السعر في المحفظة أولًا (مطلوب لهذه العملة).",
+  "bet.sendError.toncast.QUOTE_PARAMS_MISSING": "بيانات عرض السعر ناقصة — حدّث وأعد المحاولة.",
+  "bet.sendError.toncast.FINANCIAL_RISK_ACK_REQUIRED": "أكّد تحذير المخاطر المالية قبل الرهان.",
+  "bet.sendError.toncast.USER_ADDRESS_REQUIRED": "صِل المحفظة أو عيّن عنوان المرسل.",
+  "bet.sendError.toncast.NO_LIQUIDITY": "لا سيولة مطابقة لهذا الجانب الآن.",
+  "bet.sendError.toncast.INVALID_MARKET_TICKETS": "عدد التذاكر غير صالح — استخدم عددًا صحيحًا موجبًا.",
+  "bet.sendError.toncast.INVALID_ADDRESS": "عنوان TON غير صالح — تحقّق من المستفيد أو المرسل.",
 
   "page.bets.title": "رهاناتي",
   "page.bets.empty": "لم تضع أي رهان بعد.",

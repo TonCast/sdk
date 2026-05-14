@@ -30,6 +30,47 @@
   margin-bottom: 10px;
 }
 
+/* ===== BET FLOW INLINE ERROR (confirm + wallet send) ===== */
+.tc-bet-flow-error {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: calc(var(--tc-radius) - 2px);
+  border: 1px solid var(--tc-danger-border);
+  background: var(--tc-danger-bg);
+  color: var(--tc-danger-fg);
+  font-size: 13px;
+  text-align: left;
+}
+.tc-bet-flow-error--muted {
+  border-color: var(--tc-border);
+  background: var(--tc-bg-muted);
+  color: var(--tc-fg-muted);
+}
+.tc-bet-flow-error-msg {
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+.tc-bet-flow-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.tc-bet-flow-error-details {
+  margin: 12px 0 0;
+  padding: 10px;
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--tc-bg-base);
+  border: 1px solid var(--tc-border);
+  border-radius: 6px;
+  color: var(--tc-fg-muted);
+  max-height: 140px;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
 /* ===== UTILS ===== */
 .tc-space-y-3 > * + * {
   margin-top: 10px;

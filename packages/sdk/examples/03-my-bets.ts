@@ -1,5 +1,5 @@
 // Usage: tsx examples/03-my-bets.ts <pariId> <userAddress>
-import { ToncastClient, parseTonAddress } from "../src";
+import { parseTonAddress, ToncastClient } from "../src";
 
 async function main() {
   const pariId = process.argv[2];

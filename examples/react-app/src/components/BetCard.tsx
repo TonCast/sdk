@@ -7,7 +7,7 @@
 // surfaces.
 
 import { useQueryClient } from "@tanstack/react-query";
-import { parseUnits, TON_ADDRESS, ToncastError } from "@toncast/sdk";
+import { classifyBetFlowError, parseUnits, TON_ADDRESS } from "@toncast/sdk";
 import { type BetMode, toncastQueryKeys, useBet } from "@toncast/sdk-react";
 import { useIsConnectionRestored, useTonAddress, useTonConnectUI } from "@tonconnect/ui-react";
 import { useEffect, useRef, useState } from "react";
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
+import { resolveBetSendErrorTranslationKey } from "@/lib/betFlow/resolveBetSendErrorTranslationKey";
 import { formatRaw } from "@/lib/format";
 import { useT } from "@/lib/i18n/useT";
 import { ConnectButton } from "./ConnectButton";
@@ -113,13 +114,14 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
         }, 30_000),
       ];
     } catch (err) {
-      const message =
-        err instanceof ToncastError
-          ? `${err.message} (${err.code})`
-          : err instanceof Error
-            ? err.message
-            : String(err);
-      toast.error(message);
+      const classified = classifyBetFlowError(err);
+      console.error("[react-app] Bet send failed:", classified.technicalSummary);
+      const msg = t(resolveBetSendErrorTranslationKey(classified));
+      if (classified.kind === "wallet_user_rejected") {
+        toast.info(msg);
+      } else {
+        toast.error(msg);
+      }
     }
   };
 

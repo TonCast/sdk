@@ -390,6 +390,9 @@ const client = new ToncastClient({ transport });
 
 All SDK-owned failures inherit from `ToncastError` and are safe to surface in UI or telemetry:
 
+- **`classifyBetFlowError(err)`** — buckets failures from `confirmQuote` / TonConnect `sendTransaction` into `toncast`, `wallet_user_rejected`, `wallet_failed`, `network`, or `unknown`, with a `technicalSummary` string for logs (TonConnect messages are version-sensitive).
+- **`resolveBetSendErrorTranslationKey(descriptor)`** — returns stable catalog key paths (`bet.sendError.*`) for `t()` in apps and `@toncast/widget`; keep widget / demo translation keys in sync.
+
 - `ToncastApiError` — REST non-2xx response. Includes `status`, `endpoint`, optional `requestId`.
 - `ToncastRateLimitError` — HTTP 429. Includes `retryAfterMs` when the API sends `Retry-After`.
 - `ToncastWsError` — WebSocket transport or protocol failure.
@@ -697,6 +700,7 @@ src/
 ├── wallet/                       createTonClient · auto-routed jetton discovery (toncenter v3 → tonapi.io)
 ├── i18n/languages.ts             SUPPORTED_LANGUAGES + resolveLanguage
 ├── types/                        zod-backed DTOs
+├── betFlowError.ts               classifyBetFlowError (confirm + wallet send UX)
 └── errors.ts                     ToncastError / ApiError / WsError / ValidationError
 ```
 

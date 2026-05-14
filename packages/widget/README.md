@@ -10,6 +10,12 @@ Embeddable Toncast betting UI: market lists, pari detail, bet placement (TON or 
 
 **Security:** the widget prepares transactions for the user’s wallet; it does not hold keys. CDN users should prefer **Subresource Integrity** via the loader’s `integrity` option. See [`AGENTS.md`](../../AGENTS.md) for integrator obligations around `confirmQuote` and addresses.
 
+**Development:** `npm test` runs **`pretest`**, which builds **`@toncast/sdk`** (`npm --prefix ../sdk run build`) so Vitest resolves an up-to-date `dist` from the SDK. The package-exports test that reads this package’s `dist/index.js` is skipped until you run **`npm run build`** here at least once.
+
+## Bet confirm / wallet errors
+
+When `confirmQuote` or TonConnect `sendTransaction` throws, the widget uses `classifyBetFlowError` from `@toncast/sdk`, shows a localized message (`bet.sendError.*` keys via `resolveBetSendErrorTranslationKey`), and logs `technicalSummary` to the dev console as `[ToncastWidget] Bet send failed: …`. The inline card includes **Close** (`bet.sendError.dismiss`) and an optional **Technical details** disclosure with the same summary. Heuristics for wallet “user did not send” depend on `@tonconnect/ui-react` error strings; upgrade TonConnect alongside the widget if messages change.
+
 ## Subscribing to bet events
 
 Two surfaces, one event. Pick the one that matches how you mounted the widget — both deliver the same `{ pariId, amount, side }` payload after a bet transaction is sent.
