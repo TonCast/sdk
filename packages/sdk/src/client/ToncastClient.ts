@@ -15,6 +15,7 @@ import {
   type PrefetchConfig,
   type ReferralConfig,
   resolveWsUrlFromApiBaseUrl,
+  type ToncastBackgroundTask,
   type TonClient,
   type ToncastClientOptions,
 } from "./config";
@@ -36,6 +37,9 @@ export class ToncastClient {
   private referral: ReferralConfig | undefined;
   private readonly tonClient: TonClient | undefined;
   private readonly logger: Logger;
+  private readonly onBackgroundError:
+    | ((error: unknown, task: ToncastBackgroundTask) => void)
+    | undefined;
   private readonly http: HttpClient;
   private readonly prefetch: Required<PrefetchConfig>;
   private readonly languageStorageKey: string | null;
@@ -52,6 +56,7 @@ export class ToncastClient {
     this.referral = validateReferral(options.referral);
     this.tonClient = options.tonClient;
     this.logger = options.logger ?? noopLogger;
+    this.onBackgroundError = options.onBackgroundError;
 
     const resolvedBaseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
     this.http = new HttpClient({
@@ -135,7 +140,7 @@ export class ToncastClient {
     // SDK throwing on construction. The next real call retries through the
     // normal HTTP retry policy.
     void this.categories.list().catch((err) => {
-      this.logger.warn("prefetch categories failed", err);
+      this.reportBackgroundError(err, "prefetch.categories");
     });
   }
 
@@ -167,13 +172,13 @@ export class ToncastClient {
         if (!hasJetton) return;
         if (!this.prefetch.swapMarkets) return;
         return this.betting.prefetchSwapMarkets(coins).catch((err) => {
-          this.logger.warn("prefetch swap markets failed", err);
+          this.reportBackgroundError(err, "prefetch.swapMarkets");
         });
       })
       .catch((err) => {
         // Cache stays empty; next user-driven call re-tries through the
         // normal retry policy and surfaces its own error.
-        this.logger.warn("prefetch coins failed", err);
+        this.reportBackgroundError(err, "prefetch.coins");
       });
   }
 
@@ -223,7 +228,7 @@ export class ToncastClient {
       try {
         fn(next);
       } catch (err) {
-        this.logger.warn("language listener threw", err);
+        this.reportBackgroundError(err, "language.listener");
       }
     }
   }
@@ -258,6 +263,11 @@ export class ToncastClient {
   dispose(): void {
     this.paris.dispose();
     this.languageListeners.clear();
+  }
+
+  private reportBackgroundError(err: unknown, task: ToncastBackgroundTask): void {
+    this.logger.warn(`${task} failed`, err);
+    this.onBackgroundError?.(err, task);
   }
 }
 

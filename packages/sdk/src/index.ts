@@ -4,6 +4,7 @@ export type {
   ReferralConfig,
   TonConnectMessage,
   TonConnectTransaction,
+  ToncastBackgroundTask,
   ToncastClientOptions,
 } from "./client/config";
 export { DEFAULT_BASE_URL, DEFAULT_WS_URL, resolveWsUrlFromApiBaseUrl } from "./client/config";

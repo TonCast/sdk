@@ -60,4 +60,20 @@ describe("ToncastClient", () => {
     await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
     expect(String(fetchSpy.mock.calls[0]?.[0])).toBe("https://toncast.me/api/v1/categories");
   });
+
+  it("reports prefetch failures through onBackgroundError when configured", async () => {
+    const err = new Error("network down");
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(err);
+    const onBackgroundError = vi.fn();
+
+    new ToncastClient({
+      prefetch: { categories: true },
+      maxAttempts: 1,
+      onBackgroundError,
+    });
+
+    await vi.waitFor(() =>
+      expect(onBackgroundError).toHaveBeenCalledWith(err, "prefetch.categories"),
+    );
+  });
 });

@@ -57,6 +57,12 @@ export interface PrefetchConfig {
   swapMarkets?: boolean | undefined;
 }
 
+export type ToncastBackgroundTask =
+  | "prefetch.categories"
+  | "prefetch.coins"
+  | "prefetch.swapMarkets"
+  | "language.listener";
+
 export interface ToncastClientOptions {
   /** REST API base URL. */
   baseUrl?: string | undefined;
@@ -110,6 +116,8 @@ export interface ToncastClientOptions {
   persistLanguage?: boolean | string | undefined;
   /** Optional logger. Defaults to no-op. */
   logger?: Logger | undefined;
+  /** Receives failures from optional background work. User-initiated calls still reject normally. */
+  onBackgroundError?: ((error: unknown, task: ToncastBackgroundTask) => void) | undefined;
   /** Advanced: replace REST transport for tests, SSR adapters, tracing, or custom fetch policies. */
   transport?: HttpTransport | undefined;
   /** Total HTTP attempts (1 initial + N-1 retries) per request. Default 3. */
