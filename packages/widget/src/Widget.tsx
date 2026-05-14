@@ -1,14 +1,7 @@
 import type { CSSProperties, ErrorInfo } from "react";
 import { useMemo } from "react";
-import {
-  BetEmitterProvider,
-  ConfigProvider,
-  NavProvider,
-} from "./context";
-import {
-  IntegratedProvider,
-  StandaloneProvider,
-} from "./tc-bridge";
+import { BetEmitterProvider, ConfigProvider, NavProvider } from "./context";
+import { IntegratedProvider, StandaloneProvider } from "./tc-bridge";
 import { buildCssVarStyle } from "./theme/cssVars";
 import type { ToncastWidgetConfig } from "./types";
 import { cn } from "./utils/cn";

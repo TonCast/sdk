@@ -74,7 +74,11 @@ export function ConfigProvider({
 // `<Widget onBet={...} />` → BetEmitterProvider → useEmitBet() → BetCard.
 // `ToncastWidget` wires its `bet` event listener through this same prop.
 
-export type BetEmitterPayload = { pariId: string; amount: bigint; side: "yes" | "no" };
+export type BetEmitterPayload = {
+  pariId: string;
+  amount: bigint;
+  side: "yes" | "no";
+};
 export type BetEmitter = (payload: BetEmitterPayload) => void;
 
 const BetEmitterContext = createContext<BetEmitter | null>(null);

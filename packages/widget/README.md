@@ -59,10 +59,10 @@ In locales where the decimal separator is a **comma** (e.g. German), a lone **do
 
 Two layers can set the language; they coexist by design.
 
-| Source | When applied | Wins on conflict |
-| --- | --- | --- |
-| `config.widget.language` (host) | Every render where the value changes — pushed via `client.setLanguage()`, the `ToncastClient` is **not** recreated and WS subscriptions stay alive | Yes — the host’s preference always trumps a stale picker selection because it is reapplied every render |
-| In-widget language picker (header) | User clicks a flag — calls the SDK’s `setLanguage` directly | Wins until the host changes `config.widget.language` again |
+| Source                             | When applied                                                                                                                                       | Wins on conflict                                                                                        |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `config.widget.language` (host)    | Every render where the value changes — pushed via `client.setLanguage()`, the `ToncastClient` is **not** recreated and WS subscriptions stay alive | Yes — the host’s preference always trumps a stale picker selection because it is reapplied every render |
+| In-widget language picker (header) | User clicks a flag — calls the SDK’s `setLanguage` directly                                                                                        | Wins until the host changes `config.widget.language` again                                              |
 
 **To lock the language entirely** (no picker drift): pass `config.widget.language` and never change it. The picker still allows the user to switch locally, but any host-driven re-render with the same `config.widget.language` will snap it back.
 

@@ -109,6 +109,12 @@ function localeNumberSeparators(lang: string): {
  * For locales where the decimal separator is **not** `.` (e.g. `de-DE`), a
  * lone `.` with exactly three digits after it is **ambiguous** (English-style
  * fraction vs. thousands grouping) and throws {@link AmbiguousLocalizedDecimalError}.
+ *
+ * **Limitations (C-2):** strings that mix locale rules in unusual ways may still
+ * normalise into a value that fails only at {@link parseUnits} on blur — always
+ * validate financial input server-side. Multiple `.` without the locale’s true
+ * decimal separator are not fully validated as “human intent” here; prefer the
+ * locale’s official separators when typing amounts.
  */
 export function parseLocalizedDecimal(input: string, lang: string): string {
   const { decimal, group } = localeNumberSeparators(lang);
@@ -170,6 +176,9 @@ export type TimeLeftTranslate = (
 /**
  * Returns a localised "time remaining" string. The translator `t` is required —
  * call-sites running outside the widget must supply a stub (see tests).
+ *
+ * @param endTime — Unix timestamp in **seconds** (same unit as `Pari.endTime` from the API).
+ * @param now — Epoch time in **milliseconds** (defaults to `Date.now()`). Do not pass seconds here.
  */
 export function formatTimeLeft(
   endTime: number,

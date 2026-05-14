@@ -147,9 +147,15 @@ describe("useSyncClientFromConfig", () => {
       rerender(<Probe client={c} widget={{}} ownsClient />);
       rerender(<Probe client={c} widget={{ referral: { address: "UQ_b", pct: 5 } }} ownsClient />);
       expect(c.setReferral).toHaveBeenCalledTimes(3);
-      expect(c.setReferral).toHaveBeenNthCalledWith(1, { address: "UQ_a", pct: 3 });
+      expect(c.setReferral).toHaveBeenNthCalledWith(1, {
+        address: "UQ_a",
+        pct: 3,
+      });
       expect(c.setReferral).toHaveBeenNthCalledWith(2, undefined);
-      expect(c.setReferral).toHaveBeenNthCalledWith(3, { address: "UQ_b", pct: 5 });
+      expect(c.setReferral).toHaveBeenNthCalledWith(3, {
+        address: "UQ_b",
+        pct: 5,
+      });
     });
   });
 

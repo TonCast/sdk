@@ -620,13 +620,16 @@
   height: 20px;
   touch-action: none;
   user-select: none;
-  /* Radix sets translateX(-50%) on the thumb wrapper only — without translateY
-     the handle sat at top:0 and looked detached from the 8px track. */
+}
+
+/* Horizontal only: Radix sets translateX(-50%) on the thumb wrapper — add Y so
+   the handle centres on the 8px track. Scoped so a future vertical slider keeps
+   Radix's default translateY(50%) on the root (M-3). */
+.tc-slider-root[data-orientation="horizontal"] {
   --radix-slider-thumb-transform: translate(-50%, -50%) !important;
 }
 
-/* Radix positions each thumb in a span immediately after the track. */
-.tc-slider-track + span {
+.tc-slider-root[data-orientation="horizontal"] .tc-slider-track + span {
   top: 50%;
 }
 .tc-slider-track {

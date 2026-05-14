@@ -1,6 +1,6 @@
 import { createTonClient, ToncastClient } from "@toncast/sdk";
 import { ToncastProvider } from "@toncast/sdk-react";
-import { useEffect, useRef, type ReactNode } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { I18nProvider } from "./i18n/I18nProvider";
 import type { ClientStandaloneDescriptor, ToncastWidgetConfig } from "./types";
 import { useSyncClientFromConfig } from "./utils/useSyncClientFromConfig";

@@ -10,11 +10,12 @@ export function BetTicketsInput({ bet }: { bet: Bet }) {
   const t = useT();
   const [draft, setDraft] = useState<string>("");
 
+  // Sync draft from `bet.tickets` / `bet.mode` only — do not depend on the whole
+  // `bet` object or the draft resets on unrelated bet updates while the user types.
   useEffect(() => {
     if (bet.mode === "market") return;
     setDraft(bet.tickets > 0 ? String(bet.tickets) : "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bet.mode, bet.tickets]); // derived display only
+  }, [bet.mode, bet.tickets]);
 
   const commit = (raw: number) => {
     const clean = Math.max(1, Math.trunc(raw || 1));
