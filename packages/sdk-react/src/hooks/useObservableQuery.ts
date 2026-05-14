@@ -35,7 +35,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import type { Observer, Subscribable, Subscription } from "@toncast/sdk";
+import type { Observer, Subscribable, Subscription } from "@toncast/sdk/core";
 import { useRef, useSyncExternalStore } from "react";
 
 export interface UseObservableQueryOptions<T, TError = unknown>

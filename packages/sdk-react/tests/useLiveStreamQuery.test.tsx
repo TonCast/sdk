@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import type { Observer, Subscription } from "@toncast/sdk";
+import type { Observer, Subscription } from "@toncast/sdk/core";
 import { describe, expect, it, vi } from "vitest";
 import { useLiveStreamQuery } from "../src";
 

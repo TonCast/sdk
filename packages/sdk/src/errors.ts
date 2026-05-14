@@ -31,6 +31,19 @@ export class ToncastApiError extends ToncastError {
   }
 }
 
+/** HTTP 429 failure with retry metadata when the API supplies it. */
+export class ToncastRateLimitError extends ToncastApiError {
+  constructor(
+    message: string,
+    endpoint: string,
+    public readonly retryAfterMs?: number,
+    cause?: unknown,
+  ) {
+    super(message, 429, endpoint, cause);
+    this.name = "ToncastRateLimitError";
+  }
+}
+
 /** WebSocket-layer failure: connect/send/parse error on the WS transport. */
 export class ToncastWsError extends ToncastError {
   constructor(message: string, code = "WS_ERROR", cause?: unknown) {
