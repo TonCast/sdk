@@ -1,0 +1,73 @@
+/* Host chrome — design tokens (default dark; light + system overrides below). */
+:root {
+  /*
+   * Canonical dual palette for Toncast `widget.cssVars` — always both modes on :root
+   * so JS can read them while the host only exposes one active `--host-accent` at a time.
+   * See `readToncastWidgetCssVarsFromDocument` in widgetEmbedChrome.ts.
+   */
+  --tc-widget-palette-radius: 12px;
+  --tc-widget-palette-dark-accent: #38bdf8;
+  --tc-widget-palette-dark-bg: #0f172a;
+  --tc-widget-palette-dark-success: #22c55e;
+  --tc-widget-palette-dark-danger: #f87171;
+  --tc-widget-palette-dark-warn: #fbbf24;
+  --tc-widget-palette-light-accent: #0284c7;
+  --tc-widget-palette-light-bg: #ffffff;
+  --tc-widget-palette-light-success: #16a34a;
+  --tc-widget-palette-light-danger: #dc2626;
+  --tc-widget-palette-light-warn: #d97706;
+
+  color-scheme: dark;
+  --host-widget-viewport-height: min(72svh, 820px);
+  --host-bg: #0b1220;
+  --host-surface: #111b2e;
+  --host-border: #1e2d4a;
+  --host-muted: #94a3b8;
+  --host-fg: #e8eef9;
+  --host-heading: #f8fafc;
+  --host-panel-title: #f1f5f9;
+  --host-accent: var(--tc-widget-palette-dark-accent);
+  --host-accent-muted: rgba(56, 189, 248, 0.35);
+  --host-code-fg: #7dd3fc;
+  --host-row-bg: rgba(15, 23, 42, 0.65);
+  --host-radius: var(--tc-widget-palette-radius);
+  --host-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.host-app[data-host-theme="light"] {
+  color-scheme: light;
+  background: linear-gradient(180deg, #e2e8f0 0%, #f1f5f9 50%, #f8fafc 100%);
+  --host-bg: #f8fafc;
+  --host-surface: #ffffff;
+  --host-border: #cbd5e1;
+  --host-muted: #475569;
+  --host-fg: #0f172a;
+  --host-heading: #020617;
+  --host-panel-title: #0f172a;
+  --host-accent: var(--tc-widget-palette-light-accent);
+  --host-accent-muted: rgba(2, 132, 199, 0.28);
+  --host-code-fg: #0369a1;
+  --host-row-bg: #f1f5f9;
+}
+
+.host-app[data-host-theme="system"] {
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: light) {
+  .host-app[data-host-theme="system"] {
+    color-scheme: light;
+    background: linear-gradient(180deg, #e2e8f0 0%, #f1f5f9 50%, #f8fafc 100%);
+    --host-bg: #f8fafc;
+    --host-surface: #ffffff;
+    --host-border: #cbd5e1;
+    --host-muted: #475569;
+    --host-fg: #0f172a;
+    --host-heading: #020617;
+    --host-panel-title: #0f172a;
+    --host-accent: var(--tc-widget-palette-light-accent);
+    --host-accent-muted: rgba(2, 132, 199, 0.28);
+    --host-code-fg: #0369a1;
+    --host-row-bg: #f1f5f9;
+  }
+}

@@ -1,0 +1,97 @@
+.host-app {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.host-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--host-border);
+  background: rgba(17, 27, 46, 0.92);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.host-header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  justify-content: flex-end;
+}
+
+.host-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.host-brand-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--host-heading);
+}
+
+.host-brand-sub {
+  font-size: 0.78rem;
+  color: var(--host-muted);
+  line-height: 1.35;
+}
+
+.host-toolbar-wallet {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transform: scale(0.94);
+  transform-origin: center right;
+}
+
+.host-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1rem;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .host-main {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 300px);
+    align-items: stretch;
+  }
+}
+
+.host-footnote {
+  padding: 0.75rem 1.25rem 1.25rem;
+  font-size: 0.74rem;
+  color: var(--host-muted);
+  text-align: center;
+  max-width: 42rem;
+  margin: 0 auto;
+  line-height: 1.55;
+}
+
+.host-app[data-host-theme="light"] .host-header {
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+}
+
+@media (prefers-color-scheme: light) {
+  .host-app[data-host-theme="system"] .host-header {
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+  }
+}

@@ -1,0 +1,228 @@
+.host-panel {
+  width: 100%;
+  min-width: 0;
+  background: var(--host-surface);
+  border: 1px solid var(--host-border);
+  border-radius: var(--host-radius);
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+
+.host-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--host-border);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.host-panel-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--host-panel-title);
+}
+
+.host-phase {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--host-border);
+  color: var(--host-muted);
+}
+
+.host-phase[data-phase="loading"] {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+.host-phase[data-phase="ready"] {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.45);
+}
+
+.host-phase[data-phase="error"] {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.45);
+}
+
+.host-panel-body {
+  padding: 0;
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: var(--host-widget-viewport-height);
+  min-height: var(--host-widget-viewport-height);
+  max-height: var(--host-widget-viewport-height);
+}
+
+.host-widget-surface {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.host-widget-surface > * {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.host-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: rgba(11, 18, 32, 0.72);
+  font-size: 0.85rem;
+  color: var(--host-muted);
+  z-index: 2;
+}
+
+.host-spinner {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 2px solid var(--host-border);
+  border-top-color: var(--host-accent);
+  border-radius: 50%;
+  animation: host-spin 0.7s linear infinite;
+}
+
+@keyframes host-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.host-meta {
+  padding: 0.75rem 1rem;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--host-muted);
+  border-top: 1px solid var(--host-border);
+  word-break: break-word;
+}
+
+.host-meta code {
+  color: var(--host-code-fg);
+  font-size: 0.92em;
+}
+
+.host-meta-theme {
+  margin-top: 0.5rem;
+}
+
+.host-meta-theme strong {
+  color: var(--host-fg);
+}
+
+/* Demo: imperative ToncastWidgetInstance.unmount / .dispose (see App.tsx + ToncastBettingWidget ref). */
+.host-lifecycle {
+  padding: 0.65rem 1rem 0.75rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--host-muted);
+  border-top: 1px solid var(--host-border);
+  background: rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.6rem;
+  align-items: center;
+}
+
+.host-lifecycle-label {
+  font-size: inherit;
+  font-weight: 700;
+  color: var(--host-fg);
+  margin: 0 0.15rem 0 0;
+  display: inline;
+}
+
+.host-lifecycle-btn {
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.28rem 0.55rem;
+  border-radius: 6px;
+  border: 1px solid var(--host-border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--host-fg);
+  cursor: pointer;
+}
+
+.host-lifecycle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.host-lifecycle-hint {
+  flex: 1 1 100%;
+  margin: 0.35rem 0 0;
+  font-size: 0.68rem;
+  color: var(--host-muted);
+}
+
+.host-app[data-host-theme="light"] .host-lifecycle {
+  background: #f1f5f9;
+}
+
+.host-app[data-host-theme="light"] .host-lifecycle-btn {
+  background: #ffffff;
+}
+
+@media (prefers-color-scheme: light) {
+  .host-app[data-host-theme="system"] .host-lifecycle {
+    background: #f1f5f9;
+  }
+
+  .host-app[data-host-theme="system"] .host-lifecycle-btn {
+    background: #ffffff;
+  }
+}
+
+.host-app[data-host-theme="light"] .host-panel {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.host-app[data-host-theme="light"] .host-panel-head {
+  background: #f8fafc;
+}
+
+.host-app[data-host-theme="light"] .host-loading {
+  background: rgba(248, 250, 252, 0.88);
+}
+
+@media (prefers-color-scheme: light) {
+  .host-app[data-host-theme="system"] .host-panel {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.8) inset,
+      0 8px 24px rgba(15, 23, 42, 0.06);
+  }
+
+  .host-app[data-host-theme="system"] .host-panel-head {
+    background: #f8fafc;
+  }
+
+  .host-app[data-host-theme="system"] .host-loading {
+    background: rgba(248, 250, 252, 0.88);
+  }
+}
