@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import type { Logger } from "../client/config";
-import { ToncastApiError, ToncastValidationError } from "../errors";
+import { ToncastApiError, ToncastRateLimitError, ToncastValidationError } from "../errors";
 import type { SupportedLanguage } from "../i18n/languages";
 import { withRetry } from "../utils/retry";
 import { FetchHttpTransport, type HttpTransport } from "./transport";
@@ -63,11 +63,17 @@ export class HttpClient {
           });
           if (res.status < 200 || res.status >= 300) {
             const detail = extractErrorDetail(res.body);
-            throw new ToncastApiError(
-              `HTTP ${res.status} ${res.statusText ?? ""}: ${detail}`,
-              res.status,
-              req.path,
-            );
+            const message = `HTTP ${res.status} ${res.statusText ?? ""}: ${detail}`;
+            const requestId = getHeader(res.headers, "x-request-id");
+            if (res.status === 429) {
+              throw new ToncastRateLimitError(
+                message,
+                req.path,
+                parseRetryAfterMs(res.headers),
+                requestId,
+              );
+            }
+            throw new ToncastApiError(message, res.status, req.path, { requestId });
           }
           const data = res.body;
           if (!req.schema) return data as T;
@@ -127,6 +133,24 @@ function extractErrorDetail(body: unknown): string {
     if (typeof error === "string") return error;
   }
   return body == null ? "" : JSON.stringify(body);
+}
+
+function getHeader(headers: Record<string, string>, name: string): string | undefined {
+  const lower = name.toLowerCase();
+  for (const [key, value] of Object.entries(headers)) {
+    if (key.toLowerCase() === lower) return value;
+  }
+  return undefined;
+}
+
+function parseRetryAfterMs(headers: Record<string, string>): number | undefined {
+  const raw = getHeader(headers, "retry-after");
+  if (!raw) return undefined;
+  const seconds = Number(raw);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const date = Date.parse(raw);
+  if (!Number.isNaN(date)) return Math.max(0, date - Date.now());
+  return undefined;
 }
 
 function createTimeoutSignal(

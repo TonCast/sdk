@@ -18,16 +18,25 @@ export class ToncastError extends Error {
   }
 }
 
+export interface ToncastApiErrorOptions {
+  requestId?: string;
+  cause?: unknown;
+  code?: string;
+}
+
 /** HTTP-layer failure: non-2xx response from the Toncast REST API. */
 export class ToncastApiError extends ToncastError {
+  readonly requestId?: string;
+
   constructor(
     message: string,
     public readonly status: number,
     public readonly endpoint: string,
-    cause?: unknown,
+    options: ToncastApiErrorOptions = {},
   ) {
-    super(message, `API_${status}`, cause);
+    super(message, options.code ?? `API_${status}`, options.cause);
     this.name = "ToncastApiError";
+    this.requestId = options.requestId;
   }
 }
 
@@ -37,9 +46,10 @@ export class ToncastRateLimitError extends ToncastApiError {
     message: string,
     endpoint: string,
     public readonly retryAfterMs?: number,
+    requestId?: string,
     cause?: unknown,
   ) {
-    super(message, 429, endpoint, cause);
+    super(message, 429, endpoint, { code: "RATE_LIMIT", requestId, cause });
     this.name = "ToncastRateLimitError";
   }
 }

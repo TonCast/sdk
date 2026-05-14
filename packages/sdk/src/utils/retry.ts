@@ -1,4 +1,4 @@
-import { ToncastApiError, ToncastValidationError } from "../errors";
+import { ToncastApiError, ToncastRateLimitError, ToncastValidationError } from "../errors";
 
 export interface RetryOptions {
   /** Total attempts INCLUDING the first one. Default 3 (1 initial + 2 retries). */
@@ -33,14 +33,23 @@ export async function withRetry<T>(fn: () => Promise<T>, opts: RetryOptions = {}
       if (!shouldRetry(err)) break;
       if (attempt === maxAttempts - 1) break;
 
+      const retryAfterMs =
+        err instanceof ToncastRateLimitError && err.retryAfterMs !== undefined
+          ? err.retryAfterMs
+          : undefined;
       const baseDelay = delayMs * 2 ** attempt;
       const isThrottle =
         err instanceof ToncastApiError && (err.status === 429 || err.status >= 500);
-      const wait = isThrottle ? baseDelay * rateLimitBackoffMultiplier : baseDelay;
+      const wait =
+        retryAfterMs ?? withJitter(isThrottle ? baseDelay * rateLimitBackoffMultiplier : baseDelay);
       await sleep(wait, opts.signal);
     }
   }
   throw lastErr;
+}
+
+function withJitter(ms: number): number {
+  return Math.round(ms + Math.random() * Math.min(100, ms * 0.1));
 }
 
 function shouldRetry(err: unknown): boolean {
