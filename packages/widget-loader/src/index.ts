@@ -27,7 +27,7 @@
  *       });
  *       widgetRef.current.mount(containerRef.current);
  *     });
- *     return () => { active = false; widgetRef.current?.unmount(); };
+ *     return () => { active = false; widgetRef.current?.dispose(); };
  *   }, [tonconnect]);
  *
  *   return <div ref={containerRef} style={{ width: '100%' }} />;

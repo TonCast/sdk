@@ -20,10 +20,12 @@ describe("pari card responsive CSS", () => {
     expect(css).not.toContain("grid-column: 2;");
   });
 
-  it("renders compact pari meta as wrap-safe chips", async () => {
+  it("renders compact pari meta as wrap-safe chips (chrome not gated on shell 759px)", async () => {
     const css = await readFile(pariCssPath, "utf8");
 
+    expect(css).not.toContain("@container (max-width: 759px)");
     expect(css).toContain("flex-wrap: wrap;");
+    expect(css).toContain(".tc-pari-meta-item {");
     expect(css).toContain("background: var(--tc-bg-muted);");
     expect(css).toContain("border: 1px solid var(--tc-border);");
     expect(css).toContain("border-radius: 999px;");

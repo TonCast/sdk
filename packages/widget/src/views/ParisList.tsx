@@ -5,6 +5,7 @@ import { PariCard } from "../components/PariCard";
 import { Button } from "../components/ui/Button";
 import { SkeletonList } from "../components/ui/SkeletonList";
 import { useT } from "../i18n/useT";
+import { categoryFilterChipKey, categoryFilterChipLabel } from "../utils/categoryFilterChipLabel";
 
 export function ParisListView() {
   const t = useT();
@@ -40,13 +41,13 @@ export function ParisListView() {
         ) : (
           categories.data?.map((c) => (
             <Button
-              key={c.name}
+              key={categoryFilterChipKey(c)}
               variant={current.name === c.name ? "primary" : "secondary"}
               size="sm"
               className="tc-btn-rounded tc-category-chip"
               onClick={() => setActive(c)}
             >
-              {c.name === ALL_CATEGORY_FILTER.name ? t("category.all") : c.name}
+              {categoryFilterChipLabel(c, t)}
             </Button>
           ))
         )}
