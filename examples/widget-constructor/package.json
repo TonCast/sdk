@@ -13,9 +13,6 @@
     "lint:fix": "biome check --write ."
   },
   "dependencies": {
-    "@radix-ui/react-dialog": "^1.1.0",
-    "@radix-ui/react-select": "^2.1.0",
-    "@radix-ui/react-slider": "^1.2.0",
     "@tanstack/react-query": "^5.62.0",
     "@ton/core": "^0.63.1",
     "@toncast/sdk": "*",

@@ -45,9 +45,6 @@ export default defineConfig({
     include: [
       "@tanstack/react-query",
       "@tonconnect/ui-react",
-      "@radix-ui/react-slider",
-      "@radix-ui/react-select",
-      "@radix-ui/react-dialog",
       "@ton/core",
       "@ston-fi/sdk",
       "@ston-fi/api",
