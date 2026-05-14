@@ -1,5 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { type ConstructorConfig, DEFAULT_CONFIG, type SupportedLanguage } from "../src/types";
+import { describe, expect, it, vi } from "vitest";
+import {
+  type ConstructorConfig,
+  DEFAULT_CONFIG,
+  type SupportedLanguage,
+} from "../src/types";
 import {
   buildCssVarsConfig,
   buildIndexHtml,
@@ -9,6 +13,8 @@ import {
   buildStyleCss,
   PLACEHOLDER_DOMAIN,
   previewBackdropFromConfig,
+  resolveHostBackdropColors,
+  stringifyForScript,
 } from "../src/utils/generateZip";
 
 function config(overrides: Partial<ConstructorConfig>): ConstructorConfig {
@@ -34,7 +40,9 @@ describe("widget export snippets", () => {
     expect(html).toContain('href="index.iife.css"');
     expect(html).toContain("data-toncast-widget-css");
     expect(html).not.toContain("https://widget.toncast.app/v0/index.iife.css");
-    expect(html.indexOf("index.iife.css")).toBeLessThan(html.indexOf("index.iife.js"));
+    expect(html.indexOf("index.iife.css")).toBeLessThan(
+      html.indexOf("index.iife.js"),
+    );
 
     const snippet = buildJsSnippet(c);
     expect(snippet).toContain("https://widget.toncast.app/v0/index.iife.js");
@@ -45,11 +53,16 @@ describe("widget export snippets", () => {
   it("emits standalone Toncast API baseUrl when configured", () => {
     const c = config({ apiBaseUrl: "https://api.staging.toncast.test" });
 
-    expect(buildIndexHtml(c)).toContain('"baseUrl": "https://api.staging.toncast.test"');
-    expect(buildJsSnippet(c)).toContain('"baseUrl": "https://api.staging.toncast.test"');
+    expect(buildIndexHtml(c)).toContain(
+      '"baseUrl": "https://api.staging.toncast.test"',
+    );
+    expect(buildJsSnippet(c)).toContain(
+      '"baseUrl": "https://api.staging.toncast.test"',
+    );
   });
 
   it("manifest: rejects non-http(s) url and iconUrl, falls back to safe defaults", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const manifest = JSON.parse(
       buildManifestJson(
         config({
@@ -62,9 +75,12 @@ describe("widget export snippets", () => {
     expect(manifest.url).toBe(PLACEHOLDER_DOMAIN);
     expect(manifest.iconUrl).toBe(`${PLACEHOLDER_DOMAIN}/icon-192.png`);
     expect(manifest.name).toBe("My App");
+    expect(warn).toHaveBeenCalledTimes(2);
+    warn.mockRestore();
   });
 
   it("manifest: keeps valid http(s) url and iconUrl, strips trailing slashes", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const manifest = JSON.parse(
       buildManifestJson(
         config({
@@ -77,6 +93,8 @@ describe("widget export snippets", () => {
     expect(manifest.url).toBe("https://app.example.com");
     expect(manifest.iconUrl).toBe("https://cdn.example.com/icon.png");
     expect(manifest.name).toBe("Example");
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it("emits wsUrl when apiWsUrl is configured", () => {
@@ -84,8 +102,12 @@ describe("widget export snippets", () => {
       apiBaseUrl: "https://api.staging.toncast.test",
       apiWsUrl: "wss://ws.staging.toncast.test",
     });
-    expect(buildIndexHtml(c)).toContain('"wsUrl": "wss://ws.staging.toncast.test"');
-    expect(buildJsSnippet(c)).toContain('"wsUrl": "wss://ws.staging.toncast.test"');
+    expect(buildIndexHtml(c)).toContain(
+      '"wsUrl": "wss://ws.staging.toncast.test"',
+    );
+    expect(buildJsSnippet(c)).toContain(
+      '"wsUrl": "wss://ws.staging.toncast.test"',
+    );
   });
 
   it("does not emit raw script-closing tags from config values", () => {
@@ -111,7 +133,27 @@ describe("widget export snippets", () => {
     expect(buildIndexHtml(maliciousConfig)).not.toContain("</script><script>");
     expect(buildIndexHtml(maliciousConfig)).not.toContain("</style><script>");
     expect(buildJsSnippet(maliciousConfig)).not.toContain("</script><script>");
-    expect(buildReactSnippet(maliciousConfig)).not.toContain("</script><script>");
+    expect(buildReactSnippet(maliciousConfig)).not.toContain(
+      "</script><script>",
+    );
+  });
+
+  it("stringifyForScript escapes HTML comment close and throws on circular data", () => {
+    expect(stringifyForScript({ x: "a-->b" }, 0)).not.toContain("-->");
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    expect(() => stringifyForScript(circular, 0)).toThrow(
+      /serialize widget config/,
+    );
+  });
+
+  it("resolveHostBackdropColors matches preview defaults for system theme", () => {
+    const system = config({
+      theme: { ...DEFAULT_CONFIG.theme, colorScheme: "system" },
+    });
+    const { light, dark } = resolveHostBackdropColors(system);
+    expect(light).toBe("#f8fafc");
+    expect(dark).toBe("#0f172a");
   });
 
   it("emits semantic source colors and density in widget cssVars", () => {
@@ -259,11 +301,15 @@ describe("widget export snippets", () => {
     expect(html).toContain(
       '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />',
     );
+    expect(html).toContain("color-scheme: dark");
     expect(html).toMatch(
-      /body \{[\s\S]*min-height: 100vh;[\s\S]*min-height: 100dvh;[\s\S]*place-items: center;[\s\S]*padding: 0;/,
+      /html \{[\s\S]*min-height: 100vh;[\s\S]*min-height: 100svh;[\s\S]*min-height: 100dvh;[\s\S]*overflow-x: hidden;/,
     );
     expect(html).toMatch(
-      /#toncast-widget \{[\s\S]*width: min\([\s\S]*100vw,[\s\S]*calc\(100vw - env\(safe-area-inset-left, 0px\) - env\(safe-area-inset-right, 0px\)\),[\s\S]*920px[\s\S]*\);[\s\S]*height: calc\([\s\S]*100dvh - env\(safe-area-inset-top, 0px\) - env\(safe-area-inset-bottom, 0px\)[\s\S]*\);[\s\S]*min-height: 0;/,
+      /body \{[\s\S]*min-height: 100vh;[\s\S]*min-height: 100svh;[\s\S]*min-height: 100dvh;[\s\S]*display: flex;[\s\S]*flex-direction: column;[\s\S]*align-items: stretch;[\s\S]*padding: env\(safe-area-inset-top, 0px\) env\(safe-area-inset-right, 0px\) env\(safe-area-inset-bottom, 0px\) env\(safe-area-inset-left, 0px\);[\s\S]*overflow-x: hidden;/,
+    );
+    expect(html).toMatch(
+      /#toncast-widget \{[\s\S]*flex: 1 1 auto;[\s\S]*min-height: 0;[\s\S]*width: 100%;[\s\S]*max-width: 100%;/,
     );
     expect(html).not.toContain("padding: 16px;");
     expect(html).not.toContain("@media (max-width: 640px)");

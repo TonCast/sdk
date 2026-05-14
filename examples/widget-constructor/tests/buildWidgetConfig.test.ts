@@ -29,6 +29,14 @@ describe("buildWidgetConfig", () => {
     });
   });
 
+  it("integratedMode leaves tonconnect domain empty for React snippet callers", () => {
+    const cfg = buildWidgetConfig(DEFAULT_CONFIG, { integratedMode: true });
+    expect(cfg.tonconnect).toEqual({
+      type: "standalone",
+      options: { domain: "" },
+    });
+  });
+
   it("includes standalone client when apiBaseUrl is set", () => {
     const c = { ...DEFAULT_CONFIG, apiBaseUrl: "https://api.example.com/" };
     const cfg = buildWidgetConfig(c, { domain: "https://app.example" });
