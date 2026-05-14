@@ -7,7 +7,7 @@
 // surfaces.
 
 import { useQueryClient } from "@tanstack/react-query";
-import { parseUnits, TON_ADDRESS } from "@toncast/sdk";
+import { parseUnits, TON_ADDRESS, ToncastError } from "@toncast/sdk";
 import { type BetMode, toncastQueryKeys, useBet } from "@toncast/sdk-react";
 import { useIsConnectionRestored, useTonAddress, useTonConnectUI } from "@tonconnect/ui-react";
 import { useEffect, useRef, useState } from "react";
@@ -113,7 +113,13 @@ export function BetCard({ pariId, initialSide = "yes", bare = false }: BetCardPr
         }, 30_000),
       ];
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err));
+      const message =
+        err instanceof ToncastError
+          ? `${err.message} (${err.code})`
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      toast.error(message);
     }
   };
 

@@ -1,12 +1,13 @@
 // Usage: tsx examples/03-my-bets.ts <pariId> <userAddress>
-import { ToncastClient } from "../src";
+import { ToncastClient, parseTonAddress } from "../src";
 
 async function main() {
   const pariId = process.argv[2];
-  const userAddress = process.argv[3];
-  if (!pariId || !userAddress) {
+  const userAddressRaw = process.argv[3];
+  if (!pariId || !userAddressRaw) {
     throw new Error("usage: tsx examples/03-my-bets.ts <pariId> <userAddress>");
   }
+  const userAddress = parseTonAddress(userAddressRaw, "userAddress");
 
   const client = new ToncastClient({
     baseUrl: process.env.TONCAST_API_URL,

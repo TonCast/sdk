@@ -32,7 +32,7 @@ async function main() {
   // Discover the SIGNER's coins via TonAPI (configured on `new ToncastClient({ tonApi })`).
   // Without `tonApi`, only TON balance is reported.
   const coins = await client.coins.list();
-  const usdt = coins.find((c) => c.symbol === "USDT");
+  const usdt = coins.find((c) => (c.symbol ?? "").toUpperCase() === "USDT");
   if (!usdt) throw new Error("signer wallet has no USDT");
 
   const quoteParams = {

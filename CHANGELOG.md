@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Added CLI example `packages/sdk/examples/02-list-categories.ts` (categories + filter chips).
+- Validated `userAddress` in `03-my-bets.ts` via `parseTonAddress`.
+- Relaxed USDT detection in `05-bet-on-behalf.ts` (case-insensitive symbol).
+- React demo: bet confirmation errors from `@toncast/sdk` now show `ToncastError.code` in toasts.
+- `examples/widget-constructor`: declared `vitest` as a devDependency for reproducible test runs outside the monorepo root.
+
 ## 0.0.1 - Initial pre-release
 
 - Added `ToncastClient` facade with `categories`, `paris`, `bets`, `coins`, and `betting` resources.
