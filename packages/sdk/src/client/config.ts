@@ -118,7 +118,10 @@ export interface ToncastClientOptions {
   logger?: Logger | undefined;
   /** Receives failures from optional background work. User-initiated calls still reject normally. */
   onBackgroundError?: ((error: unknown, task: ToncastBackgroundTask) => void) | undefined;
-  /** Advanced: replace REST transport for tests, SSR adapters, tracing, or custom fetch policies. */
+  /**
+   * Advanced: replace REST transport for tests, SSR adapters, tracing, or custom fetch policies.
+   * Import the contract as `import type { HttpTransport } from "@toncast/sdk"`.
+   */
   transport?: HttpTransport | undefined;
   /** Total HTTP attempts (1 initial + N-1 retries) per request. Default 3. */
   maxAttempts?: number | undefined;

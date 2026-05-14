@@ -3,9 +3,9 @@
 
 /**
  * Base error class for every failure surfaced by `@toncast/sdk`.
- * Subclasses (`ToncastApiError`, `ToncastWsError`, `ToncastValidationError`)
- * narrow the kind of failure; `code` is a stable string identifier suitable
- * for switch-cases or telemetry.
+ * Subclasses (`ToncastApiError`, `ToncastUnauthorizedError`, `ToncastNotFoundError`,
+ * `ToncastRateLimitError`, `ToncastWsError`, `ToncastValidationError`) narrow the
+ * kind of failure; `code` is a stable string identifier suitable for switch-cases or telemetry.
  */
 export class ToncastError extends Error {
   constructor(
@@ -37,6 +37,22 @@ export class ToncastApiError extends ToncastError {
     super(message, options.code ?? `API_${status}`, options.cause);
     this.name = "ToncastApiError";
     this.requestId = options.requestId;
+  }
+}
+
+/** HTTP 401 — authentication required or credentials rejected when the API enforces auth. */
+export class ToncastUnauthorizedError extends ToncastApiError {
+  constructor(message: string, endpoint: string, options: ToncastApiErrorOptions = {}) {
+    super(message, 401, endpoint, { ...options, code: options.code ?? "UNAUTHORIZED" });
+    this.name = "ToncastUnauthorizedError";
+  }
+}
+
+/** HTTP 404 — requested REST path or resource does not exist. */
+export class ToncastNotFoundError extends ToncastApiError {
+  constructor(message: string, endpoint: string, options: ToncastApiErrorOptions = {}) {
+    super(message, 404, endpoint, { ...options, code: options.code ?? "NOT_FOUND" });
+    this.name = "ToncastNotFoundError";
   }
 }
 

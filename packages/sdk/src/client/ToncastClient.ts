@@ -21,9 +21,20 @@ import {
 } from "./config";
 
 /**
- * Main facade for all Toncast functionality.
- * Holds the user wallet address so subresources can read it via a shared getter,
- * and lets callers swap it at runtime (wallet reconnect, address change).
+ * Entry point for Toncast REST reads, live streams, wallet balances, and bet quote preparation.
+ *
+ * API surface: {@link CategoriesResource}, {@link ParisResource}, {@link BetsResource},
+ * {@link CoinsResource}, and {@link BettingResource}.
+ *
+ * @remarks
+ * For tests or custom fetch policies, pass {@link ToncastClientOptions.transport}
+ * (`import type { HttpTransport } from "@toncast/sdk"`).
+ *
+ * User-initiated REST calls reject with `ToncastApiError` subclasses (including
+ * `ToncastUnauthorizedError`, `ToncastNotFoundError`, `ToncastRateLimitError`) or
+ * `ToncastValidationError` when the response fails schema validation. WebSocket
+ * failures use `ToncastWsError`. Invalid constructor options (e.g. referral shape)
+ * throw `ToncastError` synchronously.
  */
 export class ToncastClient {
   readonly categories: CategoriesResource;
@@ -45,6 +56,7 @@ export class ToncastClient {
   private readonly languageStorageKey: string | null;
   private readonly languageListeners = new Set<(lang: SupportedLanguage) => void>();
 
+  /** @param options Client configuration; fields are optional unless the flows you call require them (e.g. `tonClient` for jetton betting). */
   constructor(options: ToncastClientOptions = {}) {
     this.userAddress = options.userAddress
       ? parseTonAddress(options.userAddress, "userAddress")
@@ -102,21 +114,6 @@ export class ToncastClient {
     this.prefetchStatic();
   }
 
-  /**
-   * Fire-and-forget warm-up of static reference data (currently just
-   * `categories`). Runs on construction and on `setLanguage()` — categories
-   * are language-keyed in their cache, so a language switch needs its own
-   * fetch.
-   *
-   * Why we do this in the SDK instead of leaving it to the integrator:
-   * categories are needed by ~every UI surface and the request is tiny
-   * (~1-2 KB). Letting it race the first paris fetch instead of waiting
-   * for a component mount removes a visible UX hiccup ("paris appear,
-   * categories pop in 200 ms later").
-   *
-   * Failures are swallowed — a real call later will retry through the
-   * normal retry policy and surface its own error.
-   */
   /**
    * Bootstrap-only prefetch — runs once from the constructor. Includes
    * categories (cheap) AND triggers `prefetchCoins` which conditionally

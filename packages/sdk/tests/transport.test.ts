@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ToncastClient } from "../src";
-import type { HttpTransport } from "../src/http/transport";
+import { type HttpTransport, ToncastClient } from "../src";
 
 describe("custom HTTP transport", () => {
   afterEach(() => {

@@ -1,6 +1,12 @@
 import type { z } from "zod";
 import type { Logger } from "../client/config";
-import { ToncastApiError, ToncastRateLimitError, ToncastValidationError } from "../errors";
+import {
+  ToncastApiError,
+  ToncastNotFoundError,
+  ToncastRateLimitError,
+  ToncastUnauthorizedError,
+  ToncastValidationError,
+} from "../errors";
 import type { SupportedLanguage } from "../i18n/languages";
 import { withRetry } from "../utils/retry";
 import { FetchHttpTransport, type HttpTransport } from "./transport";
@@ -73,6 +79,12 @@ export class HttpClient {
                 parseRetryAfterMs(res.headers),
                 requestId,
               );
+            }
+            if (res.status === 401) {
+              throw new ToncastUnauthorizedError(message, req.path, { requestId });
+            }
+            if (res.status === 404) {
+              throw new ToncastNotFoundError(message, req.path, { requestId });
             }
             throw new ToncastApiError(message, res.status, req.path, { requestId });
           }

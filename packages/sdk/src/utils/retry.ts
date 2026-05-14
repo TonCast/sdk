@@ -14,10 +14,11 @@ export interface RetryOptions {
 /**
  * Smart retry: retries every error by default, but applies a longer back-off
  * when the previous failure looks like rate-limiting (HTTP 429) or a server
- * problem (HTTP 5xx). Network/4xx errors get the standard exponential delay.
+ * problem (HTTP 5xx). Other `ToncastApiError` statuses (401, 404, …) are not retried.
  *
- * Honours `Retry-After` semantics indirectly via the multiplier — the backend
- * doesn't currently echo the header, but the multiplier gives it room to recover.
+ * For HTTP 429, {@link ToncastRateLimitError.retryAfterMs} is set from the
+ * `Retry-After` header when present (see `HttpClient`); `withRetry` waits that
+ * duration before the next attempt, otherwise exponential delay with jitter.
  */
 export async function withRetry<T>(fn: () => Promise<T>, opts: RetryOptions = {}): Promise<T> {
   const { delayMs = 1000, rateLimitBackoffMultiplier = 3 } = opts;

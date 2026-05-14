@@ -280,6 +280,10 @@ export interface BetSummary {
  *
  * The SDK never signs or broadcasts. Hand the resulting `TxParams[]` /
  * `TonConnectMessage[]` to your wallet bridge of choice.
+ *
+ * @throws `ToncastError` for invalid addresses or disallowed referral combinations;
+ *   `ToncastApiError` (and HTTP subclasses) when REST/STON calls fail; `ToncastValidationError`
+ *   when API responses fail schema checks.
  */
 export class BettingResource {
   private txSdk: ToncastTxSdk | null = null;

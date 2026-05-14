@@ -4,6 +4,8 @@ describe("@toncast/sdk public API", () => {
   it("exports only the intended root contract", async () => {
     const sdk = await import("../src/index");
 
+    expect(sdk).not.toHaveProperty("FetchHttpTransport");
+
     expect(Object.keys(sdk).sort()).toEqual([
       "ALL_CATEGORY_FILTER",
       "DEFAULT_BASE_URL",
@@ -16,7 +18,9 @@ describe("@toncast/sdk public API", () => {
       "ToncastApiError",
       "ToncastClient",
       "ToncastError",
+      "ToncastNotFoundError",
       "ToncastRateLimitError",
+      "ToncastUnauthorizedError",
       "ToncastValidationError",
       "ToncastWsError",
       "createTonClient",

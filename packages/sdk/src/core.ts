@@ -10,6 +10,9 @@ export { ToncastClient } from "./client/ToncastClient";
 export {
   ToncastApiError,
   ToncastError,
+  ToncastNotFoundError,
+  ToncastRateLimitError,
+  ToncastUnauthorizedError,
   ToncastValidationError,
   ToncastWsError,
 } from "./errors";

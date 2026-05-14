@@ -17,6 +17,9 @@ import {
   type ConfirmQuoteParams,
   type Cursor,
   DEFAULT_LANGUAGE,
+  type HttpTransport,
+  type HttpTransportRequest,
+  type HttpTransportResponse,
   type Page,
   type ParisCursor,
   type PricedCoin,
@@ -273,3 +276,16 @@ void userWalletAddress;
 void languages;
 void pagination;
 void _surface;
+
+/** Compile-only: root `HttpTransport` types stay re-exported for custom clients. */
+function customTransportTypes() {
+  const t: HttpTransport = {
+    request: async (_r: HttpTransportRequest): Promise<HttpTransportResponse> => ({
+      status: 200,
+      headers: {},
+      body: null,
+    }),
+  };
+  void t;
+}
+void customTransportTypes;

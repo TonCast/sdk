@@ -34,10 +34,17 @@ export { ToncastClient } from "./client/ToncastClient";
 export {
   ToncastApiError,
   ToncastError,
+  ToncastNotFoundError,
   ToncastRateLimitError,
+  ToncastUnauthorizedError,
   ToncastValidationError,
   ToncastWsError,
 } from "./errors";
+export type {
+  HttpTransport,
+  HttpTransportRequest,
+  HttpTransportResponse,
+} from "./http/transport";
 export {
   DEFAULT_LANGUAGE,
   resolveLanguage,

@@ -17,7 +17,28 @@ Universal, transport-agnostic SDK for the Toncast prediction-market protocol. Re
 
 `ToncastClient` accepts an optional `logger` (`debug`, `warn`, `error`). In production, prefer **warn+** in user-facing builds; reserve `debug` for development. Avoid logging full wallet addresses or PII unless you have a compliance reason and retention policy.
 
-Optional background work (prefetch, warm-up, listener callbacks) never rejects the constructor. Failures are sent to `logger.warn` and, when configured, `onBackgroundError(error, task)`. User-initiated SDK calls still reject with `ToncastError`, `ToncastApiError`, `ToncastRateLimitError`, `ToncastWsError`, or `ToncastValidationError`.
+Optional background work (prefetch, warm-up, listener callbacks) never rejects the constructor. Failures are sent to `logger.warn` and, when configured, `onBackgroundError(error, task)`. User-initiated SDK calls still reject with `ToncastError`, `ToncastApiError`, `ToncastUnauthorizedError`, `ToncastNotFoundError`, `ToncastRateLimitError`, `ToncastWsError`, or `ToncastValidationError`.
+
+---
+
+## Custom HTTP transport
+
+For tests, tracing, or a non-default `fetch` wrapper, pass `transport` into `ToncastClient`. Implement the `HttpTransport` interface; import types from the package root:
+
+```ts
+import { ToncastClient, type HttpTransport } from "@toncast/sdk";
+
+const transport: HttpTransport = {
+  request: async (req) => {
+    // Delegate to `fetch`, a mock, or your HTTP client.
+    return { status: 200, headers: {}, body: [] };
+  },
+};
+
+const client = new ToncastClient({ transport });
+```
+
+`packages/sdk/tsconfig.json` already includes `examples/**/*`; **`npm run typecheck --workspace=@toncast/sdk`** typechecks sources, tests, and examples (nothing is executed).
 
 ---
 

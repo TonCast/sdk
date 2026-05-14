@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { ToncastApiError, ToncastRateLimitError } from "../src";
+import type {
+  ToncastApiError,
+  ToncastNotFoundError,
+  ToncastRateLimitError,
+  ToncastUnauthorizedError,
+} from "../src";
 import { HttpClient } from "../src/http/HttpClient";
 
 const logger = { debug: vi.fn(), warn: vi.fn(), error: vi.fn() };
@@ -73,6 +78,44 @@ describe("HttpClient", () => {
       retryAfterMs: 7000,
       requestId: "req_123",
     } satisfies Partial<ToncastRateLimitError>);
+  });
+
+  it("maps 401 responses to ToncastUnauthorizedError", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401,
+        statusText: "Unauthorized",
+        headers: { "x-request-id": "req_401" },
+      }),
+    );
+
+    const http = new HttpClient(httpOpts({ maxAttempts: 1 }));
+    await expect(http.request({ path: "/secret" })).rejects.toMatchObject({
+      name: "ToncastUnauthorizedError",
+      code: "UNAUTHORIZED",
+      status: 401,
+      endpoint: "/secret",
+      requestId: "req_401",
+    } satisfies Partial<ToncastUnauthorizedError>);
+  });
+
+  it("maps 404 responses to ToncastNotFoundError", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ error: "missing" }), {
+        status: 404,
+        statusText: "Not Found",
+        headers: { "x-request-id": "req_404" },
+      }),
+    );
+
+    const http = new HttpClient(httpOpts({ maxAttempts: 1 }));
+    await expect(http.request({ path: "/gone" })).rejects.toMatchObject({
+      name: "ToncastNotFoundError",
+      code: "NOT_FOUND",
+      status: 404,
+      endpoint: "/gone",
+      requestId: "req_404",
+    } satisfies Partial<ToncastNotFoundError>);
   });
 
   it("preserves request id on generic API errors", async () => {
