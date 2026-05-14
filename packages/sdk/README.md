@@ -17,6 +17,8 @@ Universal, transport-agnostic SDK for the Toncast prediction-market protocol. Re
 
 `ToncastClient` accepts an optional `logger` (`debug`, `warn`, `error`). In production, prefer **warn+** in user-facing builds; reserve `debug` for development. Avoid logging full wallet addresses or PII unless you have a compliance reason and retention policy.
 
+Optional background work (prefetch, warm-up, listener callbacks) never rejects the constructor. Failures are sent to `logger.warn` and, when configured, `onBackgroundError(error, task)`. User-initiated SDK calls still reject with `ToncastError`, `ToncastApiError`, `ToncastRateLimitError`, `ToncastWsError`, or `ToncastValidationError`.
+
 ---
 
 ## Scope
@@ -306,6 +308,86 @@ Every `streamList` / `subscribe` consumer is ref-counted. Unsubscribing the last
 ```ts
 client.paris.dispose();  // all pari/list streams + shared list socket
 client.dispose();        // all SDK-owned live resources and listeners
+```
+
+## Configuration
+
+```ts
+const client = new ToncastClient({
+  baseUrl: "https://toncast.me/api",
+  wsUrl: "wss://toncast.me",
+  language: "en",
+  userAddress,
+  tonClient,
+  referral: { address: integratorWallet, pct: 5 },
+  requestTimeoutMs: 15_000,
+  maxAttempts: 3,
+  retryDelayMs: 1000,
+  prefetch: { categories: true, coins: false, swapMarkets: false },
+  logger: console,
+  onBackgroundError(error, task) {
+    console.warn("Toncast background task failed", task, error);
+  },
+});
+```
+
+All fields except addresses you supply yourself are optional. `new ToncastClient()` is valid for public read-only methods. Personal wallet methods (`coins`, user bets, betting quotes) require `userAddress` and, for coin pricing / jetton flows, a `tonClient`.
+
+## Transport
+
+REST calls use a small fetch-based transport by default. Advanced integrations can inject a custom transport for tests, tracing, SSR adapters, request signing at an edge proxy, or non-standard fetch policies:
+
+```ts
+import { ToncastClient, type ToncastClientOptions } from "@toncast/sdk";
+
+const transport: NonNullable<ToncastClientOptions["transport"]> = {
+  async request(req) {
+    const started = performance.now();
+    try {
+      const res = await fetch(req.url, {
+        method: req.method,
+        headers: req.headers,
+        body: req.body === undefined ? undefined : JSON.stringify(req.body),
+        signal: req.signal,
+      });
+      return {
+        status: res.status,
+        statusText: res.statusText,
+        headers: Object.fromEntries(res.headers.entries()),
+        body: await res.json().catch(() => null),
+      };
+    } finally {
+      console.debug("toncast request ms", performance.now() - started);
+    }
+  },
+};
+
+const client = new ToncastClient({ transport });
+```
+
+## Errors
+
+All SDK-owned failures inherit from `ToncastError` and are safe to surface in UI or telemetry:
+
+- `ToncastApiError` — REST non-2xx response. Includes `status`, `endpoint`, optional `requestId`.
+- `ToncastRateLimitError` — HTTP 429. Includes `retryAfterMs` when the API sends `Retry-After`.
+- `ToncastWsError` — WebSocket transport or protocol failure.
+- `ToncastValidationError` — backend response failed the SDK's zod contract.
+
+```ts
+import { ToncastError, ToncastRateLimitError } from "@toncast/sdk";
+
+try {
+  await client.paris.get(pariId);
+} catch (err) {
+  if (err instanceof ToncastRateLimitError) {
+    showRetryAfter(err.retryAfterMs);
+  } else if (err instanceof ToncastError) {
+    showSdkError(err.message);
+  } else {
+    throw err;
+  }
+}
 ```
 
 ## Preparing a bet
@@ -715,7 +797,7 @@ TONCAST_FINANCIAL_RISK_ACK=1 USER_ADDRESS=... npx tsx scripts/smoke-bet-1usdt.ts
 - Never hardcode or invent `userAddress`, `senderAddress`, or `beneficiary`; read them from the connected wallet or verified server config.
 - Require explicit developer/user acknowledgement before returning signable bet transactions (`financialRiskAcknowledged: true`).
 - For jetton-funded bets, always run `quote*Bet` through `confirmQuote` immediately before signing; this is where fresh STON.fi simulation catches slippage drift.
-- Surface `ToncastError`, `ToncastApiError`, and `ToncastWsError` to the caller/UI. Do not turn them into silent empty states.
+- Surface `ToncastError`, `ToncastApiError`, `ToncastRateLimitError`, `ToncastWsError`, and `ToncastValidationError` to the caller/UI. Do not turn them into silent empty states.
 - Mainnet smoke-test production integrations with minimal amounts before increasing limits.
 - Call `client.dispose()` / stream `.dispose()` during widget unmounts, server shutdown, and tests.
 
