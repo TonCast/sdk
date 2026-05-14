@@ -53,28 +53,28 @@ export const PARIS_FEEDS = [
 
 export interface ListParisParams {
   /** Which mutually-exclusive feed to return. Default: `"active"`. */
-  feed?: ParisFeed;
+  feed?: ParisFeed | undefined;
   /** Filter by category id (see `client.categories.list()`). */
-  categoryId?: number;
+  categoryId?: number | undefined;
   /** Free-text search query, ≤ 100 characters. */
-  search?: string;
+  search?: string | undefined;
   /** Page size. Default 20, max 50 (enforced by backend). */
-  limit?: number;
+  limit?: number | undefined;
   /**
    * Opaque cursor returned in the previous `Page.nextCursor`. Pass through unchanged.
    * The resource splits the `{sortValue, address}` shape into the
    * `cursorSortValue` / `cursorAddress` query params expected by the API.
    */
-  cursor?: ParisCursor | null;
-  signal?: AbortSignal;
+  cursor?: ParisCursor | null | undefined;
+  signal?: AbortSignal | undefined;
 }
 
 export interface CoefficientHistoryParams {
   /** Number of points to return. Default 100 (per backend). */
-  limit?: number;
+  limit?: number | undefined;
   /** Time window. Default `"ALL"`. */
-  timeframe?: CoefficientHistoryTimeframe;
-  signal?: AbortSignal;
+  timeframe?: CoefficientHistoryTimeframe | undefined;
+  signal?: AbortSignal | undefined;
 }
 
 const ParisPageSchema = envelopeSchema(PariSchema);

@@ -3,12 +3,12 @@ export interface HttpTransportRequest {
   url: string;
   headers: Record<string, string>;
   body?: unknown;
-  signal?: AbortSignal;
+  signal?: AbortSignal | undefined;
 }
 
 export interface HttpTransportResponse {
   status: number;
-  statusText?: string;
+  statusText?: string | undefined;
   headers: Record<string, string>;
   body: unknown;
 }
@@ -19,12 +19,13 @@ export interface HttpTransport {
 
 export class FetchHttpTransport implements HttpTransport {
   async request(req: HttpTransportRequest): Promise<HttpTransportResponse> {
-    const response = await fetch(req.url, {
+    const init: RequestInit = {
       method: req.method,
       headers: req.headers,
-      body: req.body === undefined ? undefined : JSON.stringify(req.body),
-      signal: req.signal,
-    });
+    };
+    if (req.body !== undefined) init.body = JSON.stringify(req.body);
+    if (req.signal) init.signal = req.signal;
+    const response = await fetch(req.url, init);
     const text = await response.text().catch(() => "");
     return {
       status: response.status,

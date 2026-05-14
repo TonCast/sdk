@@ -17,7 +17,7 @@ export interface HttpClientOptions {
   /** Per-request timeout in ms. Set 0 to disable. */
   requestTimeoutMs: number;
   /** Advanced override for tests, tracing, SSR adapters, or custom fetch policies. */
-  transport?: HttpTransport;
+  transport?: HttpTransport | undefined;
 }
 
 export interface RequestOptions<T> {
@@ -27,7 +27,7 @@ export interface RequestOptions<T> {
   query?: Record<string, string | number | boolean | object | undefined | null>;
   body?: unknown;
   schema?: z.ZodType<T>;
-  signal?: AbortSignal;
+  signal?: AbortSignal | undefined;
 }
 
 /** Minimal fetch wrapper with retry, optional zod validation, and Toncast-aware error mapping. */
@@ -46,21 +46,22 @@ export class HttpClient {
       const init: RequestInit = {
         method: req.method ?? "GET",
         headers: this.buildHeaders(hasBody),
-        signal: timeout.signal,
       };
+      if (timeout.signal) init.signal = timeout.signal;
       if (hasBody) {
         init.body = JSON.stringify(req.body);
       }
 
       return await withRetry(
         async () => {
-          const res = await this.transport.request({
+          const transportReq = {
             method: (req.method ?? "GET") as "GET" | "POST" | "PUT" | "DELETE",
             url,
             headers: init.headers as Record<string, string>,
-            body: req.body,
-            signal: timeout.signal,
-          });
+          };
+          if (hasBody) Object.assign(transportReq, { body: req.body });
+          if (timeout.signal) Object.assign(transportReq, { signal: timeout.signal });
+          const res = await this.transport.request(transportReq);
           if (res.status < 200 || res.status >= 300) {
             const detail = extractErrorDetail(res.body);
             const message = `HTTP ${res.status} ${res.statusText ?? ""}: ${detail}`;
@@ -89,7 +90,7 @@ export class HttpClient {
         {
           maxAttempts: this.opts.maxAttempts,
           delayMs: this.opts.retryDelayMs,
-          signal: timeout.signal,
+          ...(timeout.signal ? { signal: timeout.signal } : {}),
         },
       );
     } finally {
@@ -157,7 +158,7 @@ function createTimeoutSignal(
   parent: AbortSignal | undefined,
   timeoutMs: number,
 ): { signal?: AbortSignal; cleanup: () => void } {
-  if (!parent && timeoutMs <= 0) return { signal: undefined, cleanup: () => {} };
+  if (!parent && timeoutMs <= 0) return { cleanup: () => {} };
   const controller = new AbortController();
   let done = false;
 

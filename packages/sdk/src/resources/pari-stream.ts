@@ -9,9 +9,9 @@ import type { CoefficientHistoryParams, ParisResource } from "./paris";
 
 export interface SubscribePariParams {
   /** Initial coefficient-history fetch params. Defaults: `limit=100, timeframe="ALL"`. */
-  coefficientHistory?: CoefficientHistoryParams;
+  coefficientHistory?: CoefficientHistoryParams | undefined;
   /** Polling tick when WS is unreachable (ms). Default 5000. */
-  pollIntervalMs?: number;
+  pollIntervalMs?: number | undefined;
 }
 
 /**

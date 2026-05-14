@@ -20,7 +20,7 @@ async function main() {
   const beneficiary = requireEnv("RECIPIENT_ADDRESS");
   const tonClient = new TonClient({
     endpoint: process.env.TON_ENDPOINT ?? "https://toncenter.com/api/v2/jsonRPC",
-    apiKey: process.env.TONCENTER_API_KEY,
+    ...(process.env.TONCENTER_API_KEY ? { apiKey: process.env.TONCENTER_API_KEY } : {}),
   });
 
   const client = new ToncastClient({

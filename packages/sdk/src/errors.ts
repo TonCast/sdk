@@ -19,14 +19,14 @@ export class ToncastError extends Error {
 }
 
 export interface ToncastApiErrorOptions {
-  requestId?: string;
+  requestId?: string | undefined;
   cause?: unknown;
-  code?: string;
+  code?: string | undefined;
 }
 
 /** HTTP-layer failure: non-2xx response from the Toncast REST API. */
 export class ToncastApiError extends ToncastError {
-  readonly requestId?: string;
+  readonly requestId: string | undefined;
 
   constructor(
     message: string,

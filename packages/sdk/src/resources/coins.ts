@@ -5,13 +5,13 @@ import { ToncastError } from "../errors";
 import { discoverJettons, type JettonDiscoveryOptions } from "../wallet/jetton-discovery";
 
 export interface CoinsResourceDeps {
-  tonClient?: TonClient;
+  tonClient?: TonClient | undefined;
   logger: Logger;
   getUserAddress: () => string | undefined;
   /** Advanced override for jetton discovery providers — see `JettonDiscoveryOptions`. */
-  jettonDiscovery?: JettonDiscoveryOptions;
+  jettonDiscovery?: JettonDiscoveryOptions | undefined;
   /** Cache TTL in ms. Default 5 minutes. Pass `0` or `Infinity` to disable expiry. */
-  cacheTtlMs?: number;
+  cacheTtlMs?: number | undefined;
 }
 
 /**
@@ -26,15 +26,15 @@ export interface AvailableCoin {
 }
 
 export interface ListCoinsParams {
-  userAddress?: string;
-  signal?: AbortSignal;
+  userAddress?: string | undefined;
+  signal?: AbortSignal | undefined;
   /** Per-call override for jetton discovery providers (overrides client-level). */
-  jettonDiscovery?: JettonDiscoveryOptions;
+  jettonDiscovery?: JettonDiscoveryOptions | undefined;
   /**
    * Skip the cache for THIS call only (forces a fresh fetch). The result still
    * lands in cache for subsequent calls. Equivalent to `refresh()` but per-shot.
    */
-  noCache?: boolean;
+  noCache?: boolean | undefined;
 }
 
 interface CacheEntry {
@@ -110,12 +110,13 @@ export class CoinsResource {
       ]);
       const coins: AvailableCoin[] = [{ address: TON_ADDRESS, amount: tonBalance }];
       for (const j of jettons) {
-        coins.push({
+        const coin: AvailableCoin = {
           address: j.address,
           amount: j.amount,
-          symbol: j.symbol,
-          decimals: j.decimals,
-        });
+        };
+        if (j.symbol !== undefined) coin.symbol = j.symbol;
+        if (j.decimals !== undefined) coin.decimals = j.decimals;
+        coins.push(coin);
       }
       this.cache.set(key, { coins, fetchedAt: Date.now() });
       return coins;

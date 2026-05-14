@@ -97,16 +97,16 @@ export interface BettingResourceDeps {
   getUserAddress: () => string | undefined;
   /** Per-call resolver for the SDK-level referral default. */
   getReferral: () => ReferralConfig | undefined;
-  tonClient?: TonClient;
-  logger?: Logger;
+  tonClient?: TonClient | undefined;
+  logger?: Logger | undefined;
 }
 
 /** Convenience wrapper for tx-sdk's `priceCoins`. */
 export interface PriceCoinsOptions {
   /** Override the auto-fetched coin list. */
-  availableCoins?: AvailableCoin[];
-  slippage?: string;
-  walletReserve?: bigint;
+  availableCoins?: AvailableCoin[] | undefined;
+  slippage?: string | undefined;
+  walletReserve?: bigint | undefined;
 }
 
 export interface QuoteCommon {
@@ -117,7 +117,7 @@ export interface QuoteCommon {
    * Wallet that **owns the resulting tickets** (receives payout on win).
    * Defaults to `client.userAddress` — you bet for yourself.
    */
-  beneficiary?: string;
+  beneficiary?: string | undefined;
   /**
    * Wallet that **signs and funds** the transaction (the TonConnect-bound wallet).
    * Defaults to `client.userAddress`.
@@ -127,25 +127,25 @@ export interface QuoteCommon {
    * jetton-wallet to pull tokens from using this address — wrong value
    * means the swap fails at the first hop.
    */
-  senderAddress?: string;
+  senderAddress?: string | undefined;
   /**
    * Optional address that earns `referralPct` of winnings.
    * - Must be non-null when `referralPct > 0`.
    * - Must NOT equal `beneficiary` (enforced by tx-sdk).
    * - May equal `senderAddress` (agent self-refers).
    */
-  referral?: string | null;
+  referral?: string | null | undefined;
   /** Referral share, 0..7 (validated on-chain as uint3). Default 0. */
-  referralPct?: number;
-  slippage?: string;
-  walletReserve?: bigint;
-  pricedCoins?: PricedCoin[];
-  allowInsufficientBalance?: boolean;
+  referralPct?: number | undefined;
+  slippage?: string | undefined;
+  walletReserve?: bigint | undefined;
+  pricedCoins?: PricedCoin[] | undefined;
+  allowInsufficientBalance?: boolean | undefined;
   /**
    * Required before `confirmQuote` can return signable transactions. Put this
    * on quote params when you want `confirmQuote(quote)` auto-tracking to work.
    */
-  financialRiskAcknowledged?: true;
+  financialRiskAcknowledged?: true | undefined;
 }
 
 export type ConfirmQuoteParams = QuoteCommon & {
@@ -160,13 +160,13 @@ export interface QuoteFixedBetParams extends QuoteCommon {
    * Providing it avoids an extra round-trip when the caller already has
    * `summary.oddsState` in hand.
    */
-  oddsState?: OddsState;
+  oddsState?: OddsState | undefined;
 }
 
 export interface QuoteLimitBetParams extends QuoteCommon {
   worstYesOdds: number;
   ticketsCount: number;
-  oddsState?: OddsState;
+  oddsState?: OddsState | undefined;
 }
 
 /**
@@ -183,7 +183,7 @@ export interface QuoteLimitBetParams extends QuoteCommon {
  *   internally) — never opens a new ask in the book.
  */
 export type QuoteMarketBetParams = QuoteCommon & {
-  oddsState?: OddsState;
+  oddsState?: OddsState | undefined;
 } & (
     | {
         /** Spend up to this much TON across matched legs. Mutually exclusive with `marketTickets`. */
@@ -222,7 +222,7 @@ export interface MarketCapacity {
 export interface CoinCapacity {
   source: AvailableCoin;
   feasible: boolean;
-  reason?: string;
+  reason?: string | undefined;
   /**
    * Smallest possible bet via this coin in nano-TON.
    * = ticketCost(yesOdds=2) + PARI_EXECUTION_FEE = 0.02 + 0.1 = 0.12 TON.
@@ -230,7 +230,7 @@ export interface CoinCapacity {
   minBetTon: bigint;
   /** Largest possible bet via this coin in nano-TON (after wallet reserve / swap gas). */
   maxBetTon: bigint;
-  route?: PricedCoin["route"];
+  route?: PricedCoin["route"] | undefined;
 }
 
 export interface BetSummary {
@@ -335,7 +335,7 @@ export class BettingResource {
           : undefined,
       );
       this.txSdk = new ToncastTxSdk({
-        tonClient: this.deps.tonClient,
+        ...(this.deps.tonClient ? { tonClient: this.deps.tonClient } : {}),
         apiClient: this.cachedApi,
         // /v1/markets is a ~40K-row pair list that almost never changes
         // (new pools appear maybe a few times a day). The default 5-min
@@ -371,8 +371,8 @@ export class BettingResource {
     }
     return txSdk.priceCoins({
       availableCoins,
-      slippage: opts.slippage,
-      walletReserve: opts.walletReserve,
+      ...(opts.slippage !== undefined ? { slippage: opts.slippage } : {}),
+      ...(opts.walletReserve !== undefined ? { walletReserve: opts.walletReserve } : {}),
     });
   }
 
@@ -389,7 +389,9 @@ export class BettingResource {
     // De-dupe parallel callers — route discovery may fetch a large STON.fi
     // markets snapshot, so duplicated warm-ups waste bandwidth and CPU.
     if (this.inflightSwapMarkets) return this.inflightSwapMarkets;
-    this.inflightSwapMarkets = this.priceCoins({ availableCoins })
+    this.inflightSwapMarkets = this.priceCoins({
+      ...(availableCoins !== undefined ? { availableCoins } : {}),
+    })
       .then(() => undefined)
       .catch((err) => {
         // First real `priceCoins()` will retry and surface through the normal path.
@@ -825,19 +827,22 @@ export class BettingResource {
     const walletReserve = opts.walletReserve ?? DEFAULT_WALLET_RESERVE;
     // Smallest single-ticket bet: yesOdds=2, isYes=true → 0.02 TON ticket + 0.1 TON Pari fee.
     const minBetTon = ticketCost(2, true) + PARI_EXECUTION_FEE;
-    const capacities: CoinCapacity[] = pricedCoins.map((coin) => ({
-      source: {
+    const capacities: CoinCapacity[] = pricedCoins.map((coin) => {
+      const source: AvailableCoin = {
         address: coin.address,
         amount: coin.amount,
-        symbol: coin.symbol,
-        decimals: coin.decimals,
-      },
-      feasible: coin.viable,
-      reason: coin.reason,
-      minBetTon,
-      maxBetTon: coin.viable ? availableForBet(coin, walletReserve) : 0n,
-      route: coin.route,
-    }));
+      };
+      if (coin.symbol !== undefined) source.symbol = coin.symbol;
+      if (coin.decimals !== undefined) source.decimals = coin.decimals;
+      return {
+        source,
+        feasible: coin.viable,
+        reason: coin.reason,
+        minBetTon,
+        maxBetTon: coin.viable ? availableForBet(coin, walletReserve) : 0n,
+        route: coin.route,
+      };
+    });
     return {
       pari,
       oddsState,
@@ -870,7 +875,10 @@ export class BettingResource {
       "quote",
     );
     const pricedCoins =
-      params.pricedCoins ?? (await this.priceCoins({ slippage: params.slippage }));
+      params.pricedCoins ??
+      (await this.priceCoins({
+        ...(params.slippage !== undefined ? { slippage: params.slippage } : {}),
+      }));
     return {
       pariAddress: parseTonAddress(params.pariId, "pariId"),
       beneficiary,
@@ -880,9 +888,11 @@ export class BettingResource {
       referralPct,
       source: params.source,
       pricedCoins,
-      slippage: params.slippage,
-      walletReserve: params.walletReserve,
-      allowInsufficientBalance: params.allowInsufficientBalance,
+      ...(params.slippage !== undefined ? { slippage: params.slippage } : {}),
+      ...(params.walletReserve !== undefined ? { walletReserve: params.walletReserve } : {}),
+      ...(params.allowInsufficientBalance !== undefined
+        ? { allowInsufficientBalance: params.allowInsufficientBalance }
+        : {}),
     };
   }
 
@@ -946,11 +956,12 @@ export class BettingResource {
  * without going through the standard `quoteXxx → confirmQuote` flow.
  */
 export function toTonConnectMessage(tx: TxParams): TonConnectMessage {
-  return {
+  const message: TonConnectMessage = {
     address: tx.to.toString(),
     amount: tx.value.toString(),
-    payload: tx.body ? tx.body.toBoc().toString("base64") : undefined,
   };
+  if (tx.body) message.payload = tx.body.toBoc().toString("base64");
+  return message;
 }
 
 /**

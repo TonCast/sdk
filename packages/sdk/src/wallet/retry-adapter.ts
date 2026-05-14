@@ -15,12 +15,12 @@ import type { Logger } from "../client/config";
  */
 export interface RetryAdapterOptions {
   /** Total attempts including the first. Default 5. */
-  maxAttempts?: number;
+  maxAttempts?: number | undefined;
   /** Base delay between retries in ms (doubled per attempt). Default 1000. */
-  baseDelayMs?: number;
+  baseDelayMs?: number | undefined;
   /** Cap on the per-retry delay (ms). Default 15_000. */
-  maxDelayMs?: number;
-  logger?: Logger;
+  maxDelayMs?: number | undefined;
+  logger?: Logger | undefined;
 }
 
 const RETRYABLE_STATUSES = new Set([408, 425, 429, 500, 502, 503, 504]);

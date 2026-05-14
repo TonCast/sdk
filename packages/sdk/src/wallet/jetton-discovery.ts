@@ -38,7 +38,7 @@ export interface JettonDiscoveryOptions {
    * Override the toncenter v3 endpoint (and optionally its API key).
    * If set, takes precedence over the auto-derived value from `tonClient`.
    */
-  toncenter?: { endpoint: string; apiKey?: string };
+  toncenter?: { endpoint: string; apiKey?: string | undefined } | undefined;
 }
 
 /**
@@ -59,7 +59,7 @@ export async function discoverJettons(
   ownerAddress: string,
   tonClient: TonClient | undefined,
   logger: Logger,
-  signal?: AbortSignal,
+  signal?: AbortSignal | undefined,
   opts: JettonDiscoveryOptions = {},
 ): Promise<DiscoveredJetton[]> {
   const toncenter = opts.toncenter ?? deriveToncenterV3(tonClient);
@@ -87,7 +87,7 @@ export async function discoverJettons(
  */
 function deriveToncenterV3(
   tonClient: TonClient | undefined,
-): { endpoint: string; apiKey?: string } | null {
+): { endpoint: string; apiKey?: string | undefined } | null {
   if (!tonClient) return null;
   const endpoint = tonClient.parameters.endpoint;
   const v2Match = /\/api\/v2\/jsonRPC\/?$/i;
@@ -95,7 +95,7 @@ function deriveToncenterV3(
   const v3 = endpoint.replace(v2Match, "/api/v3");
   const apiKey = (tonClient as unknown as { api?: { parameters?: { apiKey?: string } } }).api
     ?.parameters?.apiKey;
-  return { endpoint: v3, apiKey };
+  return apiKey === undefined ? { endpoint: v3 } : { endpoint: v3, apiKey };
 }
 
 const ToncenterV3JettonWallet = z
@@ -135,8 +135,8 @@ const ToncenterV3JettonsResponse = z
 
 async function discoverViaToncenterV3(
   ownerAddress: string,
-  opts: { endpoint: string; apiKey?: string },
-  signal?: AbortSignal,
+  opts: { endpoint: string; apiKey?: string | undefined },
+  signal?: AbortSignal | undefined,
 ): Promise<DiscoveredJetton[]> {
   const url = new URL(`${opts.endpoint.replace(/\/+$/, "")}/jetton/wallets`);
   url.searchParams.set("owner_address", ownerAddress);
@@ -151,7 +151,9 @@ async function discoverViaToncenterV3(
   // the whole `coins.list` call.
   const json = await withRetry(
     async () => {
-      const res = await fetch(url, { headers, signal });
+      const init: RequestInit = { headers };
+      if (signal) init.signal = signal;
+      const res = await fetch(url, init);
       if (!res.ok) {
         const body = await res.text().catch(() => "");
         throw new ToncastApiError(
@@ -183,13 +185,14 @@ async function discoverViaToncenterV3(
     }
     if (amount <= 0n) continue;
     const tokenInfo = meta[w.jetton]?.token_info?.[0];
-    out.push({
+    const jetton: DiscoveredJetton = {
       address: w.jetton,
       amount,
-      symbol: tokenInfo?.symbol,
       // TEP-74 spec default: 9 if master didn't publish `decimals`.
       decimals: extractDecimals(tokenInfo?.extra) ?? TEP74_DEFAULT_DECIMALS,
-    });
+    };
+    if (tokenInfo?.symbol !== undefined) jetton.symbol = tokenInfo.symbol;
+    out.push(jetton);
   }
   return out;
 }

@@ -8,7 +8,7 @@ export interface RetryOptions {
   /** Multiplier on top of `delayMs` when the previous failure was 429 / 5xx. Default 3. */
   rateLimitBackoffMultiplier?: number;
   /** Optional cancellation signal for retry sleeps. */
-  signal?: AbortSignal;
+  signal?: AbortSignal | undefined;
 }
 
 /**
