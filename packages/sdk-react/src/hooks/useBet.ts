@@ -9,19 +9,19 @@ import {
   TON_ADDRESS,
 } from "@toncast/sdk";
 import {
-  fixedTicketsForBudget,
-  sameSideMedianYesOdds,
-  sliderPositionToYesOdds,
-  stepOdds,
-  yesOddsToSliderPosition,
-} from "@toncast/sdk/core";
-import {
   type BetOptionFailureReason,
   type BreakdownTotals,
   ODDS_MAX,
   ODDS_MIN,
   ODDS_STEP,
 } from "@toncast/sdk/betting";
+import {
+  fixedTicketsForBudget,
+  sameSideMedianYesOdds,
+  sliderPositionToYesOdds,
+  stepOdds,
+  yesOddsToSliderPosition,
+} from "@toncast/sdk/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useToncastClient } from "../client/useToncastClient";
 import {

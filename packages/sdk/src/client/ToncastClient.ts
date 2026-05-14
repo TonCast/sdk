@@ -15,8 +15,8 @@ import {
   type PrefetchConfig,
   type ReferralConfig,
   resolveWsUrlFromApiBaseUrl,
-  type ToncastBackgroundTask,
   type TonClient,
+  type ToncastBackgroundTask,
   type ToncastClientOptions,
 } from "./config";
 

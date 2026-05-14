@@ -25,8 +25,8 @@ export {
   ODDS_MIN,
   ODDS_STEP,
   PARI_EXECUTION_FEE,
-  ticketCost,
   TonClient,
+  ticketCost,
   yesOddsToDecimalOdds,
   yesOddsToProbabilityPct,
 } from "@toncast/tx-sdk";

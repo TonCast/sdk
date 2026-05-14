@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ToncastApiError, ToncastRateLimitError } from "../src";
+import type { ToncastApiError, ToncastRateLimitError } from "../src";
 import { HttpClient } from "../src/http/HttpClient";
 
 const logger = { debug: vi.fn(), warn: vi.fn(), error: vi.fn() };
