@@ -61,6 +61,7 @@ export class ToncastClient {
       maxAttempts: options.maxAttempts ?? 3,
       retryDelayMs: options.retryDelayMs ?? 1000,
       requestTimeoutMs: options.requestTimeoutMs ?? 15_000,
+      transport: options.transport,
     });
 
     const getUserAddress = (): string | undefined => this.userAddress;

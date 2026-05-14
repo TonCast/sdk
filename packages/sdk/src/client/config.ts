@@ -1,4 +1,5 @@
 import type { Client as TonClient } from "@ston-fi/sdk";
+import type { HttpTransport } from "../http/transport";
 import type { JettonDiscoveryOptions } from "../wallet/jetton-discovery";
 
 /**
@@ -109,6 +110,8 @@ export interface ToncastClientOptions {
   persistLanguage?: boolean | string;
   /** Optional logger. Defaults to no-op. */
   logger?: Logger;
+  /** Advanced: replace REST transport for tests, SSR adapters, tracing, or custom fetch policies. */
+  transport?: HttpTransport;
   /** Total HTTP attempts (1 initial + N-1 retries) per request. Default 3. */
   maxAttempts?: number;
   /** Base delay between retries in ms (doubled per attempt). Default 1000. */

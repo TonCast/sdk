@@ -3,6 +3,7 @@ import type { Logger } from "../client/config";
 import { ToncastApiError, ToncastValidationError } from "../errors";
 import type { SupportedLanguage } from "../i18n/languages";
 import { withRetry } from "../utils/retry";
+import { FetchHttpTransport, type HttpTransport } from "./transport";
 
 export interface HttpClientOptions {
   baseUrl: string;
@@ -15,6 +16,8 @@ export interface HttpClientOptions {
   retryDelayMs: number;
   /** Per-request timeout in ms. Set 0 to disable. */
   requestTimeoutMs: number;
+  /** Advanced override for tests, tracing, SSR adapters, or custom fetch policies. */
+  transport?: HttpTransport;
 }
 
 export interface RequestOptions<T> {
@@ -29,7 +32,11 @@ export interface RequestOptions<T> {
 
 /** Minimal fetch wrapper with retry, optional zod validation, and Toncast-aware error mapping. */
 export class HttpClient {
-  constructor(private readonly opts: HttpClientOptions) {}
+  private readonly transport: HttpTransport;
+
+  constructor(private readonly opts: HttpClientOptions) {
+    this.transport = opts.transport ?? new FetchHttpTransport();
+  }
 
   async request<T>(req: RequestOptions<T>): Promise<T> {
     const url = this.buildUrl(req.path, req.query);
@@ -47,23 +54,22 @@ export class HttpClient {
 
       return await withRetry(
         async () => {
-          const res = await fetch(url, init);
-          if (!res.ok) {
-            const text = await res.text().catch(() => "");
-            let detail = text;
-            try {
-              const parsed = JSON.parse(text) as { error?: unknown };
-              if (typeof parsed?.error === "string") detail = parsed.error;
-            } catch {
-              // body wasn't JSON — keep raw text
-            }
+          const res = await this.transport.request({
+            method: (req.method ?? "GET") as "GET" | "POST" | "PUT" | "DELETE",
+            url,
+            headers: init.headers as Record<string, string>,
+            body: req.body,
+            signal: timeout.signal,
+          });
+          if (res.status < 200 || res.status >= 300) {
+            const detail = extractErrorDetail(res.body);
             throw new ToncastApiError(
-              `HTTP ${res.status} ${res.statusText}: ${detail}`,
+              `HTTP ${res.status} ${res.statusText ?? ""}: ${detail}`,
               res.status,
               req.path,
             );
           }
-          const data = (await res.json()) as unknown;
+          const data = res.body;
           if (!req.schema) return data as T;
           const parsed = req.schema.safeParse(data);
           if (!parsed.success) {
@@ -112,6 +118,15 @@ export class HttpClient {
     if (hasBody) headers["content-type"] = "application/json";
     return headers;
   }
+}
+
+function extractErrorDetail(body: unknown): string {
+  if (typeof body === "string") return body;
+  if (body && typeof body === "object" && "error" in body) {
+    const error = (body as { error?: unknown }).error;
+    if (typeof error === "string") return error;
+  }
+  return body == null ? "" : JSON.stringify(body);
 }
 
 function createTimeoutSignal(
