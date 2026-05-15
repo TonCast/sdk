@@ -307,13 +307,14 @@ describe("widget export snippets", () => {
     );
     expect(html).toMatch(/body \{[\s\S]*height: 100%;/);
     expect(html).toMatch(
-      /body \{[\s\S]*padding: env\(safe-area-inset-top, 0px\)/,
+      /padding: env\(safe-area-inset-top, 0px\) 0 env\(safe-area-inset-bottom, 0px\) 0;/,
     );
     expect(html).toMatch(/body \{[\s\S]*display: flex;/);
     expect(html).toMatch(/body \{[\s\S]*flex-direction: column;/);
     expect(html).toMatch(
-      /#toncast-widget \{[\s\S]*flex: 1 1 auto;[\s\S]*min-height: 0;[\s\S]*width: 100%;/,
+      /#toncast-widget \{[\s\S]*flex: 1 1 auto;[\s\S]*min-height: 0;[\s\S]*width: 100%;[\s\S]*--tc-shell-radius: 0;/,
     );
+    expect(html).toContain("--tc-content-padding: 0");
     expect(html).not.toContain("padding: 16px;");
     expect(html).not.toContain("@media (max-width: 640px)");
   });

@@ -98,11 +98,11 @@ describe("ToncastWidget lifecycle", () => {
     w.unmount();
   });
 
-  it("does NOT inject inline <style> when host already provides the CDN stylesheet link", () => {
+  it("does NOT inject inline <style> when host stylesheet link has a parsed sheet", () => {
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.setAttribute("data-toncast-widget-css", "");
-    link.setAttribute("data-toncast-widget-css-loaded", "true");
+    Object.defineProperty(link, "sheet", { value: {}, configurable: true });
     document.head.appendChild(link);
 
     const w = new ToncastWidget(baseConfig);
@@ -110,6 +110,22 @@ describe("ToncastWidget lifecycle", () => {
     w.mount(c);
 
     expect(document.getElementById(STYLE_ID)).toBeNull();
+    w.unmount();
+    link.remove();
+  });
+
+  it("injects inline <style> when host link exists but stylesheet did not load (no sheet)", () => {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "/missing-iife.css";
+    link.setAttribute("data-toncast-widget-css", "");
+    document.head.appendChild(link);
+
+    const w = new ToncastWidget(baseConfig);
+    const c = makeContainer();
+    w.mount(c);
+
+    expect(document.getElementById(STYLE_ID)).not.toBeNull();
     w.unmount();
     link.remove();
   });

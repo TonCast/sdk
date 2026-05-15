@@ -318,7 +318,7 @@ export function buildIndexHtml(config: ConstructorConfig): string {
     buildHostShellBackdropCss(config);
 
   const iifeCssLink =
-    '\n    <link rel="stylesheet" href="index.iife.css" data-toncast-widget-css data-toncast-widget-css-loaded="true" />';
+    '\n    <link rel="stylesheet" href="index.iife.css" data-toncast-widget-css />';
   const cssLink = `${iifeCssLink}${css ? `\n    <link rel="stylesheet" href="style.css" />` : ""}`;
 
   return `<!DOCTYPE html>
@@ -340,8 +340,8 @@ export function buildIndexHtml(config: ConstructorConfig): string {
         margin: 0;
         box-sizing: border-box;
         height: 100%;
-        padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
-          env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+        /* Horizontal safe-area omitted so the widget can span edge-to-edge like a normal page. */
+        padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px) 0;
         display: flex;
         flex-direction: column;
         background: ${bodyBackground};
@@ -350,6 +350,9 @@ export function buildIndexHtml(config: ConstructorConfig): string {
         flex: 1 1 auto;
         min-height: 0;
         width: 100%;
+        --tc-shell-radius: 0;
+        --tc-shell-border: none;
+        --tc-content-padding: 0;
       }
     </style>
   </head>

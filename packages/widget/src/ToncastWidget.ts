@@ -10,7 +10,6 @@ const STYLE_ID = "toncast-widget-styles";
 
 /** Present on `<link rel="stylesheet">` when layout CSS is supplied by the host ZIP/page. */
 const CDN_STYLESHEET_ATTR = "data-toncast-widget-css";
-const CDN_STYLESHEET_LOADED_ATTR = "data-toncast-widget-css-loaded";
 
 /**
  * Derive a version tag from the CSS content so the injected <style> tag is
@@ -32,10 +31,11 @@ function injectStyles(): void {
   const cdnStylesheet = document.querySelector<HTMLLinkElement>(
     `link[rel="stylesheet"][${CDN_STYLESHEET_ATTR}]`,
   );
-  if (
-    cdnStylesheet &&
-    (cdnStylesheet.getAttribute(CDN_STYLESHEET_LOADED_ATTR) === "true" || cdnStylesheet.sheet)
-  ) {
+  /** Skip embedding only when the linked stylesheet actually parsed (`sheet` set).
+   * Host pages (e.g. ZIP export) should keep a blocking `<link href="…">` before scripts.
+   * Do **not** rely on `data-toncast-widget-css-loaded` alone — if `href` 404s, `sheet` stays null
+   * and we fall back to CSS bundled in the IIFE (fixes bare HTML deploys without `index.iife.css`). */
+  if (cdnStylesheet?.sheet) {
     return;
   }
   const existing = document.getElementById(STYLE_ID);

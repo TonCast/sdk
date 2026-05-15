@@ -23,6 +23,9 @@
   --tc-fg-muted: #64748b;
   --tc-border: #e2e8f0;
   --tc-radius: 12px;
+  /* Shell frame: override to radius 0 + border none for full-viewport host pages. */
+  --tc-shell-radius: var(--tc-radius);
+  --tc-shell-border: 1px solid var(--tc-border);
   --tc-success: #16a34a;
   --tc-success-fg: #15803d;
   --tc-success-bg: rgba(22, 163, 74, 0.1);

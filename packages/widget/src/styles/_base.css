@@ -5,9 +5,9 @@
   height: 100%;
   min-height: min(460px, 100dvh);
   background: var(--tc-bg);
-  border-radius: var(--tc-radius);
+  border-radius: var(--tc-shell-radius);
   overflow: hidden;
-  border: 1px solid var(--tc-border);
+  border: var(--tc-shell-border);
   max-width: 100%;
 }
 
