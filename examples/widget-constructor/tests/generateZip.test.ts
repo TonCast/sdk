@@ -303,13 +303,16 @@ describe("widget export snippets", () => {
     );
     expect(html).toContain("color-scheme: dark");
     expect(html).toMatch(
-      /html \{[\s\S]*min-height: 100vh;[\s\S]*min-height: 100svh;[\s\S]*min-height: 100dvh;[\s\S]*overflow-x: hidden;/,
+      /html \{[\s\S]*height: 100%;[\s\S]*min-height: 100vh;[\s\S]*min-height: 100dvh;/,
     );
+    expect(html).toMatch(/body \{[\s\S]*height: 100%;/);
     expect(html).toMatch(
-      /body \{[\s\S]*min-height: 100vh;[\s\S]*min-height: 100svh;[\s\S]*min-height: 100dvh;[\s\S]*display: flex;[\s\S]*flex-direction: column;[\s\S]*align-items: stretch;[\s\S]*padding: env\(safe-area-inset-top, 0px\) env\(safe-area-inset-right, 0px\) env\(safe-area-inset-bottom, 0px\) env\(safe-area-inset-left, 0px\);[\s\S]*overflow-x: hidden;/,
+      /body \{[\s\S]*padding: env\(safe-area-inset-top, 0px\)/,
     );
+    expect(html).toMatch(/body \{[\s\S]*display: flex;/);
+    expect(html).toMatch(/body \{[\s\S]*flex-direction: column;/);
     expect(html).toMatch(
-      /#toncast-widget \{[\s\S]*flex: 1 1 auto;[\s\S]*min-height: 0;[\s\S]*width: 100%;[\s\S]*max-width: 100%;/,
+      /#toncast-widget \{[\s\S]*flex: 1 1 auto;[\s\S]*min-height: 0;[\s\S]*width: 100%;/,
     );
     expect(html).not.toContain("padding: 16px;");
     expect(html).not.toContain("@media (max-width: 640px)");

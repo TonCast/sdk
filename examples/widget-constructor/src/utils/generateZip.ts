@@ -328,34 +328,28 @@ export function buildIndexHtml(config: ConstructorConfig): string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>${escapeHtml(config.appName || "Toncast Widget")}</title>${cssLink}
     <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
+      /* Minimal shell: fill viewport; widget is the only flex child and grows. */
       html {
-        min-height: 100%;
+        height: 100%;
         min-height: 100vh;
-        min-height: 100svh;
         min-height: 100dvh;
         color-scheme: ${rootColorScheme};
         background: ${bodyBackground};
-        overflow-x: hidden;
       }
       body {
-        font-family: system-ui, -apple-system, sans-serif;
-        min-height: 100%;
-        min-height: 100vh;
-        min-height: 100svh;
-        min-height: 100dvh;
+        margin: 0;
+        box-sizing: border-box;
+        height: 100%;
+        padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+          env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
         display: flex;
         flex-direction: column;
-        align-items: stretch;
-        padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
         background: ${bodyBackground};
-        overflow-x: hidden;
       }${systemDarkCss}
       #toncast-widget {
         flex: 1 1 auto;
         min-height: 0;
         width: 100%;
-        max-width: 100%;
       }
     </style>
   </head>
