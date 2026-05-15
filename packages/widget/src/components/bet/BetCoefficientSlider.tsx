@@ -5,7 +5,11 @@ import { Slider } from "../ui/Slider";
 
 type Bet = ReturnType<typeof useBet>;
 
-/** Coefficient slider with limit-mode fill bar and red liquidity markers. */
+/**
+ * Coefficient slider: success fill from the thumb to the track end only in
+ * **limit** mode; **fixed** (and any non-limit mode) shows liquidity dots only.
+ * Red dots mirror `bet.liquidityMarkers` in all non-market modes.
+ */
 export function BetCoefficientSlider({ bet }: { bet: Bet }) {
   const t = useT();
   const fillLeftPct = useMemo(() => {

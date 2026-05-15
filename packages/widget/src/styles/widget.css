@@ -265,6 +265,7 @@
   pointer-events: none;
   z-index: var(--tc-z-underlay);
 }
+/* Shown only for limit bets (see BetCoefficientSlider). */
 .tc-coef-slider-fill {
   position: absolute;
   top: 50%;
@@ -274,6 +275,7 @@
   background: var(--tc-success);
   right: -10px;
 }
+/* Liquidity thresholds; rendered in both limit and fixed. */
 .tc-coef-slider-marker {
   position: absolute;
   top: 50%;
@@ -286,6 +288,12 @@
 .tc-coef-slider-wrap .tc-slider-root {
   position: relative;
   z-index: var(--tc-z-raised);
+}
+/* The overlay (green limit fill + red liquidity markers) sits *under* the slider.
+   Default `.tc-slider-track` uses an opaque `--tc-bg-muted`, which hides the
+   whole underlay — same idea as the semi-transparent “glass” track in react-app. */
+.tc-coef-slider-wrap .tc-slider-track {
+  background: color-mix(in srgb, var(--tc-bg-muted) 25%, transparent);
 }
 
 /* ----- _base.css ----- */
