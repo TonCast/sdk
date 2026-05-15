@@ -6,7 +6,10 @@
 /* ----- _tokens.css ----- */
 /* ===== TOKENS =====
    Scoped under .tc-w to avoid conflicts with the host page.
-   CSS custom properties allow per-instance theming. */
+   CSS custom properties allow per-instance theming.
+   Responsive note: list/detail layouts that depend on widget width use
+   @container queries on `.tc-w` (see _pari.css). Viewport @media is reserved
+   mainly for the dialog sheet. */
 .tc-w {
   height: 100%;
   /* Default light theme */
@@ -19,6 +22,8 @@
   --tc-bg-chrome: #f8fafc;
   --tc-bg-card: #f8fafc;
   --tc-bg-muted: #f1f5f9;
+  /* Neutral inset surfaces (e.g. technical details inside alerts); follows main canvas. */
+  --tc-bg-base: var(--tc-bg);
   --tc-bg-hover: rgba(0, 0, 0, 0.04);
   --tc-fg: #1e293b;
   --tc-fg-muted: #64748b;
@@ -46,19 +51,46 @@
   --tc-warn-fg: #d97706;
   --tc-warn-bg: rgba(217, 119, 6, 0.1);
   --tc-warn-border: rgba(217, 119, 6, 0.25);
-  /* Density (`cssVars.density`): these seven tokens adjust shell spacing. Many inner
-     layouts (pari cards, dialogs, steppers) still use fixed px — see components. */
+  /* Density (`cssVars.density`): spacing tokens above drive shell + derived --tc-pari-*
+     and --tc-bet-* / --tc-stepper-* helpers; typography --tc-text-* is px-based. */
   --tc-content-padding: 12px;
   --tc-card-padding: 14px;
   --tc-card-gap: 10px;
   --tc-form-gap: 12px;
-  --tc-header-padding-y: 8px;
-  --tc-header-padding-x: 12px;
+  --tc-header-padding-y: 5px;
+  --tc-header-padding-x: 10px;
   --tc-nav-padding-y: 10px;
+  /* Typography scale (absolute px — predictable inside embedded UIs). */
+  --tc-text-2xs: 10px;
+  --tc-text-xs: 11px;
+  --tc-text-sm: 12px;
+  --tc-text-md: 13px;
+  --tc-text-base: 14px;
+  --tc-text-lg: 15px;
+  --tc-text-xl: 16px;
+  --tc-text-2xl: 17px;
+  /* Pari / bet inner spacing derived from density tokens. */
+  --tc-pari-body-padding: max(8px, calc(var(--tc-card-padding) - 4px));
+  --tc-pari-stack-gap: max(4px, calc(var(--tc-form-gap) * 0.5));
+  --tc-pari-meta-gap: max(4px, calc(var(--tc-form-gap) * 0.6666666667));
+  --tc-pari-actions-gap: max(4px, calc(var(--tc-card-gap) * 0.6));
+  --tc-pari-meta-chip-pad-y: calc(var(--tc-card-padding) / 7);
+  --tc-pari-meta-chip-pad-x: calc(var(--tc-card-padding) * 3 / 7);
+  --tc-bet-quote-pad-y: max(8px, calc(var(--tc-card-padding) - 4px));
+  --tc-bet-quote-pad-x: max(10px, calc(var(--tc-content-padding)));
+  --tc-stepper-gap: max(6px, calc(var(--tc-form-gap) * 0.6666666667));
+  /* Pari card footer in @container (max-width: 479px). Coarse pointers still get --tc-touch-target in _accessibility.css. */
+  --tc-pari-narrow-btn-min-height: 36px;
   --tc-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
   --tc-grid-mobile: 1;
   --tc-grid-tablet: 2;
   --tc-grid-desktop: 3;
+  /* Stacking inside the widget (modal overlay must clear in-widget UI). */
+  --tc-z-underlay: 0;
+  --tc-z-raised: 1;
+  --tc-z-modal: 9998;
+  /* Minimum tap target (Apple HIG / Material ~48px; 44px is acceptable). */
+  --tc-touch-target: 44px;
 
   font-family:
     system-ui,
@@ -67,7 +99,7 @@
     "Segoe UI",
     Roboto,
     sans-serif;
-  font-size: 14px;
+  font-size: var(--tc-text-base);
   line-height: 1.5;
   color: var(--tc-fg);
   background: transparent;
@@ -108,17 +140,12 @@
 .tc-form-col-sm {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: max(6px, calc(var(--tc-form-gap) * 0.6666666667));
 }
 .tc-form-col-xs {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-.tc-form-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  gap: max(3px, calc(var(--tc-form-gap) * 0.3333333333));
 }
 .tc-form-row-between {
   display: flex;
@@ -128,34 +155,34 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 32px 0;
+  gap: var(--tc-form-gap);
+  padding: calc(var(--tc-content-padding) * 2 + 8px) 0;
   text-align: center;
 }
 .tc-empty-state-card {
-  padding: 12px 0;
+  padding: var(--tc-content-padding) 0;
 }
 .tc-bet-side-toggle {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--tc-stepper-gap);
 }
 .tc-bet-side-toggle-title {
   flex: 1;
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--tc-text-base);
   color: var(--tc-fg);
 }
 .tc-detail-card-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--tc-pari-body-padding);
 }
 .tc-detail-header-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--tc-form-gap);
 }
 .tc-bet-row-thumb-btn {
   border: none;
@@ -173,7 +200,7 @@
 }
 .tc-bet-row-meta-mono {
   font-family: monospace;
-  font-size: 11px;
+  font-size: var(--tc-text-xs);
 }
 .tc-bet-row-thumb-placeholder {
   width: 100%;
@@ -183,8 +210,8 @@
 .tc-bet-row-badges {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
+  gap: var(--tc-pari-stack-gap);
+  margin-bottom: max(3px, calc(var(--tc-form-gap) * 0.3333333333));
 }
 .tc-category-chip {
   white-space: nowrap;
@@ -204,33 +231,30 @@
   flex: 1;
 }
 .tc-error-sm {
-  padding: 16px;
+  padding: var(--tc-content-padding);
   color: var(--tc-danger-fg);
-  font-size: 12px;
+  font-size: var(--tc-text-sm);
 }
 .tc-quote-row-warn {
   color: var(--tc-warn-fg);
   font-weight: 600;
 }
-.tc-quote-row-placed-note {
-  padding-left: 8px;
-}
 .tc-quote-row-placed-block {
   padding-top: 4px;
 }
 .tc-quote-row-indent {
-  padding-left: 8px;
+  padding-left: var(--tc-stepper-gap);
 }
 .tc-quote-error {
   color: var(--tc-danger);
-  font-size: 12px;
+  font-size: var(--tc-text-sm);
 }
 .tc-text-warn {
   color: var(--tc-warn-fg);
 }
 .tc-quote-notice {
-  font-size: 11px;
-  margin-bottom: 4px;
+  font-size: var(--tc-text-xs);
+  margin-bottom: max(3px, calc(var(--tc-form-gap) * 0.3333333333));
 }
 .tc-coef-slider-wrap {
   position: relative;
@@ -239,7 +263,7 @@
   position: absolute;
   inset: 0 10px;
   pointer-events: none;
-  z-index: 0;
+  z-index: var(--tc-z-underlay);
 }
 .tc-coef-slider-fill {
   position: absolute;
@@ -261,7 +285,7 @@
 }
 .tc-coef-slider-wrap .tc-slider-root {
   position: relative;
-  z-index: 1;
+  z-index: var(--tc-z-raised);
 }
 
 /* ----- _base.css ----- */
@@ -308,25 +332,32 @@
   border-bottom: 1px solid var(--tc-border);
   background: var(--tc-bg-chrome);
   flex-shrink: 0;
-  gap: 8px;
+  gap: 6px;
 }
 
 .tc-lang-select {
-  height: 30px;
+  min-height: 36px;
+  box-sizing: border-box;
   padding: 0 24px 0 8px;
   border: 1px solid var(--tc-border);
   border-radius: 6px;
   background: var(--tc-bg);
   color: var(--tc-fg);
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--tc-text-sm);
   cursor: pointer;
   appearance: none;
 }
 
 .tc-lang-select:focus {
-  outline: none;
   border-color: var(--tc-accent);
+}
+.tc-lang-select:focus-visible {
+  outline: 2px solid var(--tc-accent);
+  outline-offset: 2px;
+}
+.tc-lang-select:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .tc-lang-wrapper .tc-lang-select {
@@ -340,7 +371,7 @@
   align-items: center;
   gap: 4px;
   /* Match `.tc-lang-select` so inline icons scale with header density / font-size */
-  font-size: 12px;
+  font-size: var(--tc-text-sm);
 }
 
 .tc-lang-globe-icon {
@@ -352,6 +383,8 @@
 .tc-lang-icon {
   position: absolute;
   right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
   pointer-events: none;
   color: var(--tc-fg-muted);
   width: 12px;
@@ -362,8 +395,9 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 0 10px;
-  height: 30px;
+  padding: 0 max(8px, var(--tc-header-padding-x));
+  min-height: 36px;
+  box-sizing: border-box;
   border-radius: 999px;
   background: linear-gradient(
     180deg,
@@ -374,13 +408,15 @@
   border: none;
   cursor: pointer;
   font-family: inherit;
-  font-size: 11px;
+  font-size: var(--tc-text-xs);
   font-weight: 600;
   white-space: nowrap;
   transition: filter 0.15s;
 }
-.tc-header-connect:hover {
-  filter: brightness(1.1);
+@media (hover: hover) and (pointer: fine) {
+  .tc-header-connect:hover {
+    filter: brightness(1.1);
+  }
 }
 .tc-header-connected {
   background: var(--tc-bg-muted);
@@ -400,12 +436,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 3px;
+  min-height: var(--tc-touch-target);
+  box-sizing: border-box;
   background: none;
   border: none;
   cursor: pointer;
   color: var(--tc-fg-muted);
-  font-size: 10px;
+  font-size: var(--tc-text-2xs);
   font-family: inherit;
   transition:
     color 0.15s,
@@ -413,7 +452,12 @@
   padding: var(--tc-nav-padding-y) 4px calc(var(--tc-nav-padding-y) - 2px);
   border-radius: 0;
 }
-
+@media (hover: hover) and (pointer: fine) {
+  .tc-nav-btn:hover {
+    color: var(--tc-fg);
+    background: var(--tc-bg-hover);
+  }
+}
 .tc-nav-btn svg {
   width: 20px;
   height: 20px;
@@ -422,10 +466,6 @@
   stroke-width: 1.5;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-.tc-nav-btn:hover {
-  color: var(--tc-fg);
-  background: var(--tc-bg-hover);
 }
 .tc-nav-btn.tc-active {
   color: var(--tc-accent);
@@ -447,7 +487,7 @@
     calc(var(--tc-card-padding) - 4px);
 }
 .tc-card-title {
-  font-size: 14px;
+  font-size: var(--tc-text-base);
   font-weight: 600;
   color: var(--tc-fg);
 }
@@ -458,15 +498,21 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: max(4px, calc(var(--tc-card-gap) * 0.6));
   border: none;
   border-radius: calc(var(--tc-radius) - 2px);
   font-family: inherit;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease,
+    opacity 0.15s ease;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: var(--tc-text-md);
   padding: 0 14px;
   height: 36px;
 }
@@ -487,27 +533,15 @@
   background: var(--tc-accent);
   color: var(--tc-accent-fg);
 }
-.tc-btn-primary:hover {
-  background: var(--tc-accent-hover);
-}
-
 .tc-btn-secondary {
   background: var(--tc-bg-muted);
   color: var(--tc-fg);
   border: 1px solid var(--tc-border);
 }
-.tc-btn-secondary:hover {
-  background: var(--tc-bg-hover);
-  border-color: var(--tc-fg-muted);
-}
 
 .tc-btn-ghost {
   background: transparent;
   color: var(--tc-fg-muted);
-}
-.tc-btn-ghost:hover {
-  background: var(--tc-bg-hover);
-  color: var(--tc-fg);
 }
 
 .tc-btn-yes {
@@ -515,9 +549,6 @@
   color: var(--tc-success-fg);
   border: 1px solid transparent;
   font-weight: 600;
-}
-.tc-btn-yes:hover {
-  background: var(--tc-success-hover-bg);
 }
 .tc-btn-yes.tc-active {
   background: var(--tc-success-active-bg);
@@ -531,9 +562,6 @@
   border: 1px solid transparent;
   font-weight: 600;
 }
-.tc-btn-no:hover {
-  background: var(--tc-danger-hover-bg);
-}
 .tc-btn-no.tc-active {
   background: var(--tc-danger-active-bg);
   border-color: var(--tc-danger-active-border);
@@ -542,14 +570,14 @@
 
 .tc-btn-lg {
   height: 44px;
-  font-size: 15px;
+  font-size: var(--tc-text-lg);
   padding: 0 20px;
   width: 100%;
   border-radius: var(--tc-radius);
 }
 .tc-btn-sm {
   height: 28px;
-  font-size: 12px;
+  font-size: var(--tc-text-sm);
   padding: 0 10px;
 }
 .tc-btn-icon {
@@ -591,14 +619,20 @@
   background: var(--tc-bg-card);
   color: var(--tc-fg);
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--tc-text-md);
   cursor: pointer;
   appearance: none;
   transition: border-color 0.15s;
 }
 .tc-select:focus {
-  outline: none;
   border-color: var(--tc-accent);
+}
+.tc-select:focus-visible {
+  outline: 2px solid var(--tc-accent);
+  outline-offset: 2px;
+}
+.tc-select:focus:not(:focus-visible) {
+  outline: none;
 }
 .tc-select-icon {
   position: absolute;
@@ -622,13 +656,10 @@
   user-select: none;
 }
 
-/* Horizontal only: Radix sets translateX(-50%) on the thumb wrapper — add Y so
-   the handle centres on the 8px track. Scoped so a future vertical slider keeps
-   Radix's default translateY(50%) on the root (M-3). */
-.tc-slider-root[data-orientation="horizontal"] {
-  --radix-slider-thumb-transform: translate(-50%, -50%) !important;
-}
-
+/* Horizontal: Radix sets the thumb wrapper to transform: var(--radix-slider-thumb-transform)
+   with an inline root style translateX(-50%). That beats author CSS redefinitions of the same
+   custom property, so we do not override --radix-slider-thumb-transform. Vertical alignment
+   uses top: 50% on the wrapper plus translateY(-50%) on the inner thumb. */
 .tc-slider-root[data-orientation="horizontal"] .tc-slider-track + span {
   top: 50%;
 }
@@ -657,10 +688,18 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   cursor: grab;
   transition: transform 0.1s;
-  /* X/Y centre comes from Radix's outer wrapper + --radix-slider-thumb-transform — do not duplicate translateX here. */
 }
-.tc-slider-thumb:hover,
-.tc-slider-thumb:active {
+
+.tc-slider-root[data-orientation="horizontal"] .tc-slider-thumb {
+  transform: translateY(-50%);
+}
+
+.tc-slider-root[data-orientation="horizontal"] .tc-slider-thumb:active {
+  transform: translateY(-50%) scale(1.12);
+  cursor: grabbing;
+}
+
+.tc-slider-root[data-orientation="vertical"] .tc-slider-thumb:active {
   transform: scale(1.12);
   cursor: grabbing;
 }
@@ -678,7 +717,7 @@
   background: var(--tc-bg-card);
   color: var(--tc-fg);
   font-family: monospace;
-  font-size: 14px;
+  font-size: var(--tc-text-base);
   text-align: center;
   padding: 0 12px;
   transition: border-color 0.15s;
@@ -689,11 +728,45 @@
   appearance: none;
 }
 .tc-input:focus {
-  outline: none;
   border-color: var(--tc-accent);
+}
+.tc-input:focus-visible {
+  outline: 2px solid var(--tc-accent);
+  outline-offset: 2px;
+}
+.tc-input:focus:not(:focus-visible) {
+  outline: none;
 }
 .tc-input::placeholder {
   color: var(--tc-fg-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tc-btn-primary:hover {
+    background: var(--tc-accent-hover);
+  }
+  .tc-btn-secondary:hover {
+    background: var(--tc-bg-hover);
+    border-color: var(--tc-fg-muted);
+  }
+  .tc-btn-ghost:hover {
+    background: var(--tc-bg-hover);
+    color: var(--tc-fg);
+  }
+  .tc-btn-yes:hover {
+    background: var(--tc-success-hover-bg);
+  }
+  .tc-btn-no:hover {
+    background: var(--tc-danger-hover-bg);
+  }
+  .tc-slider-root[data-orientation="horizontal"] .tc-slider-thumb:hover {
+    transform: translateY(-50%) scale(1.12);
+    cursor: grabbing;
+  }
+  .tc-slider-root[data-orientation="vertical"] .tc-slider-thumb:hover {
+    transform: scale(1.12);
+    cursor: grabbing;
+  }
 }
 
 /* ----- _badge-notice.css ----- */
@@ -703,7 +776,7 @@
   align-items: center;
   padding: 2px 8px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: var(--tc-text-xs);
   font-weight: 500;
 }
 .tc-badge-default {
@@ -744,11 +817,12 @@
   color: var(--tc-warn-fg);
 }
 
-/* ===== ALERT / NOTICE ===== */
+/* ===== ALERT / NOTICE =====
+   Success/danger variants are for host/custom markup; in-package screens use warn or muted. */
 .tc-notice {
   border-radius: calc(var(--tc-radius) - 2px);
   padding: 10px 12px;
-  font-size: 12px;
+  font-size: var(--tc-text-sm);
 }
 .tc-notice-warn {
   background: var(--tc-warn-bg);
@@ -773,7 +847,7 @@
 
 .tc-standalone-domain-warning {
   padding: 8px 12px;
-  font-size: 12px;
+  font-size: var(--tc-text-sm);
   background: var(--tc-danger-bg);
   color: var(--tc-danger-fg);
   border-bottom: 1px solid var(--tc-danger-border);
@@ -795,9 +869,11 @@
     box-shadow 0.15s,
     transform 0.1s;
 }
-.tc-pari-card:hover {
-  box-shadow: var(--tc-shadow);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .tc-pari-card:hover {
+    box-shadow: var(--tc-shadow);
+    transform: translateY(-1px);
+  }
 }
 .tc-pari-cover-link {
   all: unset;
@@ -827,15 +903,15 @@
 }
 
 .tc-pari-body {
-  padding: 10px;
+  padding: var(--tc-pari-body-padding);
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--tc-pari-stack-gap);
   min-width: 0;
 }
 .tc-pari-name {
-  font-size: 13px;
+  font-size: var(--tc-text-md);
   font-weight: 500;
   color: var(--tc-fg);
   display: -webkit-box;
@@ -851,8 +927,8 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  font-size: 11px;
+  gap: var(--tc-pari-meta-gap);
+  font-size: var(--tc-text-xs);
   color: var(--tc-fg-muted);
   margin-top: auto;
   min-width: 0;
@@ -862,8 +938,8 @@
   align-items: center;
   max-width: 100%;
   min-width: 0;
-  min-height: 20px;
-  padding: 2px 6px;
+  min-height: max(20px, calc(var(--tc-form-gap) * 1.25));
+  padding: var(--tc-pari-meta-chip-pad-y) var(--tc-pari-meta-chip-pad-x);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -890,8 +966,8 @@
 .tc-pari-btns {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  padding: 0 10px 10px;
+  gap: var(--tc-pari-actions-gap);
+  padding: 0 var(--tc-pari-body-padding) var(--tc-pari-body-padding);
 }
 .tc-pari-btns .tc-btn {
   min-width: 0;
@@ -902,12 +978,12 @@
 
 @container (max-width: 479px) {
   .tc-pari-body {
-    padding: 8px 8px 6px;
-    gap: 4px;
+    padding: max(6px, calc(var(--tc-card-padding) - 6px)) max(6px, calc(var(--tc-card-padding) - 6px)) max(4px, calc(var(--tc-card-padding) - 8px));
+    gap: max(3px, calc(var(--tc-form-gap) * 0.3333333333));
   }
 
   .tc-pari-name {
-    font-size: 12px;
+    font-size: var(--tc-text-sm);
     line-height: 1.3;
     line-clamp: 2;
     -webkit-line-clamp: 2;
@@ -918,8 +994,8 @@
     flex-direction: var(--tc-pari-mobile-meta-direction, row);
     align-items: var(--tc-pari-mobile-meta-align, center);
     justify-content: var(--tc-pari-mobile-meta-justify, flex-start);
-    gap: var(--tc-pari-mobile-meta-gap, 4px);
-    font-size: 10px;
+    gap: var(--tc-pari-mobile-meta-gap, var(--tc-pari-meta-gap));
+    font-size: var(--tc-text-2xs);
   }
 
   .tc-pari-meta svg {
@@ -931,14 +1007,14 @@
 
   .tc-pari-btns {
     grid-template-columns: var(--tc-pari-mobile-actions-columns, 1fr 1fr);
-    gap: var(--tc-pari-mobile-actions-gap, 6px);
-    padding: 0 8px 8px;
+    gap: var(--tc-pari-mobile-actions-gap, var(--tc-pari-actions-gap));
+    padding: 0 max(6px, calc(var(--tc-card-padding) - 6px)) max(6px, calc(var(--tc-card-padding) - 6px));
   }
 
   .tc-pari-btns .tc-btn {
-    min-height: 28px;
+    min-height: var(--tc-pari-narrow-btn-min-height);
     padding: 0 4px;
-    font-size: var(--tc-pari-mobile-actions-font-size, 12px);
+    font-size: var(--tc-pari-mobile-actions-font-size, var(--tc-text-sm));
   }
 }
 
@@ -960,16 +1036,16 @@
     flex-direction: var(--tc-pari-tablet-meta-direction, row);
     align-items: var(--tc-pari-tablet-meta-align, center);
     justify-content: var(--tc-pari-tablet-meta-justify, space-between);
-    gap: var(--tc-pari-tablet-meta-gap, 8px);
+    gap: var(--tc-pari-tablet-meta-gap, var(--tc-pari-meta-gap));
   }
 
   .tc-pari-btns {
     grid-template-columns: var(--tc-pari-tablet-actions-columns, 1fr 1fr);
-    gap: var(--tc-pari-tablet-actions-gap, 6px);
+    gap: var(--tc-pari-tablet-actions-gap, var(--tc-pari-actions-gap));
   }
 
   .tc-pari-btns .tc-btn {
-    font-size: var(--tc-pari-tablet-actions-font-size, 12px);
+    font-size: var(--tc-pari-tablet-actions-font-size, var(--tc-text-sm));
   }
 }
 
@@ -985,7 +1061,7 @@
 
 .tc-category-bar {
   display: flex;
-  gap: 6px;
+  gap: max(4px, calc(var(--tc-form-gap) * 0.5));
   overflow-x: auto;
   padding-bottom: 4px;
   scrollbar-width: none;
@@ -1019,20 +1095,21 @@
   object-fit: contain;
 }
 .tc-detail-title {
-  font-size: 16px;
+  font-size: clamp(14px, 12px + 0.85cqi, 18px);
   font-weight: 600;
   color: var(--tc-fg);
   line-height: 1.35;
 }
 .tc-detail-desc {
-  font-size: 13px;
+  font-size: var(--tc-text-md);
   color: var(--tc-fg-muted);
   white-space: pre-line;
+  overflow-wrap: anywhere;
 }
 .tc-detail-desc-toggle {
   margin-top: 4px;
   padding: 0;
-  font-size: 12px;
+  font-size: var(--tc-text-sm);
   color: var(--tc-accent);
   background: none;
   border: none;
@@ -1041,15 +1118,15 @@
 .tc-detail-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  font-size: 12px;
+  gap: var(--tc-form-gap);
+  font-size: var(--tc-text-sm);
   color: var(--tc-fg-muted);
 }
 .tc-detail-section-title {
-  font-size: 13px;
+  font-size: var(--tc-text-md);
   font-weight: 600;
   color: var(--tc-fg);
-  margin-bottom: 10px;
+  margin-bottom: var(--tc-pari-stack-gap);
 }
 
 /* ----- _bet.css ----- */
@@ -1057,9 +1134,11 @@
 .tc-connect-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 16px;
-  height: 40px;
+  gap: var(--tc-stepper-gap);
+  padding: 0 max(12px, calc(var(--tc-content-padding) * 4 / 3));
+  min-height: var(--tc-touch-target);
+  box-sizing: border-box;
+  height: max(40px, calc(var(--tc-form-gap) * 3 + 4px));
   border-radius: 999px;
   background: linear-gradient(
     180deg,
@@ -1070,16 +1149,18 @@
   border: none;
   cursor: pointer;
   font-family: inherit;
-  font-size: 14px;
+  font-size: var(--tc-text-base);
   font-weight: 590;
   transition: filter 0.15s;
   box-shadow: var(--tc-accent-shadow);
 }
-.tc-connect-btn:hover {
-  filter: brightness(1.1);
-}
 .tc-connect-btn:active {
   transform: scale(0.98);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tc-connect-btn:hover {
+    filter: brightness(1.1);
+  }
 }
 .tc-connect-btn svg {
   width: 24px;
@@ -1099,35 +1180,55 @@
   border: 1px solid var(--tc-border);
   border-radius: calc(var(--tc-radius) - 4px);
   overflow: hidden;
-  font-size: 12px;
+  font-size: var(--tc-text-xs);
   font-weight: 500;
 }
 .tc-mode-tab {
   flex: 1;
-  padding: 6px 4px;
+  min-height: 34px;
+  box-sizing: border-box;
+  padding: 5px max(2px, calc(var(--tc-card-gap) * 0.35));
   text-align: center;
   background: none;
   border: none;
   cursor: pointer;
   color: var(--tc-fg-muted);
   font-family: inherit;
-  font-size: 12px;
-  transition: all 0.15s;
+  font-size: var(--tc-text-xs);
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 .tc-mode-tab.tc-active {
   background: var(--tc-accent);
   color: var(--tc-accent-fg);
 }
-.tc-mode-tab:not(.tc-active):hover {
-  background: var(--tc-bg-hover);
-  color: var(--tc-fg);
+@media (hover: hover) and (pointer: fine) {
+  .tc-mode-tab:not(.tc-active):hover {
+    background: var(--tc-bg-hover);
+    color: var(--tc-fg);
+  }
 }
-
 .tc-stepper-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--tc-stepper-gap);
 }
+
+/* ± icon buttons: accent (not success/danger). */
+.tc-stepper-row > .tc-btn:first-of-type,
+.tc-stepper-row > .tc-btn:last-of-type {
+  border-color: var(--tc-accent);
+  background: var(--tc-accent-bg);
+  color: var(--tc-accent);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tc-stepper-row > .tc-btn:first-of-type:hover:not(:disabled),
+  .tc-stepper-row > .tc-btn:last-of-type:hover:not(:disabled) {
+    background: var(--tc-accent);
+    color: var(--tc-accent-fg);
+    border-color: var(--tc-accent-hover);
+  }
+}
+
 .tc-stepper-row .tc-input {
   flex: 1;
   min-width: 0;
@@ -1142,17 +1243,17 @@
   background: var(--tc-bg-muted);
   border: 1px solid var(--tc-border);
   border-radius: calc(var(--tc-radius) - 2px);
-  padding: 10px 12px;
-  font-size: 12px;
+  padding: var(--tc-bet-quote-pad-y) var(--tc-bet-quote-pad-x);
+  font-size: var(--tc-text-sm);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: max(3px, calc(var(--tc-form-gap) * 0.3333333333));
 }
 .tc-quote-row {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--tc-stepper-gap);
 }
 .tc-quote-row-label {
   color: var(--tc-fg-muted);
@@ -1173,13 +1274,10 @@
   color: var(--tc-success-fg);
   font-weight: 600;
 }
-.tc-quote-row-warn {
-  color: var(--tc-warn-fg);
-}
 .tc-quote-divider {
   border: none;
   border-top: 1px solid var(--tc-border);
-  margin: 4px 0;
+  margin: max(3px, calc(var(--tc-form-gap) * 0.3333333333)) 0;
 }
 
 /* ----- _order-book.css ----- */
@@ -1197,7 +1295,7 @@
   grid-template-columns: 1fr 5rem 1fr;
   gap: 8px;
   padding: 0 4px;
-  font-size: 10px;
+  font-size: var(--tc-text-2xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1250,7 +1348,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: var(--tc-text-xs);
   font-family: monospace;
   font-variant-numeric: tabular-nums;
   color: var(--tc-fg);
@@ -1264,7 +1362,7 @@
 .tc-ob-price {
   text-align: center;
   font-family: monospace;
-  font-size: 11px;
+  font-size: var(--tc-text-xs);
   line-height: 1.4;
 }
 .tc-ob-price-yes {
@@ -1279,24 +1377,24 @@
 .tc-chart-header {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 13px;
+  gap: var(--tc-stepper-gap);
+  margin-bottom: var(--tc-stepper-gap);
+  font-size: var(--tc-text-md);
   font-weight: 500;
 }
 .tc-chart-meta {
   font-family: monospace;
-  font-size: 11px;
+  font-size: var(--tc-text-xs);
   color: var(--tc-fg-muted);
 }
 .tc-chart-trend-up {
   font-family: monospace;
-  font-size: 11px;
+  font-size: var(--tc-text-xs);
   color: var(--tc-success-fg);
 }
 .tc-chart-trend-down {
   font-family: monospace;
-  font-size: 11px;
+  font-size: var(--tc-text-xs);
   color: var(--tc-danger-fg);
 }
 .tc-chart-svg {
@@ -1320,7 +1418,7 @@
 .tc-bet-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--tc-card-gap);
 }
 .tc-bet-row-thumb {
   width: 44px;
@@ -1341,7 +1439,7 @@
   min-width: 0;
 }
 .tc-bet-row-name {
-  font-size: 13px;
+  font-size: var(--tc-text-md);
   font-weight: 500;
   display: -webkit-box;
   line-clamp: 2;
@@ -1351,23 +1449,27 @@
   cursor: pointer;
   color: var(--tc-fg);
 }
-.tc-bet-row-name:hover {
-  text-decoration: underline;
+@media (hover: hover) and (pointer: fine) {
+  .tc-bet-row-name:hover {
+    text-decoration: underline;
+  }
 }
 .tc-bet-row-meta {
-  font-size: 11px;
+  font-size: var(--tc-text-xs);
   color: var(--tc-fg-muted);
   margin-top: 2px;
 }
 
 /* ----- _dialog.css ----- */
-/* ===== DIALOG ===== */
+/* ===== DIALOG =====
+   Not rendered by @toncast/widget components — kept for hosts building modal UI with
+   the same class names (bundle stays a single widget.css for tsup/Vite raw imports). */
 .tc-dialog-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
-  z-index: 9998;
+  z-index: var(--tc-z-modal);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -1393,6 +1495,7 @@
   width: 100%;
   max-width: 440px;
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
   background: var(--tc-bg-card);
   border: 1px solid var(--tc-border);
@@ -1436,7 +1539,7 @@
   gap: 8px;
 }
 .tc-dialog-title {
-  font-size: 14px;
+  font-size: clamp(var(--tc-text-sm), 9px + 0.9cqi, var(--tc-text-base));
   font-weight: 600;
   color: var(--tc-fg);
   display: -webkit-box;
@@ -1447,8 +1550,8 @@
   flex: 1;
 }
 .tc-dialog-close {
-  width: 28px;
-  height: 28px;
+  width: var(--tc-touch-target);
+  height: var(--tc-touch-target);
   border-radius: 50%;
   border: none;
   background: var(--tc-bg-muted);
@@ -1458,12 +1561,14 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 16px;
+  font-size: var(--tc-text-xl);
   transition: background 0.15s;
 }
-.tc-dialog-close:hover {
-  background: var(--tc-bg-hover);
-  color: var(--tc-fg);
+@media (hover: hover) and (pointer: fine) {
+  .tc-dialog-close:hover {
+    background: var(--tc-bg-hover);
+    color: var(--tc-fg);
+  }
 }
 
 /* ----- _utilities.css ----- */
@@ -1476,17 +1581,17 @@
 
 /* ===== EMPTY STATE ===== */
 .tc-empty {
-  padding: 32px 16px;
+  padding: calc(var(--tc-content-padding) * 2 + 8px) max(12px, calc(var(--tc-content-padding) * 4 / 3));
   text-align: center;
   color: var(--tc-fg-muted);
-  font-size: 13px;
+  font-size: var(--tc-text-md);
 }
 
 /* ===== ERROR ===== */
 .tc-error {
   padding: 16px;
   color: var(--tc-danger-fg);
-  font-size: 13px;
+  font-size: var(--tc-text-md);
   border: 1px solid var(--tc-danger-bg);
   background: var(--tc-danger-bg);
   border-radius: calc(var(--tc-radius) - 2px);
@@ -1507,7 +1612,7 @@
   border: 1px solid var(--tc-danger-border);
   background: var(--tc-danger-bg);
   color: var(--tc-danger-fg);
-  font-size: 13px;
+  font-size: var(--tc-text-md);
   text-align: left;
 }
 .tc-bet-flow-error--muted {
@@ -1528,7 +1633,7 @@
 .tc-bet-flow-error-details {
   margin: 12px 0 0;
   padding: 10px;
-  font-size: 11px;
+  font-size: var(--tc-text-xs);
   white-space: pre-wrap;
   word-break: break-word;
   background: var(--tc-bg-base);
@@ -1540,45 +1645,15 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-/* ===== UTILS ===== */
-.tc-space-y-3 > * + * {
-  margin-top: 10px;
-}
-.tc-space-y-2 > * + * {
-  margin-top: 8px;
-}
-.tc-space-y-1 > * + * {
-  margin-top: 4px;
-}
-.tc-flex {
-  display: flex;
-}
-.tc-flex-col {
-  flex-direction: column;
-}
-.tc-items-center {
-  align-items: center;
-}
-.tc-justify-between {
-  justify-content: space-between;
-}
-.tc-gap-2 {
-  gap: 8px;
-}
-.tc-gap-1 {
-  gap: 4px;
-}
-.tc-w-full {
-  width: 100%;
-}
+/* ===== Typography & text helpers ===== */
 .tc-text-muted {
   color: var(--tc-fg-muted);
 }
 .tc-text-xs {
-  font-size: 11px;
+  font-size: var(--tc-text-xs);
 }
 .tc-text-sm {
-  font-size: 12px;
+  font-size: var(--tc-text-sm);
 }
 .tc-font-mono {
   font-family: monospace;
@@ -1586,49 +1661,45 @@
 .tc-font-semibold {
   font-weight: 600;
 }
-.tc-truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.tc-spin {
-  animation: tc-spin 0.8s linear infinite;
-}
-@keyframes tc-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
 .tc-divider {
   border: none;
   border-top: 1px solid var(--tc-border);
   margin: 8px 0;
 }
 .tc-page-title {
-  font-size: 17px;
+  font-size: clamp(15px, 11px + 1.1cqi, var(--tc-text-2xl));
   font-weight: 600;
   color: var(--tc-fg);
-  margin-bottom: 12px;
+  margin-bottom: var(--tc-form-gap);
 }
 .tc-back-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  min-height: 0;
+  box-sizing: border-box;
+  padding: 2px 4px;
   background: none;
   border: none;
   cursor: pointer;
   color: var(--tc-fg-muted);
-  font-size: 13px;
+  font-size: var(--tc-text-md);
   font-family: inherit;
-  padding: 0;
-  margin-bottom: 10px;
+  margin-bottom: 0;
   transition: color 0.15s;
 }
-.tc-back-btn:hover {
-  color: var(--tc-fg);
+.tc-back-btn:focus-visible {
+  outline: 2px solid var(--tc-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tc-back-btn:hover {
+    color: var(--tc-fg);
+  }
 }
 .tc-label {
-  font-size: 11px;
+  font-size: var(--tc-text-xs);
   color: var(--tc-fg-muted);
   margin-bottom: 4px;
 }
@@ -1652,10 +1723,10 @@
   border: 1px solid var(--tc-border);
   border-radius: calc(var(--tc-radius) - 4px);
   padding: 10px 12px;
-  font-size: 12px;
+  font-size: var(--tc-text-sm);
 }
 .tc-outcome-title {
-  font-size: 10px;
+  font-size: var(--tc-text-2xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1663,15 +1734,90 @@
   margin-bottom: 4px;
 }
 .tc-outcome-value {
-  font-size: 16px;
+  font-size: var(--tc-text-xl);
   font-weight: 600;
 }
-.tc-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--tc-border);
-  border-top-color: var(--tc-accent);
-  border-radius: 50%;
-  animation: tc-spin 0.6s linear infinite;
-  display: inline-block;
+
+/* ----- _accessibility.css ----- */
+/* ===== Motion & pointer preferences (WCAG 2.1) =====
+   Loaded last in the bundle so these rules win over component defaults. */
+
+@media (prefers-reduced-motion: reduce) {
+  .tc-pari-card {
+    transition: none;
+  }
+
+  .tc-dialog-overlay,
+  .tc-dialog {
+    animation: none;
+  }
+
+  .tc-skeleton {
+    animation: none;
+    opacity: 0.85;
+  }
+
+  .tc-dialog-overlay {
+    backdrop-filter: none;
+  }
+
+  .tc-detail-img-blur {
+    filter: none;
+    opacity: 0.35;
+    transform: none;
+  }
+
+  .tc-btn,
+  .tc-nav-btn,
+  .tc-header-connect,
+  .tc-back-btn,
+  .tc-connect-btn,
+  .tc-dialog-close,
+  .tc-select,
+  .tc-input,
+  .tc-slider-thumb,
+  .tc-mode-tab {
+    transition: none;
+  }
+
+  .tc-btn:active,
+  .tc-connect-btn:active {
+    transform: none;
+  }
+
+  .tc-slider-thumb:active {
+    transform: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .tc-btn:not(.tc-btn-lg) {
+    min-height: var(--tc-touch-target);
+  }
+
+  .tc-btn-icon {
+    width: var(--tc-touch-target);
+    height: var(--tc-touch-target);
+  }
+
+  .tc-pari-btns .tc-btn {
+    min-height: var(--tc-touch-target);
+  }
+
+  .tc-select,
+  .tc-input {
+    min-height: var(--tc-touch-target);
+  }
+
+  /* Compact header / back / mode tabs on fine pointers; restore 44px on coarse. */
+  .tc-header .tc-lang-select,
+  .tc-header .tc-header-connect {
+    min-height: var(--tc-touch-target);
+  }
+  .tc-back-btn {
+    min-height: var(--tc-touch-target);
+  }
+  .tc-mode-tab {
+    min-height: var(--tc-touch-target);
+  }
 }

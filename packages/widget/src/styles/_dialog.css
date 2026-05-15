@@ -1,10 +1,12 @@
-/* ===== DIALOG ===== */
+/* ===== DIALOG =====
+   Not rendered by @toncast/widget components — kept for hosts building modal UI with
+   the same class names (bundle stays a single widget.css for tsup/Vite raw imports). */
 .tc-dialog-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
-  z-index: 9998;
+  z-index: var(--tc-z-modal);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -30,6 +32,7 @@
   width: 100%;
   max-width: 440px;
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
   background: var(--tc-bg-card);
   border: 1px solid var(--tc-border);
@@ -73,7 +76,7 @@
   gap: 8px;
 }
 .tc-dialog-title {
-  font-size: 14px;
+  font-size: clamp(var(--tc-text-sm), 9px + 0.9cqi, var(--tc-text-base));
   font-weight: 600;
   color: var(--tc-fg);
   display: -webkit-box;
@@ -84,8 +87,8 @@
   flex: 1;
 }
 .tc-dialog-close {
-  width: 28px;
-  height: 28px;
+  width: var(--tc-touch-target);
+  height: var(--tc-touch-target);
   border-radius: 50%;
   border: none;
   background: var(--tc-bg-muted);
@@ -95,10 +98,12 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 16px;
+  font-size: var(--tc-text-xl);
   transition: background 0.15s;
 }
-.tc-dialog-close:hover {
-  background: var(--tc-bg-hover);
-  color: var(--tc-fg);
+@media (hover: hover) and (pointer: fine) {
+  .tc-dialog-close:hover {
+    background: var(--tc-bg-hover);
+    color: var(--tc-fg);
+  }
 }

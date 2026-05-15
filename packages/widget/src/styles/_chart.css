@@ -2,24 +2,24 @@
 .tc-chart-header {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 13px;
+  gap: var(--tc-stepper-gap);
+  margin-bottom: var(--tc-stepper-gap);
+  font-size: var(--tc-text-md);
   font-weight: 500;
 }
 .tc-chart-meta {
   font-family: monospace;
-  font-size: 11px;
+  font-size: var(--tc-text-xs);
   color: var(--tc-fg-muted);
 }
 .tc-chart-trend-up {
   font-family: monospace;
-  font-size: 11px;
+  font-size: var(--tc-text-xs);
   color: var(--tc-success-fg);
 }
 .tc-chart-trend-down {
   font-family: monospace;
-  font-size: 11px;
+  font-size: var(--tc-text-xs);
   color: var(--tc-danger-fg);
 }
 .tc-chart-svg {
@@ -43,7 +43,7 @@
 .tc-bet-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--tc-card-gap);
 }
 .tc-bet-row-thumb {
   width: 44px;
@@ -64,7 +64,7 @@
   min-width: 0;
 }
 .tc-bet-row-name {
-  font-size: 13px;
+  font-size: var(--tc-text-md);
   font-weight: 500;
   display: -webkit-box;
   line-clamp: 2;
@@ -74,11 +74,13 @@
   cursor: pointer;
   color: var(--tc-fg);
 }
-.tc-bet-row-name:hover {
-  text-decoration: underline;
+@media (hover: hover) and (pointer: fine) {
+  .tc-bet-row-name:hover {
+    text-decoration: underline;
+  }
 }
 .tc-bet-row-meta {
-  font-size: 11px;
+  font-size: var(--tc-text-xs);
   color: var(--tc-fg-muted);
   margin-top: 2px;
 }

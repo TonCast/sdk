@@ -1,0 +1,82 @@
+/* ===== Motion & pointer preferences (WCAG 2.1) =====
+   Loaded last in the bundle so these rules win over component defaults. */
+
+@media (prefers-reduced-motion: reduce) {
+  .tc-pari-card {
+    transition: none;
+  }
+
+  .tc-dialog-overlay,
+  .tc-dialog {
+    animation: none;
+  }
+
+  .tc-skeleton {
+    animation: none;
+    opacity: 0.85;
+  }
+
+  .tc-dialog-overlay {
+    backdrop-filter: none;
+  }
+
+  .tc-detail-img-blur {
+    filter: none;
+    opacity: 0.35;
+    transform: none;
+  }
+
+  .tc-btn,
+  .tc-nav-btn,
+  .tc-header-connect,
+  .tc-back-btn,
+  .tc-connect-btn,
+  .tc-dialog-close,
+  .tc-select,
+  .tc-input,
+  .tc-slider-thumb,
+  .tc-mode-tab {
+    transition: none;
+  }
+
+  .tc-btn:active,
+  .tc-connect-btn:active {
+    transform: none;
+  }
+
+  .tc-slider-thumb:active {
+    transform: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .tc-btn:not(.tc-btn-lg) {
+    min-height: var(--tc-touch-target);
+  }
+
+  .tc-btn-icon {
+    width: var(--tc-touch-target);
+    height: var(--tc-touch-target);
+  }
+
+  .tc-pari-btns .tc-btn {
+    min-height: var(--tc-touch-target);
+  }
+
+  .tc-select,
+  .tc-input {
+    min-height: var(--tc-touch-target);
+  }
+
+  /* Compact header / back / mode tabs on fine pointers; restore 44px on coarse. */
+  .tc-header .tc-lang-select,
+  .tc-header .tc-header-connect {
+    min-height: var(--tc-touch-target);
+  }
+  .tc-back-btn {
+    min-height: var(--tc-touch-target);
+  }
+  .tc-mode-tab {
+    min-height: var(--tc-touch-target);
+  }
+}

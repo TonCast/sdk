@@ -3,15 +3,21 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: max(4px, calc(var(--tc-card-gap) * 0.6));
   border: none;
   border-radius: calc(var(--tc-radius) - 2px);
   font-family: inherit;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease,
+    opacity 0.15s ease;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: var(--tc-text-md);
   padding: 0 14px;
   height: 36px;
 }
@@ -32,27 +38,15 @@
   background: var(--tc-accent);
   color: var(--tc-accent-fg);
 }
-.tc-btn-primary:hover {
-  background: var(--tc-accent-hover);
-}
-
 .tc-btn-secondary {
   background: var(--tc-bg-muted);
   color: var(--tc-fg);
   border: 1px solid var(--tc-border);
 }
-.tc-btn-secondary:hover {
-  background: var(--tc-bg-hover);
-  border-color: var(--tc-fg-muted);
-}
 
 .tc-btn-ghost {
   background: transparent;
   color: var(--tc-fg-muted);
-}
-.tc-btn-ghost:hover {
-  background: var(--tc-bg-hover);
-  color: var(--tc-fg);
 }
 
 .tc-btn-yes {
@@ -60,9 +54,6 @@
   color: var(--tc-success-fg);
   border: 1px solid transparent;
   font-weight: 600;
-}
-.tc-btn-yes:hover {
-  background: var(--tc-success-hover-bg);
 }
 .tc-btn-yes.tc-active {
   background: var(--tc-success-active-bg);
@@ -76,9 +67,6 @@
   border: 1px solid transparent;
   font-weight: 600;
 }
-.tc-btn-no:hover {
-  background: var(--tc-danger-hover-bg);
-}
 .tc-btn-no.tc-active {
   background: var(--tc-danger-active-bg);
   border-color: var(--tc-danger-active-border);
@@ -87,14 +75,14 @@
 
 .tc-btn-lg {
   height: 44px;
-  font-size: 15px;
+  font-size: var(--tc-text-lg);
   padding: 0 20px;
   width: 100%;
   border-radius: var(--tc-radius);
 }
 .tc-btn-sm {
   height: 28px;
-  font-size: 12px;
+  font-size: var(--tc-text-sm);
   padding: 0 10px;
 }
 .tc-btn-icon {
@@ -136,14 +124,20 @@
   background: var(--tc-bg-card);
   color: var(--tc-fg);
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--tc-text-md);
   cursor: pointer;
   appearance: none;
   transition: border-color 0.15s;
 }
 .tc-select:focus {
-  outline: none;
   border-color: var(--tc-accent);
+}
+.tc-select:focus-visible {
+  outline: 2px solid var(--tc-accent);
+  outline-offset: 2px;
+}
+.tc-select:focus:not(:focus-visible) {
+  outline: none;
 }
 .tc-select-icon {
   position: absolute;
@@ -167,13 +161,10 @@
   user-select: none;
 }
 
-/* Horizontal only: Radix sets translateX(-50%) on the thumb wrapper — add Y so
-   the handle centres on the 8px track. Scoped so a future vertical slider keeps
-   Radix's default translateY(50%) on the root (M-3). */
-.tc-slider-root[data-orientation="horizontal"] {
-  --radix-slider-thumb-transform: translate(-50%, -50%) !important;
-}
-
+/* Horizontal: Radix sets the thumb wrapper to transform: var(--radix-slider-thumb-transform)
+   with an inline root style translateX(-50%). That beats author CSS redefinitions of the same
+   custom property, so we do not override --radix-slider-thumb-transform. Vertical alignment
+   uses top: 50% on the wrapper plus translateY(-50%) on the inner thumb. */
 .tc-slider-root[data-orientation="horizontal"] .tc-slider-track + span {
   top: 50%;
 }
@@ -202,10 +193,18 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   cursor: grab;
   transition: transform 0.1s;
-  /* X/Y centre comes from Radix's outer wrapper + --radix-slider-thumb-transform — do not duplicate translateX here. */
 }
-.tc-slider-thumb:hover,
-.tc-slider-thumb:active {
+
+.tc-slider-root[data-orientation="horizontal"] .tc-slider-thumb {
+  transform: translateY(-50%);
+}
+
+.tc-slider-root[data-orientation="horizontal"] .tc-slider-thumb:active {
+  transform: translateY(-50%) scale(1.12);
+  cursor: grabbing;
+}
+
+.tc-slider-root[data-orientation="vertical"] .tc-slider-thumb:active {
   transform: scale(1.12);
   cursor: grabbing;
 }
@@ -223,7 +222,7 @@
   background: var(--tc-bg-card);
   color: var(--tc-fg);
   font-family: monospace;
-  font-size: 14px;
+  font-size: var(--tc-text-base);
   text-align: center;
   padding: 0 12px;
   transition: border-color 0.15s;
@@ -234,9 +233,43 @@
   appearance: none;
 }
 .tc-input:focus {
-  outline: none;
   border-color: var(--tc-accent);
+}
+.tc-input:focus-visible {
+  outline: 2px solid var(--tc-accent);
+  outline-offset: 2px;
+}
+.tc-input:focus:not(:focus-visible) {
+  outline: none;
 }
 .tc-input::placeholder {
   color: var(--tc-fg-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tc-btn-primary:hover {
+    background: var(--tc-accent-hover);
+  }
+  .tc-btn-secondary:hover {
+    background: var(--tc-bg-hover);
+    border-color: var(--tc-fg-muted);
+  }
+  .tc-btn-ghost:hover {
+    background: var(--tc-bg-hover);
+    color: var(--tc-fg);
+  }
+  .tc-btn-yes:hover {
+    background: var(--tc-success-hover-bg);
+  }
+  .tc-btn-no:hover {
+    background: var(--tc-danger-hover-bg);
+  }
+  .tc-slider-root[data-orientation="horizontal"] .tc-slider-thumb:hover {
+    transform: translateY(-50%) scale(1.12);
+    cursor: grabbing;
+  }
+  .tc-slider-root[data-orientation="vertical"] .tc-slider-thumb:hover {
+    transform: scale(1.12);
+    cursor: grabbing;
+  }
 }

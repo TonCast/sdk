@@ -1,6 +1,9 @@
 /* ===== TOKENS =====
    Scoped under .tc-w to avoid conflicts with the host page.
-   CSS custom properties allow per-instance theming. */
+   CSS custom properties allow per-instance theming.
+   Responsive note: list/detail layouts that depend on widget width use
+   @container queries on `.tc-w` (see _pari.css). Viewport @media is reserved
+   mainly for the dialog sheet. */
 .tc-w {
   height: 100%;
   /* Default light theme */
@@ -13,6 +16,8 @@
   --tc-bg-chrome: #f8fafc;
   --tc-bg-card: #f8fafc;
   --tc-bg-muted: #f1f5f9;
+  /* Neutral inset surfaces (e.g. technical details inside alerts); follows main canvas. */
+  --tc-bg-base: var(--tc-bg);
   --tc-bg-hover: rgba(0, 0, 0, 0.04);
   --tc-fg: #1e293b;
   --tc-fg-muted: #64748b;
@@ -40,19 +45,46 @@
   --tc-warn-fg: #d97706;
   --tc-warn-bg: rgba(217, 119, 6, 0.1);
   --tc-warn-border: rgba(217, 119, 6, 0.25);
-  /* Density (`cssVars.density`): these seven tokens adjust shell spacing. Many inner
-     layouts (pari cards, dialogs, steppers) still use fixed px — see components. */
+  /* Density (`cssVars.density`): spacing tokens above drive shell + derived --tc-pari-*
+     and --tc-bet-* / --tc-stepper-* helpers; typography --tc-text-* is px-based. */
   --tc-content-padding: 12px;
   --tc-card-padding: 14px;
   --tc-card-gap: 10px;
   --tc-form-gap: 12px;
-  --tc-header-padding-y: 8px;
-  --tc-header-padding-x: 12px;
+  --tc-header-padding-y: 5px;
+  --tc-header-padding-x: 10px;
   --tc-nav-padding-y: 10px;
+  /* Typography scale (absolute px — predictable inside embedded UIs). */
+  --tc-text-2xs: 10px;
+  --tc-text-xs: 11px;
+  --tc-text-sm: 12px;
+  --tc-text-md: 13px;
+  --tc-text-base: 14px;
+  --tc-text-lg: 15px;
+  --tc-text-xl: 16px;
+  --tc-text-2xl: 17px;
+  /* Pari / bet inner spacing derived from density tokens. */
+  --tc-pari-body-padding: max(8px, calc(var(--tc-card-padding) - 4px));
+  --tc-pari-stack-gap: max(4px, calc(var(--tc-form-gap) * 0.5));
+  --tc-pari-meta-gap: max(4px, calc(var(--tc-form-gap) * 0.6666666667));
+  --tc-pari-actions-gap: max(4px, calc(var(--tc-card-gap) * 0.6));
+  --tc-pari-meta-chip-pad-y: calc(var(--tc-card-padding) / 7);
+  --tc-pari-meta-chip-pad-x: calc(var(--tc-card-padding) * 3 / 7);
+  --tc-bet-quote-pad-y: max(8px, calc(var(--tc-card-padding) - 4px));
+  --tc-bet-quote-pad-x: max(10px, calc(var(--tc-content-padding)));
+  --tc-stepper-gap: max(6px, calc(var(--tc-form-gap) * 0.6666666667));
+  /* Pari card footer in @container (max-width: 479px). Coarse pointers still get --tc-touch-target in _accessibility.css. */
+  --tc-pari-narrow-btn-min-height: 36px;
   --tc-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
   --tc-grid-mobile: 1;
   --tc-grid-tablet: 2;
   --tc-grid-desktop: 3;
+  /* Stacking inside the widget (modal overlay must clear in-widget UI). */
+  --tc-z-underlay: 0;
+  --tc-z-raised: 1;
+  --tc-z-modal: 9998;
+  /* Minimum tap target (Apple HIG / Material ~48px; 44px is acceptable). */
+  --tc-touch-target: 44px;
 
   font-family:
     system-ui,
@@ -61,7 +93,7 @@
     "Segoe UI",
     Roboto,
     sans-serif;
-  font-size: 14px;
+  font-size: var(--tc-text-base);
   line-height: 1.5;
   color: var(--tc-fg);
   background: transparent;

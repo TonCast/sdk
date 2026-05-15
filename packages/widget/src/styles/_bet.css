@@ -2,9 +2,11 @@
 .tc-connect-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 16px;
-  height: 40px;
+  gap: var(--tc-stepper-gap);
+  padding: 0 max(12px, calc(var(--tc-content-padding) * 4 / 3));
+  min-height: var(--tc-touch-target);
+  box-sizing: border-box;
+  height: max(40px, calc(var(--tc-form-gap) * 3 + 4px));
   border-radius: 999px;
   background: linear-gradient(
     180deg,
@@ -15,16 +17,18 @@
   border: none;
   cursor: pointer;
   font-family: inherit;
-  font-size: 14px;
+  font-size: var(--tc-text-base);
   font-weight: 590;
   transition: filter 0.15s;
   box-shadow: var(--tc-accent-shadow);
 }
-.tc-connect-btn:hover {
-  filter: brightness(1.1);
-}
 .tc-connect-btn:active {
   transform: scale(0.98);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tc-connect-btn:hover {
+    filter: brightness(1.1);
+  }
 }
 .tc-connect-btn svg {
   width: 24px;
@@ -44,35 +48,55 @@
   border: 1px solid var(--tc-border);
   border-radius: calc(var(--tc-radius) - 4px);
   overflow: hidden;
-  font-size: 12px;
+  font-size: var(--tc-text-xs);
   font-weight: 500;
 }
 .tc-mode-tab {
   flex: 1;
-  padding: 6px 4px;
+  min-height: 34px;
+  box-sizing: border-box;
+  padding: 5px max(2px, calc(var(--tc-card-gap) * 0.35));
   text-align: center;
   background: none;
   border: none;
   cursor: pointer;
   color: var(--tc-fg-muted);
   font-family: inherit;
-  font-size: 12px;
-  transition: all 0.15s;
+  font-size: var(--tc-text-xs);
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 .tc-mode-tab.tc-active {
   background: var(--tc-accent);
   color: var(--tc-accent-fg);
 }
-.tc-mode-tab:not(.tc-active):hover {
-  background: var(--tc-bg-hover);
-  color: var(--tc-fg);
+@media (hover: hover) and (pointer: fine) {
+  .tc-mode-tab:not(.tc-active):hover {
+    background: var(--tc-bg-hover);
+    color: var(--tc-fg);
+  }
 }
-
 .tc-stepper-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--tc-stepper-gap);
 }
+
+/* ± icon buttons: accent (not success/danger). */
+.tc-stepper-row > .tc-btn:first-of-type,
+.tc-stepper-row > .tc-btn:last-of-type {
+  border-color: var(--tc-accent);
+  background: var(--tc-accent-bg);
+  color: var(--tc-accent);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tc-stepper-row > .tc-btn:first-of-type:hover:not(:disabled),
+  .tc-stepper-row > .tc-btn:last-of-type:hover:not(:disabled) {
+    background: var(--tc-accent);
+    color: var(--tc-accent-fg);
+    border-color: var(--tc-accent-hover);
+  }
+}
+
 .tc-stepper-row .tc-input {
   flex: 1;
   min-width: 0;
@@ -87,17 +111,17 @@
   background: var(--tc-bg-muted);
   border: 1px solid var(--tc-border);
   border-radius: calc(var(--tc-radius) - 2px);
-  padding: 10px 12px;
-  font-size: 12px;
+  padding: var(--tc-bet-quote-pad-y) var(--tc-bet-quote-pad-x);
+  font-size: var(--tc-text-sm);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: max(3px, calc(var(--tc-form-gap) * 0.3333333333));
 }
 .tc-quote-row {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--tc-stepper-gap);
 }
 .tc-quote-row-label {
   color: var(--tc-fg-muted);
@@ -118,11 +142,8 @@
   color: var(--tc-success-fg);
   font-weight: 600;
 }
-.tc-quote-row-warn {
-  color: var(--tc-warn-fg);
-}
 .tc-quote-divider {
   border: none;
   border-top: 1px solid var(--tc-border);
-  margin: 4px 0;
+  margin: max(3px, calc(var(--tc-form-gap) * 0.3333333333)) 0;
 }

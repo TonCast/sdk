@@ -29,6 +29,7 @@ const BUNDLE_ORDER = [
   "_chart.css",
   "_dialog.css",
   "_utilities.css",
+  "_accessibility.css",
 ];
 
 const HEADER = `/* ===== TONCAST WIDGET STYLES =====
