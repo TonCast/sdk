@@ -4,14 +4,10 @@ import type {
 } from "@toncast/widget";
 import { safeHexColor } from "@toncast/widget/color-math";
 import { RADIUS_DEFAULT } from "@toncast/widget/constants";
-import { deriveCssVars } from "@toncast/widget/css-vars-builder";
-import {
-  densityPresetToCssCustomProperties,
-  WIDGET_DENSITY_PRESETS,
-} from "@toncast/widget/density-presets";
 import { parseHttpUrl, stripTrailingSlashes } from "@toncast/widget/url";
 import { WIDGET_CDN_JS_URL } from "@toncast/widget-loader";
-import widgetIifeCss from "../../../../packages/widget/src/styles/widget.css?raw";
+/** Minified at bundle time via `minifyWidgetCssRawPlugin` (see `minifyWidgetCss.ts`). */
+import widgetIifeCss from "@toncast/widget/styles/widget.css?raw";
 import {
   type ConstructorConfig,
   DEFAULT_DARK_COLORS,
@@ -20,6 +16,10 @@ import {
 } from "../types";
 import { buildWidgetConfig } from "./buildWidgetConfig";
 import { clampRadius } from "./normalizeConfig";
+import {
+  HOST_PAGE_BACKDROP,
+  WIDGET_SHELL_BG,
+} from "./themeDefaults";
 
 /** Shown in export UI when no app domain is set; used in generated HTML/JS placeholders. */
 export const PLACEHOLDER_DOMAIN = "https://your-domain.com";
@@ -63,6 +63,7 @@ export function stringifyForScript(value: unknown, space: number): string {
 function buildDeltaPalette(
   colors: ThemeColorSet,
   defaults: ThemeColorSet,
+  mode: "light" | "dark",
 ): ToncastWidgetCssVarsBase {
   const palette: ToncastWidgetCssVarsBase = {};
   const accent = safeHexColor(colors.accent);
@@ -70,27 +71,38 @@ function buildDeltaPalette(
   const success = safeHexColor(colors.success);
   const danger = safeHexColor(colors.danger);
   const warn = safeHexColor(colors.warn);
+  const fg = colors.fg ? safeHexColor(colors.fg) : null;
+  const fgMuted = colors.fgMuted ? safeHexColor(colors.fgMuted) : null;
+  const border = colors.border ? safeHexColor(colors.border) : null;
   if (accent !== null && accent !== defaults.accent) palette.accent = accent;
-  if (bg !== null) palette.bg = bg;
+  const canonicalBg = WIDGET_SHELL_BG[mode];
+  const defaultBgRaw = defaults.bg?.trim()
+    ? safeHexColor(defaults.bg)
+    : canonicalBg;
+  if (
+    bg !== null &&
+    defaultBgRaw !== null &&
+    bg.toLowerCase() !== defaultBgRaw.toLowerCase()
+  ) {
+    palette.bg = bg;
+  }
   if (success !== null && success !== defaults.success)
     palette.success = success;
   if (danger !== null && danger !== defaults.danger) palette.danger = danger;
   if (warn !== null && warn !== defaults.warn) palette.warn = warn;
+  if (fg !== null && fg !== (defaults.fg ? safeHexColor(defaults.fg) : null))
+    palette.fg = fg;
+  if (
+    fgMuted !== null &&
+    fgMuted !== (defaults.fgMuted ? safeHexColor(defaults.fgMuted) : null)
+  )
+    palette.fgMuted = fgMuted;
+  if (
+    border !== null &&
+    border !== (defaults.border ? safeHexColor(defaults.border) : null)
+  )
+    palette.border = border;
   return palette;
-}
-
-function appendPaletteCssVars(
-  lines: string[],
-  colors: ThemeColorSet,
-  defaults: ThemeColorSet,
-  theme: "light" | "dark",
-): void {
-  const palette = buildDeltaPalette(colors, defaults);
-  if (Object.keys(palette).length === 0) return;
-  const vars = deriveCssVars(palette, theme);
-  for (const [name, value] of Object.entries(vars)) {
-    lines.push(`  ${name}: ${value};`);
-  }
 }
 
 /** Returns the trimmed value when it parses as an absolute http(s) URL, otherwise `null`. */
@@ -135,9 +147,6 @@ export function buildManifestJson(config: ConstructorConfig): string {
   );
 }
 
-const HOST_BACKDROP_LIGHT = "#f8fafc";
-const HOST_BACKDROP_DARK = "#0f172a";
-
 /** Resolves host page backdrop colors from optional theme shell `bg` values. */
 export function resolveHostBackdropColors(config: ConstructorConfig): {
   light: string;
@@ -146,8 +155,8 @@ export function resolveHostBackdropColors(config: ConstructorConfig): {
   const lightRaw = config.theme.light.bg?.trim();
   const darkRaw = config.theme.dark.bg?.trim();
   return {
-    light: (lightRaw && safeHexColor(lightRaw)) || HOST_BACKDROP_LIGHT,
-    dark: (darkRaw && safeHexColor(darkRaw)) || HOST_BACKDROP_DARK,
+    light: (lightRaw && safeHexColor(lightRaw)) || HOST_PAGE_BACKDROP.light,
+    dark: (darkRaw && safeHexColor(darkRaw)) || HOST_PAGE_BACKDROP.dark,
   };
 }
 
@@ -169,8 +178,9 @@ export function previewBackdropFromConfig(
 function paletteOrNull(
   colors: ThemeColorSet,
   defaults: ThemeColorSet,
+  mode: "light" | "dark",
 ): ToncastWidgetCssVarsBase | null {
-  const palette = buildDeltaPalette(colors, defaults);
+  const palette = buildDeltaPalette(colors, defaults, mode);
   return Object.keys(palette).length > 0 ? palette : null;
 }
 
@@ -198,8 +208,8 @@ export function buildCssVarsConfig(
   if (radius !== RADIUS_DEFAULT) vars.radius = `${radius}px`;
   if (theme.density !== "default") vars.density = theme.density;
 
-  const lightVars = paletteOrNull(theme.light, DEFAULT_LIGHT_COLORS);
-  const darkVars = paletteOrNull(theme.dark, DEFAULT_DARK_COLORS);
+  const lightVars = paletteOrNull(theme.light, DEFAULT_LIGHT_COLORS, "light");
+  const darkVars = paletteOrNull(theme.dark, DEFAULT_DARK_COLORS, "dark");
 
   if (theme.colorScheme === "light") {
     if (lightVars) Object.assign(vars, lightVars);
@@ -212,72 +222,6 @@ export function buildCssVarsConfig(
   }
 
   return Object.keys(vars).length > 0 ? vars : undefined;
-}
-
-/** Builds optional host CSS overrides for the widget container (for CSS snippet export). */
-export function buildStyleCss(config: ConstructorConfig): string | null {
-  const { theme } = config;
-  const radius = clampRadius(theme.radius);
-
-  const baseLines: string[] = [];
-  if (radius !== RADIUS_DEFAULT) baseLines.push(`  --tc-radius: ${radius}px;`);
-  // Emit density spacing tokens (same presets as @toncast/widget WIDGET_DENSITY_PRESETS).
-  if (theme.density !== "default") {
-    const preset = WIDGET_DENSITY_PRESETS[theme.density];
-    const densityVars = densityPresetToCssCustomProperties(preset);
-    for (const [k, v] of Object.entries(densityVars))
-      baseLines.push(`  ${k}: ${v};`);
-  }
-
-  const lightLines: string[] = [];
-  if (theme.colorScheme !== "dark") {
-    appendPaletteCssVars(
-      lightLines,
-      theme.light,
-      DEFAULT_LIGHT_COLORS,
-      "light",
-    );
-  }
-
-  const darkLines: string[] = [];
-  if (theme.colorScheme !== "light") {
-    appendPaletteCssVars(darkLines, theme.dark, DEFAULT_DARK_COLORS, "dark");
-  }
-
-  const hasOverrides =
-    baseLines.length > 0 || lightLines.length > 0 || darkLines.length > 0;
-  if (!hasOverrides) return null;
-
-  const out: string[] = [];
-
-  if (theme.colorScheme === "system") {
-    // Light vars go in the base block; dark vars in a media query override
-    const allBaseLines = [...baseLines, ...lightLines];
-    if (allBaseLines.length > 0) {
-      out.push("#toncast-widget {", ...allBaseLines, "}");
-    }
-    if (darkLines.length > 0) {
-      out.push(
-        "@media (prefers-color-scheme: dark) {",
-        "  #toncast-widget {",
-        ...darkLines.map((l) => `  ${l}`),
-        "  }",
-        "}",
-      );
-    }
-  } else if (theme.colorScheme === "dark") {
-    const allLines = [...baseLines, ...darkLines];
-    if (allLines.length > 0) {
-      out.push("#toncast-widget {", ...allLines, "}");
-    }
-  } else {
-    const allLines = [...baseLines, ...lightLines];
-    if (allLines.length > 0) {
-      out.push("#toncast-widget {", ...allLines, "}");
-    }
-  }
-
-  return out.length > 0 ? out.join("\n") : null;
 }
 
 /** `color-scheme` value for the exported host `<html>` shell. */
@@ -313,20 +257,18 @@ export function buildIndexHtml(config: ConstructorConfig): string {
   const domain = stripTrailingSlashes(config.domain || PLACEHOLDER_DOMAIN);
   const widgetConfig = buildWidgetConfig(config, { domain });
 
-  const css = buildStyleCss(config);
   const { rootColorScheme, bodyBackground, systemDarkCss } =
     buildHostShellBackdropCss(config);
 
   const iifeCssLink =
     '\n    <link rel="stylesheet" href="index.iife.css" data-toncast-widget-css />';
-  const cssLink = `${iifeCssLink}${css ? `\n    <link rel="stylesheet" href="style.css" />` : ""}`;
 
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>${escapeHtml(config.appName || "Toncast Widget")}</title>${cssLink}
+    <title>${escapeHtml(config.appName || "Toncast Widget")}</title>${iifeCssLink}
     <style>
       /* Minimal shell: fill viewport; widget is the only flex child and grows. */
       html {
@@ -394,6 +336,7 @@ export function buildReactSnippet(config: ConstructorConfig): string {
     : "";
 
   return `// NOTE: ToncastBettingWidget must be rendered inside a TonConnectUIProvider.
+// Theme is applied via widget.cssVars in the config below.
 // See https://docs.ton.org/develop/dapps/ton-connect/web for setup instructions.
 import { useEffect, useRef } from 'react';
 import { useTonConnectUI } from '@tonconnect/ui-react';
@@ -431,9 +374,6 @@ export async function downloadZip(config: ConstructorConfig): Promise<void> {
   folder.file("index.html", buildIndexHtml(config));
   folder.file("index.iife.css", widgetIifeCss);
   folder.file("tonconnect-manifest.json", buildManifestJson(config));
-
-  const css = buildStyleCss(config);
-  if (css) folder.file("style.css", css);
 
   const blob = await zip.generateAsync({ type: "blob" });
   const objectUrl = URL.createObjectURL(blob);

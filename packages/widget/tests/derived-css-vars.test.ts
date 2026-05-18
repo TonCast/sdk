@@ -183,6 +183,7 @@ describe("buildCssVarStyle", () => {
     expect(style["--tc-pari-mobile-meta-justify"]).toBe("flex-start");
     expect(style["--tc-pari-mobile-meta-gap"]).toBe("4px");
     expect(style["--tc-pari-mobile-actions-columns"]).toBe("1fr");
+    expect(style["--tc-pari-mobile-actions-min-height"]).toBe("30px");
     expect(style["--tc-pari-tablet-meta-direction"]).toBe("row");
     expect(style["--tc-pari-tablet-actions-columns"]).toBe("1fr 1fr");
     expect(style["--tc-grid-cols"]).toBeUndefined();
@@ -199,6 +200,16 @@ describe("buildCssVarStyle", () => {
     expect(style["--tc-pari-tablet-meta-justify"]).toBe("flex-start");
     expect(style["--tc-pari-tablet-meta-gap"]).toBe("4px");
     expect(style["--tc-pari-tablet-actions-columns"]).toBe("1fr");
+    expect(style["--tc-pari-tablet-actions-min-height"]).toBe("30px");
+  });
+
+  it("omits stacked action min-height when mobile columns are side by side", () => {
+    const style = buildCssVarStyle(undefined, "light", undefined, {
+      grid: { mobile: 1, tablet: 2, desktop: 3 },
+    }) as Record<string, string>;
+
+    expect(style["--tc-pari-mobile-actions-columns"]).toBe("1fr 1fr");
+    expect(style["--tc-pari-mobile-actions-min-height"]).toBeUndefined();
   });
 
   it("clamps invalid responsive layout grid values to defaults", () => {

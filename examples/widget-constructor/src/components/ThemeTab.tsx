@@ -1,4 +1,6 @@
+import { safeHexColor } from "@toncast/widget/color-math";
 import { RADIUS_DEFAULT, RADIUS_MAX } from "@toncast/widget/constants";
+import { useMemo, useState } from "react";
 import {
   DEFAULT_ACCENT,
   DEFAULT_DARK_COLORS,
@@ -6,6 +8,9 @@ import {
   type ThemeColorSet,
   type ThemeConfig,
 } from "../types";
+import { checkAccentOnBg, type ContrastLevel } from "../utils/contrastRatio";
+import { effectiveAdvancedColors } from "../utils/effectiveAdvancedColors";
+import { WIDGET_SHELL_BG } from "../utils/themeDefaults";
 import {
   type ConstructorThemeChoice,
   colorSchemeToThemeSelection,
@@ -58,19 +63,53 @@ const GRID_COLUMN_OPTIONS_BY_DEVICE_UI = {
   desktop: GRID_COLUMN_OPTIONS_BY_DEVICE.desktop.map((value) => ({ value, label: String(value) })),
 } as const;
 
+const CONTRAST_BADGE: Record<ContrastLevel, string> = {
+  pass: "bg-emerald-900/30 text-emerald-400 border-emerald-700/50",
+  warn: "bg-amber-900/30 text-amber-400 border-amber-700/50",
+  fail: "bg-red-900/30 text-red-400 border-red-700/50",
+};
+
+function ContrastBadge({ accent, bg }: { accent: string; bg: string }) {
+  const check = checkAccentOnBg(accent, bg);
+  if (check.ratio === null) return null;
+  const label =
+    check.level === "pass"
+      ? `Contrast OK (${check.ratio.toFixed(1)}:1)`
+      : check.level === "warn"
+        ? `Low contrast (${check.ratio.toFixed(1)}:1, aim ≥4.5:1)`
+        : `Poor contrast (${check.ratio.toFixed(1)}:1)`;
+  return (
+    <p
+      className={`text-[10px] px-2 py-1 rounded border ${CONTRAST_BADGE[check.level]}`}
+      role="status"
+    >
+      {label}
+    </p>
+  );
+}
+
 /** Reusable color set editor (brand + semantic colors). */
 function ColorSetEditor({
   label,
   value,
   onChange,
   defaults,
+  mode,
 }: {
   label: string;
   value: ThemeColorSet;
   onChange: (v: ThemeColorSet) => void;
   defaults: ThemeColorSet;
+  mode: "light" | "dark";
 }) {
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const set = (key: keyof ThemeColorSet, val: string) => onChange({ ...value, [key]: val });
+  const shellBg =
+    (value.bg?.trim() && safeHexColor(value.bg)) || WIDGET_SHELL_BG[mode];
+  const effective = useMemo(
+    () => effectiveAdvancedColors(value, mode),
+    [value, mode],
+  );
 
   return (
     <div className="min-w-0 rounded-lg border border-slate-700/60 bg-slate-900/40 p-3 space-y-3">
@@ -85,9 +124,10 @@ function ColorSetEditor({
       <ColorField
         label="Background"
         value={value.bg ?? ""}
-        placeholderHint={defaults.bg ?? "#ffffff"}
+        placeholderHint={defaults.bg || WIDGET_SHELL_BG[mode]}
         onChange={(v) => set("bg", v)}
       />
+      <ContrastBadge accent={value.accent} bg={shellBg} />
       <ColorField
         label="Positive"
         value={value.success}
@@ -106,6 +146,41 @@ function ColorSetEditor({
         defaultValue={defaults.warn}
         onChange={(v) => set("warn", v)}
       />
+
+      <div>
+        <button
+          type="button"
+          onClick={() => setAdvancedOpen((o) => !o)}
+          className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-300"
+        >
+          Advanced {advancedOpen ? "▾" : "▸"}
+        </button>
+        {advancedOpen && (
+          <div className="mt-2 space-y-3 pt-2 border-t border-slate-700/60">
+            <ColorField
+              label="Text"
+              value={value.fg ?? ""}
+              previewColor={effective.fg}
+              placeholderHint="Derived from background"
+              onChange={(v) => set("fg", v)}
+            />
+            <ColorField
+              label="Muted text"
+              value={value.fgMuted ?? ""}
+              previewColor={effective.fgMuted}
+              placeholderHint="Derived from background"
+              onChange={(v) => set("fgMuted", v)}
+            />
+            <ColorField
+              label="Border"
+              value={value.border ?? ""}
+              previewColor={effective.border}
+              placeholderHint="Derived from background"
+              onChange={(v) => set("border", v)}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -159,6 +234,7 @@ export function ThemeTab({ theme, onChange }: Props) {
             value={theme.light}
             onChange={(v) => set("light", v)}
             defaults={DEFAULT_LIGHT_COLORS}
+            mode="light"
           />
         )}
         {showDark && (
@@ -167,6 +243,7 @@ export function ThemeTab({ theme, onChange }: Props) {
             value={theme.dark}
             onChange={(v) => set("dark", v)}
             defaults={DEFAULT_DARK_COLORS}
+            mode="dark"
           />
         )}
       </div>
@@ -226,6 +303,11 @@ export function ThemeTab({ theme, onChange }: Props) {
         </div>
         <p className="mt-1.5 text-[10px] text-slate-600">
           Used at &lt;480px, 480–759px, and 760px+ respectively.
+        </p>
+        <p className="mt-1 text-[10px] text-slate-600 leading-snug">
+          With <strong>2–3 columns on Mobile</strong>, YES/NO buttons on each card stack in a single
+          column (widget sets <code className="text-slate-500">--tc-pari-mobile-actions-columns</code>
+          ).
         </p>
       </div>
 

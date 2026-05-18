@@ -17,7 +17,9 @@ describe("pari card responsive CSS", () => {
     expect(css).toContain("grid-template-columns: var(--tc-pari-mobile-actions-columns, 1fr 1fr);");
     expect(css).toContain("flex-direction: var(--tc-pari-tablet-meta-direction, row);");
     expect(css).toContain("grid-template-columns: var(--tc-pari-tablet-actions-columns, 1fr 1fr);");
-    expect(css).toContain("min-height: var(--tc-pari-narrow-btn-min-height);");
+    expect(css).toContain(
+      "min-height: var(--tc-pari-mobile-actions-min-height, var(--tc-pari-narrow-btn-min-height));",
+    );
     expect(css).not.toContain("grid-column: 2;");
   });
 

@@ -12,6 +12,10 @@ export interface ThemeColorSet {
   success: string;
   danger: string;
   warn: string;
+  /** Optional overrides (skip derivation). */
+  fg?: string;
+  fgMuted?: string;
+  border?: string;
 }
 
 export interface ThemeGridConfig {

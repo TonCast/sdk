@@ -168,29 +168,35 @@ export function App() {
       {/* ── Right: live preview ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Preview toolbar */}
-        <div className="flex items-center justify-between px-6 py-2.5 border-b border-slate-800 bg-slate-950">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Live Preview
-          </span>
-          <div className="flex items-center gap-1 bg-slate-900 rounded-lg p-1 border border-slate-800">
-            {DEVICES.map((d) => (
-              <button
-                key={d.id}
-                type="button"
-                aria-label={d.previewLabel}
-                onClick={() => setDevice(d.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                  device === d.id
-                    ? "bg-slate-700 text-slate-100 shadow"
-                    : "text-slate-500 hover:text-slate-300"
-                }`}
-                title={d.width}
-              >
-                <span aria-hidden="true">{d.icon}</span>
-                <span>{d.width}</span>
-              </button>
-            ))}
+        <div className="flex flex-col border-b border-slate-800 bg-slate-950">
+          <div className="flex items-center justify-between px-6 py-2.5">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              Live Preview
+            </span>
+            <div className="flex items-center gap-1 bg-slate-900 rounded-lg p-1 border border-slate-800">
+              {DEVICES.map((d) => (
+                <button
+                  key={d.id}
+                  type="button"
+                  aria-label={d.previewLabel}
+                  onClick={() => setDevice(d.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    device === d.id
+                      ? "bg-slate-700 text-slate-100 shadow"
+                      : "text-slate-500 hover:text-slate-300"
+                  }`}
+                  title={d.width}
+                >
+                  <span aria-hidden="true">{d.icon}</span>
+                  <span>{d.width}</span>
+                </button>
+              ))}
+            </div>
           </div>
+          <p className="px-6 pb-2 text-[10px] text-slate-600 leading-snug">
+            Card frame (shadow, fixed height) is for this tool only. Exported ZIP and CDN embeds use
+            a full-viewport shell without the preview frame.
+          </p>
         </div>
 
         {/* Preview canvas */}

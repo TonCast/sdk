@@ -1,12 +1,18 @@
+import { safeHexColor } from "@toncast/widget/color-math";
+
 interface Props {
   label: string;
   /** Current value. May be empty string when in "Clear" mode (no defaultValue). */
   value: string;
   /** When set → "Reset" mode (typed default shown as placeholder). When undefined → "Clear" mode. */
   defaultValue?: string;
+  /** Shown in swatch/placeholder when `value` is empty (e.g. derived theme). Does not enable Reset. */
+  previewColor?: string;
   placeholderHint?: string;
   onChange: (next: string) => void;
 }
+
+const PICKER_FALLBACK_HEX = "#64748b";
 
 const rowCls = "flex min-w-0 items-center gap-2";
 const hexInputCls =
@@ -16,30 +22,54 @@ const swatchCls =
 const actionCls =
   "inline-flex h-8 shrink-0 items-center text-[10px] text-slate-500 hover:text-slate-300 transition-colors";
 
-/**
- * Hex color picker with a sibling text input and a contextual "Reset"/"Clear" action.
- * - When `defaultValue` is provided → action label = "Reset" (resets to defaultValue).
- * - When `defaultValue` is undefined → action label = "Clear" (sets value to "").
- */
-export function ColorField({ label, value, defaultValue, placeholderHint, onChange }: Props) {
+/** Hex for `<input type="color">` — native picker only accepts #rrggbb. */
+function pickerHex(
+  value: string,
+  previewColor: string | undefined,
+  defaultValue: string | undefined,
+): string {
+  return (
+    safeHexColor(value) ??
+    safeHexColor(previewColor ?? "") ??
+    safeHexColor(defaultValue ?? "") ??
+    PICKER_FALLBACK_HEX
+  );
+}
+
+/** Hex color picker with text input and Reset/Clear action. */
+export function ColorField({
+  label,
+  value,
+  defaultValue,
+  previewColor,
+  placeholderHint,
+  onChange,
+}: Props) {
   const isReset = defaultValue !== undefined;
-  const swatchValue = value || defaultValue || "#000000";
-  const placeholder = defaultValue ?? placeholderHint ?? "";
+  const colorPickerValue = pickerHex(value, previewColor, defaultValue);
+  const placeholder = value
+    ? ""
+    : (previewColor ?? defaultValue ?? placeholderHint ?? "");
   const showAction = isReset ? value !== defaultValue && value !== "" : value !== "";
   const actionLabel = isReset ? "Reset" : "Clear";
   const onAction = () => onChange(isReset ? (defaultValue as string) : "");
-  const hint = value || (isReset ? defaultValue || "optional" : "optional");
+  const hint =
+    value ||
+    previewColor ||
+    (isReset ? defaultValue || "optional" : placeholderHint || "optional");
 
   return (
     <div>
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-xs text-slate-400">{label}</span>
-        <span className="font-mono text-[10px] text-slate-500">{hint}</span>
+        <span className="font-mono text-[10px] text-slate-500 truncate max-w-[55%] text-right">
+          {hint}
+        </span>
       </div>
       <div className={rowCls}>
         <input
           type="color"
-          value={swatchValue}
+          value={colorPickerValue}
           onChange={(e) => onChange(e.target.value)}
           className={swatchCls}
           aria-label={`${label} color`}

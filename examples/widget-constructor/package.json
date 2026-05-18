@@ -27,6 +27,7 @@
     "vite-plugin-node-polyfills": "^0.26.0"
   },
   "devDependencies": {
+    "lightningcss": "1.32.0",
     "@tailwindcss/vite": "^4.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

@@ -1023,8 +1023,9 @@
   }
 
   .tc-pari-btns .tc-btn {
-    min-height: var(--tc-pari-narrow-btn-min-height);
-    padding: 0 4px;
+    height: auto;
+    min-height: var(--tc-pari-mobile-actions-min-height, var(--tc-pari-narrow-btn-min-height));
+    padding: 5px 4px;
     font-size: var(--tc-pari-mobile-actions-font-size, var(--tc-text-sm));
   }
 }
@@ -1056,6 +1057,9 @@
   }
 
   .tc-pari-btns .tc-btn {
+    height: auto;
+    min-height: var(--tc-pari-tablet-actions-min-height, var(--tc-pari-narrow-btn-min-height));
+    padding: 5px 4px;
     font-size: var(--tc-pari-tablet-actions-font-size, var(--tc-text-sm));
   }
 }
@@ -1812,7 +1816,10 @@
   }
 
   .tc-pari-btns .tc-btn {
-    min-height: var(--tc-touch-target);
+    min-height: var(
+      --tc-pari-tablet-actions-min-height,
+      var(--tc-pari-mobile-actions-min-height, var(--tc-touch-target))
+    );
   }
 
   .tc-select,

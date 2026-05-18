@@ -4,13 +4,13 @@ import {
   DEFAULT_CONFIG,
   type SupportedLanguage,
 } from "../src/types";
+import { deriveCssVars } from "@toncast/widget/css-vars-builder";
 import {
   buildCssVarsConfig,
   buildIndexHtml,
   buildJsSnippet,
   buildManifestJson,
   buildReactSnippet,
-  buildStyleCss,
   PLACEHOLDER_DOMAIN,
   previewBackdropFromConfig,
   resolveHostBackdropColors,
@@ -202,24 +202,7 @@ describe("widget export snippets", () => {
     expect(snippet).not.toContain("gridCols");
   });
 
-  it("does not emit removed grid CSS variables in style.css", () => {
-    const gridConfig = config({
-      theme: {
-        ...DEFAULT_CONFIG.theme,
-        grid: {
-          mobile: 1,
-          tablet: 2,
-          desktop: 3,
-        },
-      },
-    });
-
-    const css = buildStyleCss(gridConfig);
-
-    expect(css ?? "").not.toContain("--tc-grid-cols");
-  });
-
-  it("emits derived CSS-only variables for themed fills and chrome", () => {
+  it("deriveCssVars emits derived fill/chrome variables from cssVars palette", () => {
     const themedConfig = config({
       theme: {
         ...DEFAULT_CONFIG.theme,
@@ -234,13 +217,15 @@ describe("widget export snippets", () => {
       },
     });
 
-    const css = buildStyleCss(themedConfig);
+    const palette = buildCssVarsConfig(themedConfig);
+    expect(palette).toBeDefined();
+    const vars = deriveCssVars(palette!, "light");
 
-    expect(css).toContain("--tc-accent-bg");
-    expect(css).toContain("--tc-accent-shadow");
-    expect(css).toContain("--tc-bg-chrome");
-    expect(css).toContain("--tc-success-fill-bg");
-    expect(css).toContain("--tc-danger-fill-bg");
+    expect(vars["--tc-accent-bg"]).toBeDefined();
+    expect(vars["--tc-accent-shadow"]).toBeDefined();
+    expect(vars["--tc-bg-chrome"]).toBeDefined();
+    expect(vars["--tc-success-fill-bg"]).toBeDefined();
+    expect(vars["--tc-danger-fill-bg"]).toBeDefined();
   });
 
   it("includes shell background in widget cssVars when set (dark mode)", () => {
@@ -317,5 +302,50 @@ describe("widget export snippets", () => {
     expect(html).toContain("--tc-content-padding: 0");
     expect(html).not.toContain("padding: 16px;");
     expect(html).not.toContain("@media (max-width: 640px)");
+  });
+
+  it("buildIndexHtml does not link style.css (theme via widget.cssVars only)", () => {
+    const c = config({
+      theme: {
+        ...DEFAULT_CONFIG.theme,
+        colorScheme: "dark",
+        dark: {
+          ...DEFAULT_CONFIG.theme.dark,
+          accent: "#00b2d8",
+          bg: "#000000",
+        },
+      },
+    });
+    const html = buildIndexHtml(c);
+    expect(html).not.toContain('href="style.css"');
+    expect(html).toContain('"accent": "#00b2d8"');
+  });
+
+  it("omits bg from cssVars when it matches canonical dark shell default", () => {
+    const c = config({
+      theme: {
+        ...DEFAULT_CONFIG.theme,
+        colorScheme: "dark",
+        dark: {
+          ...DEFAULT_CONFIG.theme.dark,
+          bg: "#0f172a",
+        },
+      },
+    });
+    expect(buildCssVarsConfig(c)?.bg).toBeUndefined();
+  });
+
+  it("emits bg in cssVars when it differs from canonical dark default", () => {
+    const c = config({
+      theme: {
+        ...DEFAULT_CONFIG.theme,
+        colorScheme: "dark",
+        dark: {
+          ...DEFAULT_CONFIG.theme.dark,
+          bg: "#000000",
+        },
+      },
+    });
+    expect(buildCssVarsConfig(c)).toMatchObject({ bg: "#000000" });
   });
 });

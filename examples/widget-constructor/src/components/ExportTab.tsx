@@ -5,7 +5,6 @@ import {
   buildJsSnippet,
   buildManifestJson,
   buildReactSnippet,
-  buildStyleCss,
   downloadZip,
   PLACEHOLDER_DOMAIN,
 } from "../utils/generateZip";
@@ -68,7 +67,6 @@ export function ExportTab({ config }: { config: ConstructorConfig }) {
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const domainMissing = !config.domain;
-  const cssContent = buildStyleCss(config);
 
   const handleDownload = async () => {
     if (domainMissing) return;
@@ -85,6 +83,12 @@ export function ExportTab({ config }: { config: ConstructorConfig }) {
 
   return (
     <div className="space-y-4">
+      <div className="rounded-lg bg-sky-900/20 border border-sky-800/40 px-3 py-2.5 text-xs text-sky-400 leading-snug">
+        <strong>Deploy vs preview:</strong> ZIP and CDN embeds use a full-viewport shell (no card
+        shadow, <code className="text-sky-300/90">--tc-shell-radius: 0</code>). Theme is applied via{" "}
+        <code className="text-sky-300/90">widget.cssVars</code> in the generated config.
+      </div>
+
       {domainMissing && (
         <div className="rounded-lg bg-amber-900/20 border border-amber-700/40 px-3 py-2 text-xs text-amber-400">
           Set <strong>app domain</strong> in Config tab to enable ZIP download.
@@ -105,13 +109,8 @@ export function ExportTab({ config }: { config: ConstructorConfig }) {
           Deploy to Cloudflare Pages or any static host —{" "}
           <code className="text-slate-400">index.html</code> +{" "}
           <code className="text-slate-400">index.iife.css</code> +{" "}
-          <code className="text-slate-400">tonconnect-manifest.json</code>
-          {cssContent && (
-            <>
-              {" "}
-              + <code className="text-slate-400">style.css</code>
-            </>
-          )}
+          <code className="text-slate-400">tonconnect-manifest.json</code> (theme in embedded{" "}
+          <code className="text-slate-400">widget.cssVars</code>)
         </p>
         <button
           type="button"
@@ -146,16 +145,6 @@ export function ExportTab({ config }: { config: ConstructorConfig }) {
         </p>
         <CodeBlock title="tonconnect-manifest.json" code={buildManifestJson(config)} />
       </div>
-
-      {/* CSS overrides */}
-      {cssContent && (
-        <div>
-          <p className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">
-            CSS overrides
-          </p>
-          <CodeBlock title="style.css" code={cssContent} />
-        </div>
-      )}
 
       {/* Option B */}
       <div>

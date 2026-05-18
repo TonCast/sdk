@@ -60,7 +60,10 @@
   }
 
   .tc-pari-btns .tc-btn {
-    min-height: var(--tc-touch-target);
+    min-height: var(
+      --tc-pari-tablet-actions-min-height,
+      var(--tc-pari-mobile-actions-min-height, var(--tc-touch-target))
+    );
   }
 
   .tc-select,

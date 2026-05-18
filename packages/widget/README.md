@@ -4,7 +4,7 @@ Embeddable Toncast betting UI: market lists, pari detail, bet placement (TON or 
 
 - **CDN:** major-versioned IIFE bundle (see root monorepo README for snippet).
 - **npm:** ESM/CJS builds plus [`@toncast/widget-loader`](../widget-loader) for runtime script injection.
-- **Theming:** CSS variables and density presets — see root README “Widget white-label theming”.
+- **Theming:** CSS variables and density presets — see root README “Widget white-label theming”. Responsive pari-card grid columns are set via `widget.layout.grid` (`mobile` / `tablet` / `desktop`); when `mobile` is 2 or 3, the widget stacks YES/NO actions vertically on narrow cards for readability.
 
 **Status:** 0.0.1 (pre–1.0.0). Pin exact versions until `1.0.0`. The IIFE bundle is large by design (~1.7 MB minified); monitor size on upgrades. See [`CHANGELOG.md`](../../CHANGELOG.md).
 

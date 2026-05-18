@@ -35,6 +35,10 @@ function applyPariCardLayoutVars(
   style[`${prefix}-actions-columns`] = shouldStack ? "1fr" : "1fr 1fr";
   style[`${prefix}-actions-gap`] = shouldStack ? "4px" : "6px";
   style[`${prefix}-actions-font-size`] = shouldStack ? "11px" : "12px";
+  // Stacked YES/NO on narrow cards: shorter than default touch row (44px) or side-by-side row (36px).
+  if (shouldStack) {
+    style[`${prefix}-actions-min-height`] = "30px";
+  }
 }
 
 function applyLayoutVars(layout: ToncastWidgetLayout | undefined, style: StyleVars): void {

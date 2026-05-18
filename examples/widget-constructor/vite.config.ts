@@ -3,11 +3,13 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
+import { minifyWidgetCssRawPlugin } from "./vite/minifyWidgetCssRawPlugin";
 
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    minifyWidgetCssRawPlugin(),
     // @ton/core, @ston-fi/sdk, axios etc. reach for Node built-ins at module-init time.
     nodePolyfills({
       include: ["stream", "buffer", "events", "util", "process", "crypto"],
