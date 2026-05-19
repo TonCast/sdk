@@ -1,16 +1,22 @@
 import type { ToncastWidgetConfig, ToncastWidgetLayout } from "@toncast/widget";
 import { stripTrailingSlashes } from "@toncast/widget/url";
 import type { ConstructorConfig } from "../types";
-import { buildCssVarsConfig, PLACEHOLDER_DOMAIN } from "./generateZip";
+import { buildCssVarsConfig } from "./cssVars";
 import { normalizeGridColumnForDevice } from "./themeRules";
+
+/** Shown in export UI when no app domain is set; used in generated HTML/JS placeholders. */
+export const PLACEHOLDER_DOMAIN = "https://your-domain.com";
 
 export interface BuildWidgetConfigOpts {
   /**
    * Absolute app URL for TonConnect standalone manifest (`tonconnect.options.domain`).
-   * Ignored when `integratedMode` is true (React snippet supplies TonConnect separately).
+   * Ignored when `integratedMode` is true.
    */
   domain?: string;
-  /** When true, `domain` is ignored and tonconnect domain is left empty for integrated UIs. */
+  /**
+   * When true, `domain` is set to empty string — snippet generators only read
+   * `.widget` / `.client` and supply their own TonConnect instance.
+   */
   integratedMode?: boolean;
 }
 
@@ -52,11 +58,12 @@ function buildWidgetOptions(config: ConstructorConfig): NonNullable<ToncastWidge
  * Single source of truth for the runtime widget config object.
  *
  * Used by:
- * - HTML/JS/React snippet generators in `generateZip` (serialised to text);
+ * - HTML/JS/React snippet generators in `snippets.ts` (serialised to text);
  * - `LivePreview` (passed as a prop to <Widget/>).
  *
- * `tonconnect` is always emitted; `client` only when `apiBaseUrl` is non-empty
- * (optional `apiWsUrl` is included when set in the constructor).
+ * `tonconnect` is always emitted. In `integratedMode`, domain is empty — callers
+ * read only `.widget` / `.client` and wire their own TonConnect instance.
+ * `client` is only emitted when `apiBaseUrl` is non-empty.
  * `widget` is always emitted (includes responsive `layout`).
  */
 export function buildWidgetConfig(

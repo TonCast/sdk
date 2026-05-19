@@ -1,4 +1,9 @@
-import { DEFAULT_BASE_URL, DEFAULT_WS_URL, type SupportedLanguage } from "@toncast/sdk";
+import {
+  DEFAULT_BASE_URL,
+  DEFAULT_WS_URL,
+  SUPPORTED_LANGUAGES,
+  type SupportedLanguage,
+} from "@toncast/sdk";
 import { parseHttpUrl, stripTrailingSlashes } from "@toncast/widget/url";
 import { type ConstructorConfig, resetConfigTabToDefaults } from "../types";
 import { PillButton } from "./ui/PillButton";
@@ -17,6 +22,12 @@ const LANGUAGES: { code: SupportedLanguage; label: string }[] = [
   { code: "fa", label: "فارسی" },
   { code: "ar", label: "العربية" },
 ];
+
+const SUPPORTED_LANGUAGES_SET = new Set<string>(SUPPORTED_LANGUAGES);
+
+function isSupportedLanguage(v: string): v is SupportedLanguage {
+  return SUPPORTED_LANGUAGES_SET.has(v);
+}
 
 const LANGUAGE_OPTIONS: ReadonlyArray<{
   value: SupportedLanguage;
@@ -178,7 +189,10 @@ export function ConfigTab({ config, onChange }: Props) {
         <select
           id="tc-language"
           value={config.language}
-          onChange={(e) => set("language", e.target.value as SupportedLanguage | "")}
+          onChange={(e) => {
+            const v = e.target.value;
+            set("language", isSupportedLanguage(v) ? v : "");
+          }}
           className="w-full h-9 px-3 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-xs focus:outline-none focus:border-sky-500/50"
         >
           <option value="">Auto-detect (navigator.language)</option>

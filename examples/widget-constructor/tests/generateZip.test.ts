@@ -1,17 +1,17 @@
 import { deriveCssVars } from "@toncast/widget/css-vars-builder";
 import { describe, expect, it, vi } from "vitest";
 import { type ConstructorConfig, DEFAULT_CONFIG, type SupportedLanguage } from "../src/types";
+import { PLACEHOLDER_DOMAIN } from "../src/utils/buildWidgetConfig";
+import { buildCssVarsConfig } from "../src/utils/cssVars";
+import { previewBackdropFromConfig } from "../src/utils/generateZip";
+import { buildManifestJson } from "../src/utils/manifest";
 import {
-  buildCssVarsConfig,
   buildIndexHtml,
   buildJsSnippet,
-  buildManifestJson,
   buildReactSnippet,
-  PLACEHOLDER_DOMAIN,
-  previewBackdropFromConfig,
   resolveHostBackdropColors,
   stringifyForScript,
-} from "../src/utils/generateZip";
+} from "../src/utils/snippets";
 
 function config(overrides: Partial<ConstructorConfig>): ConstructorConfig {
   return {

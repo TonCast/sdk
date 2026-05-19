@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ConfigTab } from "./components/ConfigTab";
 import { ExportTab } from "./components/ExportTab";
-import { LivePreview } from "./components/LivePreview";
+import { LivePreviewPlaceholder } from "./components/LivePreviewPlaceholder";
+import { loadLivePreview } from "./components/loadLivePreview";
 import { ThemeTab } from "./components/ThemeTab";
 import { type ConstructorConfig, DEFAULT_CONFIG, type Device } from "./types";
 import { previewBackdropFromConfig } from "./utils/generateZip";
 import { normalizeConfig } from "./utils/normalizeConfig";
+import { useIdlePrefetch } from "./utils/useIdlePrefetch";
 import { usePrefersColorSchemeDark } from "./utils/usePrefersColorSchemeDark";
 
 type Tab = "theme" | "config" | "export";
@@ -44,6 +46,9 @@ const DEVICES: {
 
 const STORAGE_KEY = "tc-constructor-config-v2";
 
+/** Widget + SDK stack; split so Theme/Config/Export tabs load without the full preview bundle. */
+const LivePreview = lazy(loadLivePreview);
+
 /** Loads config from localStorage, normalizing types to prevent runtime crashes. */
 function loadConfig(): ConstructorConfig {
   try {
@@ -63,15 +68,25 @@ export function App() {
   const [device, setDevice] = useState<Device>("mobile");
   const prefersDark = usePrefersColorSchemeDark();
   const previewBackdrop = previewBackdropFromConfig(config, prefersDark);
+  const tabListRef = useRef<HTMLDivElement>(null);
 
-  // Persist config changes to localStorage.
+  // Persist config changes to localStorage — debounced to avoid per-keystroke writes.
+  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-    } catch {
-      // QuotaExceeded / private mode — skip silently.
-    }
+    if (persistTimerRef.current !== null) clearTimeout(persistTimerRef.current);
+    persistTimerRef.current = setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+      } catch {
+        // QuotaExceeded / private mode — skip silently.
+      }
+    }, 400);
+    return () => {
+      if (persistTimerRef.current !== null) clearTimeout(persistTimerRef.current);
+    };
   }, [config]);
+
+  useIdlePrefetch(loadLivePreview);
 
   const handleResetAll = () => {
     if (window.confirm("Reset all settings (Theme + Config) to defaults?")) {
@@ -79,13 +94,44 @@ export function App() {
     }
   };
 
+  /** Activates a tab and moves DOM focus to its button (WCAG roving tabIndex). */
+  const activateTab = (newTab: Tab) => {
+    setTab(newTab);
+    requestAnimationFrame(() => {
+      tabListRef.current?.querySelector<HTMLElement>(`#tab-${newTab}`)?.focus();
+    });
+  };
+
+  /** Arrow-key / Home / End navigation inside the tablist (WCAG 2.1 §3.2.5). */
+  const handleTabKeyDown = (e: React.KeyboardEvent, currentTab: Tab) => {
+    const idx = TABS.findIndex((t) => t.id === currentTab);
+    let next = idx;
+    if (e.key === "ArrowRight") next = (idx + 1) % TABS.length;
+    else if (e.key === "ArrowLeft") next = (idx - 1 + TABS.length) % TABS.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = TABS.length - 1;
+    else return;
+    e.preventDefault();
+    activateTab(TABS[next].id);
+  };
+
   const tabIndex = TABS.findIndex((t) => t.id === tab);
   const nextTab = TABS[tabIndex + 1];
 
   return (
     <div className="flex h-full overflow-hidden bg-slate-950 text-slate-200">
+      {/* Skip link — visible only on keyboard focus; jumps past sidebar for AT users */}
+      <a
+        href="#live-preview"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-3 focus:py-1.5 focus:rounded-md focus:bg-slate-700 focus:text-slate-100 focus:text-xs focus:font-semibold"
+      >
+        Skip to live preview
+      </a>
       {/* ── Left: settings panel ── */}
-      <aside className="w-88 shrink-0 flex flex-col border-r border-slate-800 bg-slate-950">
+      <aside
+        aria-label="Widget settings"
+        className="w-88 shrink-0 flex flex-col border-r border-slate-800 bg-slate-950"
+      >
         {/* Header */}
         <div className="px-4 py-3 border-b border-slate-800">
           <div className="text-sm font-bold text-slate-100 leading-tight">
@@ -94,26 +140,36 @@ export function App() {
           <div className="text-xs text-slate-500 mt-0.5">configure · preview · export</div>
         </div>
 
-        {/* Tab bar */}
-        <div role="tablist" className="flex border-b border-slate-800 bg-slate-900/50">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              id={`tab-${t.id}`}
-              role="tab"
-              type="button"
-              aria-selected={tab === t.id}
-              aria-controls={`panel-${t.id}`}
-              onClick={() => setTab(t.id)}
-              className={`flex-1 py-2.5 text-xs font-semibold transition-all ${
-                tab === t.id
-                  ? "text-sky-400 border-b-2 border-sky-400"
-                  : "text-slate-500 hover:text-slate-300"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+        {/* Tab bar — WCAG tablist pattern: roving tabIndex + arrow-key navigation */}
+        <div
+          ref={tabListRef}
+          role="tablist"
+          aria-label="Constructor sections"
+          className="flex border-b border-slate-800 bg-slate-900/50"
+        >
+          {TABS.map((t) => {
+            const isActive = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                id={`tab-${t.id}`}
+                role="tab"
+                type="button"
+                aria-selected={isActive}
+                aria-controls={isActive ? `panel-${t.id}` : undefined}
+                tabIndex={isActive ? 0 : -1}
+                onClick={() => activateTab(t.id)}
+                onKeyDown={(e) => handleTabKeyDown(e, t.id)}
+                className={`flex-1 py-2.5 text-xs font-semibold transition-all ${
+                  isActive
+                    ? "text-sky-400 border-b-2 border-sky-400"
+                    : "text-slate-500 hover:text-slate-300"
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Tab content — scrollable */}
@@ -146,7 +202,7 @@ export function App() {
               onClick={() => {
                 const order: Tab[] = ["theme", "config", "export"];
                 const next = order[order.indexOf(tab) + 1];
-                if (next) setTab(next);
+                if (next) activateTab(next);
               }}
               className="text-xs text-sky-400 hover:text-sky-300 transition-colors font-medium"
             >
@@ -166,19 +222,21 @@ export function App() {
       </aside>
 
       {/* ── Right: live preview ── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden" id="live-preview">
         {/* Preview toolbar */}
         <div className="flex flex-col border-b border-slate-800 bg-slate-950">
           <div className="flex items-center justify-between px-6 py-2.5">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Live Preview
             </span>
-            <div className="flex items-center gap-1 bg-slate-900 rounded-lg p-1 border border-slate-800">
+            <fieldset className="flex items-center gap-1 bg-slate-900 rounded-lg p-1 border border-slate-800 m-0 min-w-0">
+              <legend className="sr-only">Preview device width</legend>
               {DEVICES.map((d) => (
                 <button
                   key={d.id}
                   type="button"
                   aria-label={d.previewLabel}
+                  aria-pressed={device === d.id}
                   onClick={() => setDevice(d.id)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                     device === d.id
@@ -191,7 +249,7 @@ export function App() {
                   <span>{d.width}</span>
                 </button>
               ))}
-            </div>
+            </fieldset>
           </div>
           <p className="px-6 pb-2 text-[10px] text-slate-600 leading-snug">
             Card frame (shadow, fixed height) is for this tool only. Exported ZIP and CDN embeds use
@@ -211,10 +269,12 @@ export function App() {
               transition: "width 0.3s ease",
             }}
           >
-            <LivePreview config={config} deviceMode={device} />
+            <Suspense fallback={<LivePreviewPlaceholder deviceMode={device} />}>
+              <LivePreview config={config} deviceMode={device} />
+            </Suspense>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

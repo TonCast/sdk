@@ -3,8 +3,9 @@
  * - SPA: examples/widget-constructor/dist/
  * - CDN: examples/widget-constructor/dist/v0/index.iife.js
  */
-import { cp, mkdir } from "node:fs/promises";
+
 import { spawn } from "node:child_process";
+import { cp, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 

@@ -1,11 +1,21 @@
 import { Address } from "@ton/core";
+import { SUPPORTED_LANGUAGES } from "@toncast/sdk";
 import { RADIUS_DEFAULT, RADIUS_MAX } from "@toncast/widget/constants";
 import { parseHttpUrl, stripTrailingSlashes } from "@toncast/widget/url";
 import { type ConstructorConfig, DEFAULT_CONFIG, type ThemeConfig } from "../types";
 import { normalizeGridColumnForDevice } from "./themeRules";
 
-const VALID_DENSITIES: ThemeConfig["density"][] = ["compact", "default", "comfortable"];
-const VALID_SCHEMES: ThemeConfig["colorScheme"][] = ["light", "dark", "system"];
+const VALID_DENSITIES = new Set<ThemeConfig["density"]>(["compact", "default", "comfortable"]);
+const VALID_SCHEMES = new Set<ThemeConfig["colorScheme"]>(["light", "dark", "system"]);
+const SUPPORTED_LANGUAGES_SET = new Set<string>(SUPPORTED_LANGUAGES);
+
+function isValidDensity(v: unknown): v is ThemeConfig["density"] {
+  return typeof v === "string" && VALID_DENSITIES.has(v as ThemeConfig["density"]);
+}
+
+function isValidScheme(v: unknown): v is ThemeConfig["colorScheme"] {
+  return typeof v === "string" && VALID_SCHEMES.has(v as ThemeConfig["colorScheme"]);
+}
 
 /**
  * Clamps a radius value to [0, RADIUS_MAX]. Non-finite input falls back to
@@ -65,10 +75,24 @@ export function normalizeReferralAddress(raw: unknown): string {
  */
 export function normalizeConfig(parsed: Partial<ConstructorConfig>): ConstructorConfig {
   const t = parsed.theme;
+  const rawLanguages = Array.isArray(parsed.languages)
+    ? parsed.languages
+    : DEFAULT_CONFIG.languages;
+  const languages = rawLanguages.filter(
+    (l): l is ConstructorConfig["languages"][number] =>
+      typeof l === "string" && SUPPORTED_LANGUAGES_SET.has(l),
+  );
+  const rawLanguage = parsed.language;
+  const language =
+    typeof rawLanguage === "string" &&
+    (rawLanguage === "" || SUPPORTED_LANGUAGES_SET.has(rawLanguage))
+      ? (rawLanguage as ConstructorConfig["language"])
+      : DEFAULT_CONFIG.language;
   return {
     ...DEFAULT_CONFIG,
     ...parsed,
-    languages: Array.isArray(parsed.languages) ? parsed.languages : DEFAULT_CONFIG.languages,
+    languages,
+    language,
     apiBaseUrl: normalizeApiBaseUrl(parsed.apiBaseUrl),
     apiWsUrl: normalizeApiWsUrl(parsed.apiWsUrl),
     referralPct: Number.isFinite(Number(parsed.referralPct))
@@ -79,12 +103,8 @@ export function normalizeConfig(parsed: Partial<ConstructorConfig>): Constructor
     theme: {
       ...DEFAULT_CONFIG.theme,
       ...t,
-      colorScheme: VALID_SCHEMES.includes(t?.colorScheme as ThemeConfig["colorScheme"])
-        ? (t?.colorScheme as ThemeConfig["colorScheme"])
-        : DEFAULT_CONFIG.theme.colorScheme,
-      density: VALID_DENSITIES.includes(t?.density as ThemeConfig["density"])
-        ? (t?.density as ThemeConfig["density"])
-        : DEFAULT_CONFIG.theme.density,
+      colorScheme: isValidScheme(t?.colorScheme) ? t.colorScheme : DEFAULT_CONFIG.theme.colorScheme,
+      density: isValidDensity(t?.density) ? t.density : DEFAULT_CONFIG.theme.density,
       radius: clampRadius(t?.radius, DEFAULT_CONFIG.theme.radius),
       grid: {
         mobile: normalizeGridColumnForDevice("mobile", t?.grid?.mobile),

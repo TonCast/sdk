@@ -1,4 +1,5 @@
 import { safeHexColor } from "@toncast/widget/color-math";
+import { useId } from "react";
 
 interface Props {
   label: string;
@@ -45,6 +46,7 @@ export function ColorField({
   placeholderHint,
   onChange,
 }: Props) {
+  const inputId = useId();
   const isReset = defaultValue !== undefined;
   const colorPickerValue = pickerHex(value, previewColor, defaultValue);
   const placeholder = value ? "" : (previewColor ?? defaultValue ?? placeholderHint ?? "");
@@ -57,7 +59,9 @@ export function ColorField({
   return (
     <div>
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs text-slate-400">{label}</span>
+        <label htmlFor={inputId} className="text-xs text-slate-400">
+          {label}
+        </label>
         <span className="font-mono text-[10px] text-slate-500 truncate max-w-[55%] text-right">
           {hint}
         </span>
@@ -68,14 +72,15 @@ export function ColorField({
           value={colorPickerValue}
           onChange={(e) => onChange(e.target.value)}
           className={swatchCls}
-          aria-label={`${label} color`}
+          aria-label={`${label} color picker`}
+          tabIndex={-1}
         />
         <input
+          id={inputId}
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          aria-label={`${label} hex color`}
           className={hexInputCls}
         />
         {showAction && (

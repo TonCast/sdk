@@ -1,13 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { ConstructorConfig } from "../types";
+import { PLACEHOLDER_DOMAIN } from "../utils/buildWidgetConfig";
 import { copyTextToClipboard } from "../utils/copyTextToClipboard";
-import {
-  buildJsSnippet,
-  buildManifestJson,
-  buildReactSnippet,
-  downloadZip,
-  PLACEHOLDER_DOMAIN,
-} from "../utils/generateZip";
+import { downloadZip } from "../utils/generateZip";
+import { buildManifestJson } from "../utils/manifest";
+import { buildJsSnippet, buildReactSnippet } from "../utils/snippets";
 
 function CopyButton({ text }: { text: string }) {
   const [state, setState] = useState<"idle" | "copied" | "error">("idle");
