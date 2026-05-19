@@ -24,11 +24,17 @@ function run(cmd, args) {
   });
 }
 
-// Workspace packages export ./dist/* — build deps before widget IIFE (esbuild resolves via package.json).
-for (const workspace of ["@toncast/sdk", "@toncast/sdk-react", "@toncast/widget"]) {
+// Workspace packages export ./dist/* — build all deps before constructor (Vite has no loader alias).
+const workspaces = [
+  "@toncast/sdk",
+  "@toncast/sdk-react",
+  "@toncast/widget",
+  "@toncast/widget-loader",
+  "@toncast/widget-constructor",
+];
+for (const workspace of workspaces) {
   await run("npm", ["run", "build", "--workspace", workspace]);
 }
-await run("npm", ["run", "build", "--workspace", "@toncast/widget-constructor"]);
 await mkdir(join(distDir, "v0"), { recursive: true });
 await cp(iifeSrc, iifeDest);
 console.log(`[build-widget-host] ${iifeDest}`);
