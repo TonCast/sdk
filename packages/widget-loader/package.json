@@ -1,6 +1,6 @@
 {
   "name": "@toncast/widget-loader",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Loads the Toncast betting widget CDN bundle at runtime — analog of @ston-fi/omniston-widget-loader",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -50,6 +50,6 @@
     "access": "public"
   },
   "devDependencies": {
-    "@toncast/widget": "0.0.2"
+    "@toncast/widget": "0.0.3"
   }
 }
