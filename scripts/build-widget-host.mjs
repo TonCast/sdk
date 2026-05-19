@@ -24,7 +24,10 @@ function run(cmd, args) {
   });
 }
 
-await run("npm", ["run", "build", "--workspace", "@toncast/widget"]);
+// Workspace packages export ./dist/* — build deps before widget IIFE (esbuild resolves via package.json).
+for (const workspace of ["@toncast/sdk", "@toncast/sdk-react", "@toncast/widget"]) {
+  await run("npm", ["run", "build", "--workspace", workspace]);
+}
 await run("npm", ["run", "build", "--workspace", "@toncast/widget-constructor"]);
 await mkdir(join(distDir, "v0"), { recursive: true });
 await cp(iifeSrc, iifeDest);
