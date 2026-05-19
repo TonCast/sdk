@@ -12,6 +12,7 @@
   },
   "scripts": {
     "build": "npm run build --workspaces --if-present",
+    "build:widget-host": "node scripts/build-widget-host.mjs",
     "check": "npm run lint && npm run build && npm run typecheck && npm test",
     "test": "npm run test --workspaces --if-present",
     "test:watch": "npm run test:watch --workspaces --if-present",
