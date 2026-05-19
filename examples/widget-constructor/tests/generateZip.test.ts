@@ -35,11 +35,11 @@ describe("widget export snippets", () => {
     const html = buildIndexHtml(c);
     expect(html).toContain('href="index.iife.css"');
     expect(html).toContain("data-toncast-widget-css");
-    expect(html).not.toContain("https://widget.toncast.app/v0/index.iife.css");
+    expect(html).not.toContain("https://widget.toncast.me/v0/index.iife.css");
     expect(html.indexOf("index.iife.css")).toBeLessThan(html.indexOf("index.iife.js"));
 
     const snippet = buildJsSnippet(c);
-    expect(snippet).toContain("https://widget.toncast.app/v0/index.iife.js");
+    expect(snippet).toContain("https://widget.toncast.me/v0/index.iife.js");
     expect(snippet).not.toContain("index.iife.css");
     expect(snippet).not.toContain("data-toncast-widget-css");
   });

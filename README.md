@@ -85,7 +85,7 @@ Host a [TON Connect manifest](https://docs.ton.org/v3/guidelines/ton-connect/cre
   <body>
     <div id="toncast-widget"></div>
 
-    <script src="https://widget.toncast.app/v0/index.iife.js"></script>
+    <script src="https://widget.toncast.me/v0/index.iife.js"></script>
     <script>
       const Widget = window.ToncastWidget.ToncastWidget;
       const widget = new Widget({

@@ -102,7 +102,7 @@ export interface ToncastWidgetLoaderOptions {
 }
 
 /** Major-versioned CDN base (`/v0/`, `/v1/`, …). */
-const CDN_VERSION_BASE = "https://widget.toncast.app/v0";
+const CDN_VERSION_BASE = "https://widget.toncast.me/v0";
 
 /**
  * Default widget script on CDN. Single source of truth — re-exported as a
