@@ -15,9 +15,7 @@ describe("BetCoefficientSlider", () => {
     expect(src).toMatch(/bet\.mode\s*===\s*["']limit["']/);
     expect(src).toContain("tc-coef-slider-fill");
     expect(src).toContain("bet.liquidityMarkers.map");
-    expect(src).not.toMatch(
-      /bet\.mode\s*===\s*["']fixed["'][\s\S]*tc-coef-slider-fill/,
-    );
+    expect(src).not.toMatch(/bet\.mode\s*===\s*["']fixed["'][\s\S]*tc-coef-slider-fill/);
     const markersBlock = src.slice(src.indexOf("bet.liquidityMarkers.map"));
     expect(markersBlock.slice(0, 400)).not.toMatch(/bet\.mode\s*===\s*["']limit["']/);
   });

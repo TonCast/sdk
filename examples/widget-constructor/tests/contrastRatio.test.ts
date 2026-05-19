@@ -15,7 +15,8 @@ describe("checkAccentOnBg", () => {
   it("computes ratio for default accent on white shell", () => {
     const r = checkAccentOnBg("#0098ea", "#ffffff");
     expect(r.ratio).not.toBeNull();
-    expect(r.ratio!).toBeGreaterThan(1);
+    if (r.ratio == null) throw new Error("expected ratio");
+    expect(r.ratio).toBeGreaterThan(1);
   });
 
   it("warns or fails for low-contrast accent on dark bg", () => {

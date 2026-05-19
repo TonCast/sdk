@@ -5,9 +5,7 @@ import type { ThemeColorSet } from "../types";
  * Semantic palette for `deriveCssVars` when the user set a custom shell `bg`.
  * Returns `null` when bg is empty — widget keeps `_tokens.css` defaults.
  */
-export function themePaletteForDerivation(
-  colors: ThemeColorSet,
-): Record<string, string> | null {
+export function themePaletteForDerivation(colors: ThemeColorSet): Record<string, string> | null {
   const explicitBg = colors.bg?.trim() ? safeHexColor(colors.bg) : null;
   if (!explicitBg) return null;
 

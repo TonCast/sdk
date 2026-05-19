@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
+    "pretest": "npm --prefix ../../packages/sdk run build && npm --prefix ../../packages/sdk-react run build && npm --prefix ../../packages/widget run build && npm --prefix ../../packages/widget-loader run build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",

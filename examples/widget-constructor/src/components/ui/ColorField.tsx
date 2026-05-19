@@ -47,16 +47,12 @@ export function ColorField({
 }: Props) {
   const isReset = defaultValue !== undefined;
   const colorPickerValue = pickerHex(value, previewColor, defaultValue);
-  const placeholder = value
-    ? ""
-    : (previewColor ?? defaultValue ?? placeholderHint ?? "");
+  const placeholder = value ? "" : (previewColor ?? defaultValue ?? placeholderHint ?? "");
   const showAction = isReset ? value !== defaultValue && value !== "" : value !== "";
   const actionLabel = isReset ? "Reset" : "Clear";
   const onAction = () => onChange(isReset ? (defaultValue as string) : "");
   const hint =
-    value ||
-    previewColor ||
-    (isReset ? defaultValue || "optional" : placeholderHint || "optional");
+    value || previewColor || (isReset ? defaultValue || "optional" : placeholderHint || "optional");
 
   return (
     <div>

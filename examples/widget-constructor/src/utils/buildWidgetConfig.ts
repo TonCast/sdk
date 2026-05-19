@@ -19,32 +19,22 @@ function buildLayout(config: ConstructorConfig): ToncastWidgetLayout {
     grid: {
       mobile: normalizeGridColumnForDevice("mobile", config.theme.grid.mobile),
       tablet: normalizeGridColumnForDevice("tablet", config.theme.grid.tablet),
-      desktop: normalizeGridColumnForDevice(
-        "desktop",
-        config.theme.grid.desktop,
-      ),
+      desktop: normalizeGridColumnForDevice("desktop", config.theme.grid.desktop),
     },
   };
 }
 
-function buildClient(
-  config: ConstructorConfig,
-): ToncastWidgetConfig["client"] | undefined {
+function buildClient(config: ConstructorConfig): ToncastWidgetConfig["client"] | undefined {
   const baseUrl = stripTrailingSlashes(config.apiBaseUrl.trim());
   if (!baseUrl) return undefined;
   const wsUrl = stripTrailingSlashes(config.apiWsUrl.trim());
-  return wsUrl
-    ? { type: "standalone", baseUrl, wsUrl }
-    : { type: "standalone", baseUrl };
+  return wsUrl ? { type: "standalone", baseUrl, wsUrl } : { type: "standalone", baseUrl };
 }
 
-function buildWidgetOptions(
-  config: ConstructorConfig,
-): NonNullable<ToncastWidgetConfig["widget"]> {
+function buildWidgetOptions(config: ConstructorConfig): NonNullable<ToncastWidgetConfig["widget"]> {
   const widget: NonNullable<ToncastWidgetConfig["widget"]> = {};
   if (config.language) widget.language = config.language;
-  if (config.theme.colorScheme !== "light")
-    widget.theme = config.theme.colorScheme;
+  if (config.theme.colorScheme !== "light") widget.theme = config.theme.colorScheme;
   const cssVars = buildCssVarsConfig(config);
   if (cssVars) widget.cssVars = cssVars;
   widget.layout = buildLayout(config);
@@ -73,9 +63,7 @@ export function buildWidgetConfig(
   config: ConstructorConfig,
   opts: BuildWidgetConfigOpts = {},
 ): ToncastWidgetConfig {
-  const domain = opts.integratedMode
-    ? ""
-    : stripTrailingSlashes(opts.domain || PLACEHOLDER_DOMAIN);
+  const domain = opts.integratedMode ? "" : stripTrailingSlashes(opts.domain || PLACEHOLDER_DOMAIN);
   const out: ToncastWidgetConfig = {
     tonconnect: { type: "standalone", options: { domain } },
     widget: buildWidgetOptions(config),

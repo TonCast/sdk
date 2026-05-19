@@ -24,6 +24,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "pretest": "npm --prefix ../sdk run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "biome check .",

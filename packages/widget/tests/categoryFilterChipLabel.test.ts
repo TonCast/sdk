@@ -1,7 +1,10 @@
 import { ALL_CATEGORY_FILTER, type CategoryFilter } from "@toncast/sdk";
 import { describe, expect, it } from "vitest";
-import { categoryFilterChipKey, categoryFilterChipLabel } from "../src/utils/categoryFilterChipLabel";
 import type { TranslationKey } from "../src/i18n/translations";
+import {
+  categoryFilterChipKey,
+  categoryFilterChipLabel,
+} from "../src/utils/categoryFilterChipLabel";
 
 const t = (key: TranslationKey) => key;
 

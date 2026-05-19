@@ -11,7 +11,7 @@ describe("Radix slider thumb CSS", () => {
     const css = await readFile(controlsCssPath, "utf8");
 
     expect(css).not.toMatch(/--radix-slider-thumb-transform:\s*[^;]+!important/);
-    expect(css).toContain(".tc-slider-root[data-orientation=\"horizontal\"] .tc-slider-thumb");
+    expect(css).toContain('.tc-slider-root[data-orientation="horizontal"] .tc-slider-thumb');
     expect(css).toContain("transform: translateY(-50%)");
     expect(css).toContain("translateY(-50%) scale(1.12)");
   });

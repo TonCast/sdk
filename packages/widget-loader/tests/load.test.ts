@@ -71,18 +71,14 @@ function installFakeDocument(options?: { querySelectorThrows: boolean }) {
       if (!match) return null;
       return (
         headChildren.find(
-          (e) =>
-            e.tagName === "SCRIPT" &&
-            e.attrs["data-tc-widget-loader"] === match[1],
+          (e) => e.tagName === "SCRIPT" && e.attrs["data-tc-widget-loader"] === match[1],
         ) ?? null
       );
     },
     querySelectorAll(selector: string): FakeHeadChild[] {
       if (!selector.includes("data-toncast-widget-css")) return [];
       return headChildren.filter(
-        (e) =>
-          e.tagName === "LINK" &&
-          e.attrs["data-toncast-widget-css"] !== undefined,
+        (e) => e.tagName === "LINK" && e.attrs["data-toncast-widget-css"] !== undefined,
       );
     },
   };
@@ -128,9 +124,7 @@ describe("ToncastWidgetLoader.load", () => {
     doc.scripts[0]?.onload?.();
 
     await expect(first).resolves.toBe(Widget);
-    await expect(loader.load("https://cdn.example/widget.js")).resolves.toBe(
-      Widget,
-    );
+    await expect(loader.load("https://cdn.example/widget.js")).resolves.toBe(Widget);
     expect(doc.scripts).toHaveLength(1);
     expect(doc.scripts[0]?.getAttribute("data-tc-widget-loader-key")).toContain(
       "https://cdn.example/widget.js",
@@ -149,15 +143,11 @@ describe("ToncastWidgetLoader.load", () => {
     await first;
 
     doc.scripts[0]?.removeAttribute("data-tc-widget-loader-key");
-    expect(doc.scripts[0]?.hasAttribute("data-tc-widget-loader-key")).toBe(
-      false,
-    );
+    expect(doc.scripts[0]?.hasAttribute("data-tc-widget-loader-key")).toBe(false);
 
     await expect(loader.load(src)).resolves.toBe(Widget);
     expect(doc.scripts).toHaveLength(1);
-    expect(doc.scripts[0]?.getAttribute("data-tc-widget-loader-key")).toContain(
-      src,
-    );
+    expect(doc.scripts[0]?.getAttribute("data-tc-widget-loader-key")).toContain(src);
   });
 
   it("allows retrying after a failed script load", async () => {
@@ -200,12 +190,8 @@ describe("ToncastWidgetLoader.load", () => {
     doc.scripts[1]?.onload?.();
     await expect(second).resolves.toBe(WidgetB);
 
-    await expect(loader.load("https://cdn.example/a.js")).resolves.toBe(
-      WidgetA,
-    );
-    await expect(loader.load("https://cdn.example/b.js")).resolves.toBe(
-      WidgetB,
-    );
+    await expect(loader.load("https://cdn.example/a.js")).resolves.toBe(WidgetA);
+    await expect(loader.load("https://cdn.example/b.js")).resolves.toBe(WidgetB);
     expect(doc.scripts).toHaveLength(2);
     expect(doc.links).toHaveLength(0);
   });
@@ -251,9 +237,9 @@ describe("ToncastWidgetLoader.load", () => {
     vi.unstubAllGlobals();
     vi.stubGlobal("document", undefined);
     const loader = await importFreshLoader();
-    await expect(
-      loader.load("https://cdn.example/widget.js"),
-    ).rejects.toThrowError(/requires a browser environment/);
+    await expect(loader.load("https://cdn.example/widget.js")).rejects.toThrowError(
+      /requires a browser environment/,
+    );
   });
 
   it("defaults crossOrigin to 'anonymous' when integrity is set without explicit crossOrigin", async () => {
@@ -375,8 +361,6 @@ describe("ToncastWidgetLoader.load", () => {
     await expect(sri).resolves.toBe(WidgetSri);
 
     await expect(loader.load(url)).resolves.toBe(WidgetPlain);
-    await expect(loader.load(url, { integrity: "sha384-abc" })).resolves.toBe(
-      WidgetSri,
-    );
+    await expect(loader.load(url, { integrity: "sha384-abc" })).resolves.toBe(WidgetSri);
   });
 });

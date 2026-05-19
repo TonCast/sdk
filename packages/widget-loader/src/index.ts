@@ -49,13 +49,9 @@ export type {
   ToncastWidgetLayout,
 } from "./widgetTypes";
 
-export type ToncastWidgetConstructor = new (
-  config: ToncastWidgetConfig,
-) => ToncastWidgetInstance;
+export type ToncastWidgetConstructor = new (config: ToncastWidgetConfig) => ToncastWidgetInstance;
 
-type WidgetEventListener<T> = T extends void
-  ? () => void
-  : (payload: T) => void;
+type WidgetEventListener<T> = T extends void ? () => void : (payload: T) => void;
 
 export interface ToncastWidgetInstance {
   mount(container: Element): void;
@@ -78,11 +74,7 @@ export interface ToncastWidgetInstance {
   on(event: "error", listener: (err: unknown) => void): this;
   on(
     event: "bet",
-    listener: (payload: {
-      pariId: string;
-      amount: bigint;
-      side: "yes" | "no";
-    }) => void,
+    listener: (payload: { pariId: string; amount: bigint; side: "yes" | "no" }) => void,
   ): this;
   off<K extends keyof ToncastWidgetEventMap>(
     event: K,
@@ -124,16 +116,11 @@ const CDN_URL = WIDGET_CDN_JS_URL;
 /** Attribute storing the loader cache key so duplicate URLs with different SRI/nonce do not reuse the wrong script. */
 const LOADER_KEY_ATTR = "data-tc-widget-loader-key";
 
-function normalizeCrossOrigin(
-  v: ToncastWidgetLoaderOptions["crossOrigin"],
-): string {
+function normalizeCrossOrigin(v: ToncastWidgetLoaderOptions["crossOrigin"]): string {
   return v === undefined ? "" : v;
 }
 
-function makeLoaderCacheKey(
-  cdnUrl: string,
-  options: ToncastWidgetLoaderOptions,
-): string {
+function makeLoaderCacheKey(cdnUrl: string, options: ToncastWidgetLoaderOptions): string {
   const integrity = options.integrity ?? "";
   const crossOrigin = normalizeCrossOrigin(options.crossOrigin);
   const nonce = options.nonce ?? "";
@@ -173,10 +160,7 @@ function stampLegacyLoaderScriptKeys(src: string, cacheKey: string): void {
   }
 }
 
-function findLoaderScript(
-  src: string,
-  cacheKey: string,
-): HTMLScriptElement | null {
+function findLoaderScript(src: string, cacheKey: string): HTMLScriptElement | null {
   for (const el of Array.from(document.scripts)) {
     if (el.getAttribute("data-tc-widget-loader") !== src) continue;
     if (effectiveScriptKey(el, src) === cacheKey) return el;
@@ -232,8 +216,7 @@ async function loadUncached(
   // The IIFE sets window.ToncastWidget = { ToncastWidget: [class] }
   // biome-ignore lint/suspicious/noExplicitAny: global set by CDN bundle
   const g = globalThis as any;
-  const ctor: ToncastWidgetConstructor =
-    g.ToncastWidget?.ToncastWidget ?? g.ToncastWidget;
+  const ctor: ToncastWidgetConstructor = g.ToncastWidget?.ToncastWidget ?? g.ToncastWidget;
 
   if (typeof ctor !== "function") {
     // Drop the script so a retry does not short-circuit on findLoaderScript().
@@ -319,22 +302,14 @@ function injectScript(
     el.onload = () => finish(() => resolve());
     el.onerror = () => {
       el.remove();
-      finish(() =>
-        reject(
-          new Error(`[ToncastWidgetLoader] Failed to load bundle from ${src}`),
-        ),
-      );
+      finish(() => reject(new Error(`[ToncastWidgetLoader] Failed to load bundle from ${src}`)));
     };
     if (typeof options.timeoutMs === "number" && options.timeoutMs > 0) {
       const ms = options.timeoutMs;
       timer = setTimeout(() => {
         el.remove();
         finish(() =>
-          reject(
-            new Error(
-              `[ToncastWidgetLoader] Timed out after ${ms}ms loading ${src}`,
-            ),
-          ),
+          reject(new Error(`[ToncastWidgetLoader] Timed out after ${ms}ms loading ${src}`)),
         );
       }, ms);
     }

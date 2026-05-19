@@ -70,7 +70,7 @@
     "build": "tsup && npm run build:iife",
     "build:iife": "tsup --config tsup.iife.config.ts",
     "dev": "tsup --watch",
-    "pretest": "npm --prefix ../sdk run build",
+    "pretest": "npm --prefix ../sdk run build && npm --prefix ../sdk-react run build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",

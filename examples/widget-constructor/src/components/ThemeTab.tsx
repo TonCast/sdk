@@ -8,7 +8,7 @@ import {
   type ThemeColorSet,
   type ThemeConfig,
 } from "../types";
-import { checkAccentOnBg, type ContrastLevel } from "../utils/contrastRatio";
+import { type ContrastLevel, checkAccentOnBg } from "../utils/contrastRatio";
 import { effectiveAdvancedColors } from "../utils/effectiveAdvancedColors";
 import { WIDGET_SHELL_BG } from "../utils/themeDefaults";
 import {
@@ -104,12 +104,8 @@ function ColorSetEditor({
 }) {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const set = (key: keyof ThemeColorSet, val: string) => onChange({ ...value, [key]: val });
-  const shellBg =
-    (value.bg?.trim() && safeHexColor(value.bg)) || WIDGET_SHELL_BG[mode];
-  const effective = useMemo(
-    () => effectiveAdvancedColors(value, mode),
-    [value, mode],
-  );
+  const shellBg = (value.bg?.trim() && safeHexColor(value.bg)) || WIDGET_SHELL_BG[mode];
+  const effective = useMemo(() => effectiveAdvancedColors(value, mode), [value, mode]);
 
   return (
     <div className="min-w-0 rounded-lg border border-slate-700/60 bg-slate-900/40 p-3 space-y-3">
@@ -306,7 +302,8 @@ export function ThemeTab({ theme, onChange }: Props) {
         </p>
         <p className="mt-1 text-[10px] text-slate-600 leading-snug">
           With <strong>2–3 columns on Mobile</strong>, YES/NO buttons on each card stack in a single
-          column (widget sets <code className="text-slate-500">--tc-pari-mobile-actions-columns</code>
+          column (widget sets{" "}
+          <code className="text-slate-500">--tc-pari-mobile-actions-columns</code>
           ).
         </p>
       </div>

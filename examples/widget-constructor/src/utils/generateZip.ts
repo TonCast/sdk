@@ -1,13 +1,10 @@
-import type {
-  ToncastWidgetCssVars,
-  ToncastWidgetCssVarsBase,
-} from "@toncast/widget";
+import type { ToncastWidgetCssVars, ToncastWidgetCssVarsBase } from "@toncast/widget";
 import { safeHexColor } from "@toncast/widget/color-math";
 import { RADIUS_DEFAULT } from "@toncast/widget/constants";
-import { parseHttpUrl, stripTrailingSlashes } from "@toncast/widget/url";
-import { WIDGET_CDN_JS_URL } from "@toncast/widget-loader";
 /** Minified at bundle time via `minifyWidgetCssRawPlugin` (see `minifyWidgetCss.ts`). */
 import widgetIifeCss from "@toncast/widget/styles/widget.css?raw";
+import { parseHttpUrl, stripTrailingSlashes } from "@toncast/widget/url";
+import { WIDGET_CDN_JS_URL } from "@toncast/widget-loader";
 import {
   type ConstructorConfig,
   DEFAULT_DARK_COLORS,
@@ -16,10 +13,7 @@ import {
 } from "../types";
 import { buildWidgetConfig } from "./buildWidgetConfig";
 import { clampRadius } from "./normalizeConfig";
-import {
-  HOST_PAGE_BACKDROP,
-  WIDGET_SHELL_BG,
-} from "./themeDefaults";
+import { HOST_PAGE_BACKDROP, WIDGET_SHELL_BG } from "./themeDefaults";
 
 /** Shown in export UI when no app domain is set; used in generated HTML/JS placeholders. */
 export const PLACEHOLDER_DOMAIN = "https://your-domain.com";
@@ -76,31 +70,17 @@ function buildDeltaPalette(
   const border = colors.border ? safeHexColor(colors.border) : null;
   if (accent !== null && accent !== defaults.accent) palette.accent = accent;
   const canonicalBg = WIDGET_SHELL_BG[mode];
-  const defaultBgRaw = defaults.bg?.trim()
-    ? safeHexColor(defaults.bg)
-    : canonicalBg;
-  if (
-    bg !== null &&
-    defaultBgRaw !== null &&
-    bg.toLowerCase() !== defaultBgRaw.toLowerCase()
-  ) {
+  const defaultBgRaw = defaults.bg?.trim() ? safeHexColor(defaults.bg) : canonicalBg;
+  if (bg !== null && defaultBgRaw !== null && bg.toLowerCase() !== defaultBgRaw.toLowerCase()) {
     palette.bg = bg;
   }
-  if (success !== null && success !== defaults.success)
-    palette.success = success;
+  if (success !== null && success !== defaults.success) palette.success = success;
   if (danger !== null && danger !== defaults.danger) palette.danger = danger;
   if (warn !== null && warn !== defaults.warn) palette.warn = warn;
-  if (fg !== null && fg !== (defaults.fg ? safeHexColor(defaults.fg) : null))
-    palette.fg = fg;
-  if (
-    fgMuted !== null &&
-    fgMuted !== (defaults.fgMuted ? safeHexColor(defaults.fgMuted) : null)
-  )
+  if (fg !== null && fg !== (defaults.fg ? safeHexColor(defaults.fg) : null)) palette.fg = fg;
+  if (fgMuted !== null && fgMuted !== (defaults.fgMuted ? safeHexColor(defaults.fgMuted) : null))
     palette.fgMuted = fgMuted;
-  if (
-    border !== null &&
-    border !== (defaults.border ? safeHexColor(defaults.border) : null)
-  )
+  if (border !== null && border !== (defaults.border ? safeHexColor(defaults.border) : null))
     palette.border = border;
   return palette;
 }
@@ -108,9 +88,7 @@ function buildDeltaPalette(
 /** Returns the trimmed value when it parses as an absolute http(s) URL, otherwise `null`. */
 function safeHttpUrl(raw: string): string | null {
   const trimmed = raw.trim();
-  return trimmed && parseHttpUrl(trimmed)
-    ? stripTrailingSlashes(trimmed)
-    : null;
+  return trimmed && parseHttpUrl(trimmed) ? stripTrailingSlashes(trimmed) : null;
 }
 
 /**
@@ -164,12 +142,8 @@ export function resolveHostBackdropColors(config: ConstructorConfig): {
  * Page mat behind the widget in Live Preview / export: uses optional shell bg
  * when set, otherwise the same defaults as the widget (`--tc-bg` light/dark).
  */
-export function previewBackdropFromConfig(
-  config: ConstructorConfig,
-  prefersDark: boolean,
-): string {
-  const { light: lightBody, dark: darkBody } =
-    resolveHostBackdropColors(config);
+export function previewBackdropFromConfig(config: ConstructorConfig, prefersDark: boolean): string {
+  const { light: lightBody, dark: darkBody } = resolveHostBackdropColors(config);
   if (config.theme.colorScheme === "dark") return darkBody;
   if (config.theme.colorScheme === "light") return lightBody;
   return prefersDark ? darkBody : lightBody;
@@ -197,9 +171,7 @@ function paletteOrNull(
  *
  * Exported so LivePreview and `buildWidgetConfig` share one implementation.
  */
-export function buildCssVarsConfig(
-  config: ConstructorConfig,
-): ToncastWidgetCssVars | undefined {
+export function buildCssVarsConfig(config: ConstructorConfig): ToncastWidgetCssVars | undefined {
   const { theme } = config;
   const radius = clampRadius(theme.radius);
 
@@ -237,8 +209,7 @@ function buildHostShellBackdropCss(config: ConstructorConfig): {
   bodyBackground: string;
   systemDarkCss: string;
 } {
-  const { light: bodyBgLight, dark: bodyBgDark } =
-    resolveHostBackdropColors(config);
+  const { light: bodyBgLight, dark: bodyBgDark } = resolveHostBackdropColors(config);
   const isSystem = config.theme.colorScheme === "system";
   const isDark = config.theme.colorScheme === "dark";
   const bodyBackground = isDark ? bodyBgDark : bodyBgLight;
@@ -257,8 +228,7 @@ export function buildIndexHtml(config: ConstructorConfig): string {
   const domain = stripTrailingSlashes(config.domain || PLACEHOLDER_DOMAIN);
   const widgetConfig = buildWidgetConfig(config, { domain });
 
-  const { rootColorScheme, bodyBackground, systemDarkCss } =
-    buildHostShellBackdropCss(config);
+  const { rootColorScheme, bodyBackground, systemDarkCss } = buildHostShellBackdropCss(config);
 
   const iifeCssLink =
     '\n    <link rel="stylesheet" href="index.iife.css" data-toncast-widget-css />';
@@ -383,9 +353,6 @@ export async function downloadZip(config: ConstructorConfig): Promise<void> {
     a.download = "toncast-widget.zip";
     a.click();
   } finally {
-    setTimeout(
-      () => URL.revokeObjectURL(objectUrl),
-      OBJECT_URL_REVOKE_DELAY_MS,
-    );
+    setTimeout(() => URL.revokeObjectURL(objectUrl), OBJECT_URL_REVOKE_DELAY_MS);
   }
 }
