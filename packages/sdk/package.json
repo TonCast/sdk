@@ -85,6 +85,9 @@
   ],
   "license": "MIT",
   "author": "Toncast",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@ston-fi/api": "0.32.0",
     "@ston-fi/sdk": "2.7.0",

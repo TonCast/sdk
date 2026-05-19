@@ -41,6 +41,9 @@
   ],
   "license": "MIT",
   "author": "Toncast",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@toncast/sdk": "0.0.1"
   },

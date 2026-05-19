@@ -37,6 +37,9 @@
   ],
   "license": "MIT",
   "author": "Toncast",
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "@toncast/widget": "0.0.1"
   }

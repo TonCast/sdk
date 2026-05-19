@@ -51,12 +51,13 @@
   },
   "files": [
     "dist",
+    "!dist/iife",
     "README.md"
   ],
   "sideEffects": [
     "./src/browser-globals.ts",
     "./dist/index.css",
-    "./dist/index.iife.js",
+    "./dist/iife/index.iife.js",
     "./dist/browser-globals.js",
     "./dist/browser-globals.cjs"
   ],
@@ -86,6 +87,9 @@
   ],
   "license": "MIT",
   "author": "Toncast",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@ton/core": "0.63.1",
     "buffer": "6.0.3"

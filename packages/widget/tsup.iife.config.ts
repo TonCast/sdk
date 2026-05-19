@@ -5,7 +5,7 @@ export default defineConfig({
   entry: { "index.iife": "src/index.ts" },
   format: ["iife"],
   globalName: "ToncastWidget",
-  outDir: "dist",
+  outDir: "dist/iife",
   minify: true,
   sourcemap: false,
   target: "es2020",
