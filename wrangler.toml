@@ -1,8 +1,7 @@
 # Cloudflare Pages: widget.toncast.me (constructor + /v0 CDN bundle)
+# Build command is set in the Pages dashboard (not supported in wrangler.toml for Pages):
+#   npm run build:widget-host
 # https://developers.cloudflare.com/pages/configuration/wrangler-configuration/
 name = "widget-constructor"
 compatibility_date = "2024-09-23"
 pages_build_output_dir = "./examples/widget-constructor/dist"
-
-[build]
-command = "npm run build:widget-host"
