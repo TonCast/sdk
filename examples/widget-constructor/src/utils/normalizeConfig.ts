@@ -89,17 +89,17 @@ export function normalizeConfig(parsed: Partial<ConstructorConfig>): Constructor
       ? (rawLanguage as ConstructorConfig["language"])
       : DEFAULT_CONFIG.language;
   return {
-    ...DEFAULT_CONFIG,
-    ...parsed,
+    domain: normalizeDomain(parsed.domain),
+    appName: typeof parsed.appName === "string" ? parsed.appName : DEFAULT_CONFIG.appName,
+    iconUrl: typeof parsed.iconUrl === "string" ? parsed.iconUrl : DEFAULT_CONFIG.iconUrl,
     languages,
     language,
     apiBaseUrl: normalizeApiBaseUrl(parsed.apiBaseUrl),
     apiWsUrl: normalizeApiWsUrl(parsed.apiWsUrl),
+    referralAddress: normalizeReferralAddress(parsed.referralAddress),
     referralPct: Number.isFinite(Number(parsed.referralPct))
       ? Math.min(7, Math.max(0, Number(parsed.referralPct)))
       : DEFAULT_CONFIG.referralPct,
-    domain: normalizeDomain(parsed.domain),
-    referralAddress: normalizeReferralAddress(parsed.referralAddress),
     theme: {
       ...DEFAULT_CONFIG.theme,
       ...t,

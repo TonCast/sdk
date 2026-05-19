@@ -5,15 +5,15 @@ import { TonDiamond } from "./ui/TonDiamond";
 
 export function ConnectButton() {
   const t = useT();
-  const { address, connect, disconnect, restored } = useTcState();
+  const { address, connect, restored } = useTcState();
   const connected = Boolean(address);
 
   return (
     <button
       type="button"
-      onClick={connected ? disconnect : connect}
+      onClick={connect}
       className="tc-connect-btn"
-      aria-label={connected ? t("wallet.disconnect") : t("wallet.connect")}
+      aria-label={connected ? t("wallet.options") : t("wallet.connect")}
       disabled={!restored}
       aria-busy={!restored}
     >

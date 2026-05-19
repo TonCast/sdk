@@ -435,6 +435,87 @@
   border: 1px solid var(--tc-border);
 }
 
+/* ===== WALLET POPOVER ===== */
+.tc-wallet-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.tc-wallet-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 200;
+  min-width: 180px;
+  background: var(--tc-bg-card);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tc-wallet-popover-addr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: calc(max(var(--tc-radius) - 4px, 4px));
+  background: var(--tc-bg);
+}
+
+.tc-wallet-popover-addr-text {
+  font-size: var(--tc-text-sm);
+  color: var(--tc-fg-muted);
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.tc-wallet-popover-copy {
+  background: none;
+  border: none;
+  padding: 3px 5px;
+  cursor: pointer;
+  color: var(--tc-fg-muted);
+  border-radius: 4px;
+  font-size: var(--tc-text-sm);
+  line-height: 1;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tc-wallet-popover-copy:hover {
+    background: var(--tc-bg-hover);
+    color: var(--tc-fg);
+  }
+}
+
+.tc-wallet-popover-disconnect {
+  width: 100%;
+  text-align: left;
+  padding: 8px 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--tc-danger);
+  font-size: var(--tc-text-sm);
+  font-family: inherit;
+  border-radius: calc(max(var(--tc-radius) - 4px, 4px));
+}
+@media (hover: hover) and (pointer: fine) {
+  .tc-wallet-popover-disconnect:hover {
+    background: var(--tc-bg-hover);
+  }
+}
+
 /* ===== NAVBAR ===== */
 .tc-nav {
   display: flex;
@@ -1086,6 +1167,46 @@
 }
 
 /* ===== PARI DETAIL ===== */
+
+/* ─── Two-column layout ─────────────────────────────────── */
+.tc-detail-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tc-form-gap, 12px);
+}
+.tc-detail-col-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tc-form-gap, 12px);
+  min-width: 0;
+}
+.tc-detail-col-bet {
+  min-width: 0;
+}
+.tc-detail-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tc-form-gap, 12px);
+}
+
+@container (min-width: 760px) {
+  .tc-detail-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+  .tc-detail-col-bet {
+    position: sticky;
+    top: var(--tc-content-padding, 12px);
+  }
+  .tc-detail-bottom {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    align-items: start;
+  }
+}
+
+/* ─── Hero image ────────────────────────────────────────── */
 .tc-detail-img-wrapper {
   position: relative;
   width: 100%;
@@ -1093,6 +1214,11 @@
   overflow: hidden;
   border-radius: var(--tc-radius);
   background: var(--tc-bg-muted);
+}
+@container (max-width: 759px) {
+  .tc-detail-img-wrapper {
+    max-height: 240px;
+  }
 }
 .tc-detail-img-blur {
   position: absolute;

@@ -1,8 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { type BetFlowErrorDescriptor, classifyBetFlowError, TON_ADDRESS } from "@toncast/sdk";
 import { type BetMode, useBet, useTonConnectClient } from "@toncast/sdk-react";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { BET_REFRESH_DELAY_MS, BET_TX_VALID_FOR_SECONDS } from "../constants";
+import { ConfigContext } from "../context";
 import { useI18n } from "../i18n/I18nProvider";
 import { useT } from "../i18n/useT";
 import { useTcState } from "../tc-bridge";
@@ -27,6 +28,12 @@ function WalletSync({ address }: { address: string }) {
   return null;
 }
 
+const BET_MODE_LABEL: Record<BetMode, string> = {
+  market: "Market",
+  limit: "Limit",
+  fixed: "Fixed",
+};
+
 export interface BetCardProps {
   pariId: string;
   initialSide?: "yes" | "no";
@@ -40,10 +47,13 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
   const { address, restored, connect, instance: tc } = useTcState();
   const connected = Boolean(address);
   const queryClient = useQueryClient();
+  const widgetConfig = useContext(ConfigContext);
+  const referralPct = widgetConfig?.widget?.referral?.pct ?? 0;
 
   const bet = useBet({
     pariId: connected ? pariId : null,
     defaultSide: initialSide,
+    referralPct,
   });
 
   const isYes = bet.side === "yes";
@@ -138,7 +148,7 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
                   className={`tc-mode-tab${bet.mode === m ? " tc-active" : ""}`}
                   onClick={() => bet.setMode(m)}
                 >
-                  {t(`bet.mode.${m}` as const)}
+                  {BET_MODE_LABEL[m]}
                 </button>
               ))}
             </div>

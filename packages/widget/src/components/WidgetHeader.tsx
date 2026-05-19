@@ -1,11 +1,31 @@
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@toncast/sdk";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWidgetConfig } from "../context";
 import { useI18n } from "../i18n/I18nProvider";
 import { useT } from "../i18n/useT";
 import { useTcState } from "../tc-bridge";
 import { shortAddr } from "../utils/format";
 import { TonDiamond } from "./ui/TonDiamond";
+
+function CopyIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
 
 function GlobeIcon() {
   return (
@@ -44,6 +64,9 @@ export function WidgetHeader() {
   const { lang, setLang } = useI18n();
   const t = useT();
   const { address, connect, disconnect, restored } = useTcState();
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const walletRef = useRef<HTMLDivElement>(null);
   const config = useWidgetConfig();
   const connected = Boolean(address);
 
@@ -64,6 +87,30 @@ export function WidgetHeader() {
   );
 
   const showPicker = availableLangs.length > 1;
+
+  useEffect(() => {
+    if (!popoverOpen) return;
+    const onMouseDown = (e: MouseEvent) => {
+      if (walletRef.current && !walletRef.current.contains(e.target as Node)) {
+        setPopoverOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPopoverOpen(false);
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [popoverOpen]);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(address).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }, [address]);
 
   // Auto-reset to first available language if current is not in the list.
   useEffect(() => {
@@ -112,17 +159,50 @@ export function WidgetHeader() {
         <div />
       )}
 
-      {/* Wallet connect — disabled while TonConnect restores session from localStorage */}
-      <button
-        type="button"
-        onClick={connected ? disconnect : connect}
-        className={`tc-header-connect${connected ? " tc-header-connected" : ""}`}
-        disabled={!restored}
-        aria-busy={!restored}
-      >
-        {!connected && <TonDiamond size={16} />}
-        <span>{connected ? shortAddr(address) : t("wallet.connect")}</span>
-      </button>
+      {/* Wallet connect / wallet popover */}
+      <div className="tc-wallet-wrapper" ref={walletRef}>
+        <button
+          type="button"
+          onClick={connected ? () => setPopoverOpen((v) => !v) : connect}
+          className={`tc-header-connect${connected ? " tc-header-connected" : ""}`}
+          aria-label={connected ? t("wallet.options") : undefined}
+          aria-expanded={connected ? popoverOpen : undefined}
+          aria-haspopup={connected ? "dialog" : undefined}
+          disabled={!restored}
+          aria-busy={!restored}
+        >
+          {!connected && <TonDiamond size={16} />}
+          <span>{connected ? shortAddr(address) : t("wallet.connect")}</span>
+        </button>
+
+        {connected && popoverOpen && (
+          <div className="tc-wallet-popover" role="dialog" aria-label={t("wallet.options")}>
+            <div className="tc-wallet-popover-addr">
+              <span className="tc-wallet-popover-addr-text" title={address}>
+                {shortAddr(address)}
+              </span>
+              <button
+                type="button"
+                className="tc-wallet-popover-copy"
+                aria-label={t("wallet.copyAddress")}
+                onClick={handleCopy}
+              >
+                {copied ? "✓" : <CopyIcon />}
+              </button>
+            </div>
+            <button
+              type="button"
+              className="tc-wallet-popover-disconnect"
+              onClick={() => {
+                disconnect();
+                setPopoverOpen(false);
+              }}
+            >
+              {t("wallet.disconnect")}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

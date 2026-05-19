@@ -2,6 +2,7 @@ import type { ToncastWidgetConfig, ToncastWidgetLayout } from "@toncast/widget";
 import { stripTrailingSlashes } from "@toncast/widget/url";
 import type { ConstructorConfig } from "../types";
 import { buildCssVarsConfig } from "./cssVars";
+import { normalizeReferralAddress } from "./normalizeConfig";
 import { normalizeGridColumnForDevice } from "./themeRules";
 
 /** Shown in export UI when no app domain is set; used in generated HTML/JS placeholders. */
@@ -44,9 +45,10 @@ function buildWidgetOptions(config: ConstructorConfig): NonNullable<ToncastWidge
   const cssVars = buildCssVarsConfig(config);
   if (cssVars) widget.cssVars = cssVars;
   widget.layout = buildLayout(config);
-  if (config.referralAddress && config.referralPct > 0) {
+  const referralAddress = normalizeReferralAddress(config.referralAddress);
+  if (referralAddress && config.referralPct > 0) {
     widget.referral = {
-      address: config.referralAddress,
+      address: referralAddress,
       pct: config.referralPct,
     };
   }

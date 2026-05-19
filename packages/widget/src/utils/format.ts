@@ -140,7 +140,7 @@ export function parseLocalizedDecimal(input: string, lang: string): string {
   return s;
 }
 
-/** Locale-aware `Number.toFixed`-style formatter (e.g. `×1.50`, `82%`). */
+/** Locale-aware decimal formatter — trailing zeros stripped by default. */
 export function formatDecimal(
   value: number,
   lang: string,
@@ -150,11 +150,12 @@ export function formatDecimal(
   try {
     return new Intl.NumberFormat(lang, {
       maximumFractionDigits: opts.maximumFractionDigits ?? 2,
-      minimumFractionDigits: opts.minimumFractionDigits ?? opts.maximumFractionDigits ?? 2,
+      minimumFractionDigits: opts.minimumFractionDigits ?? 0,
       useGrouping: true,
     }).format(value);
   } catch {
-    return value.toFixed(opts.maximumFractionDigits ?? 2);
+    const s = value.toFixed(opts.maximumFractionDigits ?? 2);
+    return s.includes(".") ? s.replace(/\.?0+$/, "") : s;
   }
 }
 

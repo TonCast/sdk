@@ -23,7 +23,8 @@ export function themePaletteForDerivation(colors: ThemeColorSet): Record<string,
   if (fg) palette.fg = fg;
   const fgMuted = colors.fgMuted?.trim() ? safeHexColor(colors.fgMuted) : null;
   if (fgMuted) palette.fgMuted = fgMuted;
-  if (colors.border?.trim()) palette.border = colors.border.trim();
+  const border = colors.border?.trim() ? safeHexColor(colors.border) : null;
+  if (border) palette.border = border;
 
   return palette;
 }

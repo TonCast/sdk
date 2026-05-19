@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useTonConnectClient } from "@toncast/sdk-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { NavBar } from "./components/NavBar";
 import { WidgetHeader } from "./components/WidgetHeader";
 import { useNav } from "./context";
@@ -26,6 +26,7 @@ export function WidgetShell() {
   const { address } = useTcState();
   const standaloneManifestOk = useStandaloneManifestOk();
   const queryClient = useQueryClient();
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // delegate address→client sync to the canonical SDK hook (avoids duplication).
   useTonConnectClient(address || null);
@@ -43,11 +44,17 @@ export function WidgetShell() {
     ]);
   }, [address, queryClient]);
 
+  // Reset scroll position immediately before the browser paints so the new
+  // view always starts at the top (no flash of the previous scroll position).
+  useLayoutEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 });
+  }, [view.name]);
+
   return (
     <div className="tc-shell">
       {!standaloneManifestOk && <StandaloneDomainWarning />}
       <WidgetHeader />
-      <div className="tc-content">
+      <div ref={contentRef} className="tc-content">
         {view.name === "list" && <ParisListView />}
         {view.name === "detail" && <PariDetailView view={view} />}
         {view.name === "bets" && <MyBetsView />}

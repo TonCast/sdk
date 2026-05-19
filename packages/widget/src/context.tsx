@@ -51,7 +51,7 @@ export function NavProvider({ children }: { children: ReactNode }) {
 
 // ─── Widget config context ───
 
-const ConfigContext = createContext<ToncastWidgetConfig | null>(null);
+export const ConfigContext = createContext<ToncastWidgetConfig | null>(null);
 
 export function useWidgetConfig(): ToncastWidgetConfig {
   const ctx = useContext(ConfigContext);

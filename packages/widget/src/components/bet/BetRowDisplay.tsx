@@ -33,8 +33,10 @@ export function BetRowBadges({ bet }: { bet: Bet }) {
 export function BetRowBetSummary({ bet }: { bet: Bet }) {
   const t = useT();
   const { lang, fmt } = useI18n();
-  // `bet.amount` is plain `number` of nano TON in the SDK type, so divide here.
-  const amountTon = fmt.decimal(bet.amount / 1e9);
+  // `bet.amount` is a plain `number` of nano TON — convert to bigint for the
+  // TON formatter so all significant decimal places are preserved without
+  // trailing zeros (e.g. 1005000000 → "1.005", not "1.01").
+  const amountTon = fmt.ton(BigInt(Math.round(bet.amount)));
   const date = new Date(bet.createdAt * 1000).toLocaleDateString(lang, {
     day: "numeric",
     month: "short",

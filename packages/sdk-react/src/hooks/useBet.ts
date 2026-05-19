@@ -59,6 +59,10 @@ export interface UseBetParams {
   priceCoinsOptions?: PriceCoinsOptions;
   /** Default 5s — staleTime on the live quote query. */
   quoteStaleTime?: number;
+  /** Referral percentage (integer 0–7) to deduct from displayed winnings.
+   *  Pass the value from `widget.referral.pct` so the UI reflects the real
+   *  net payout the bettor will receive on-chain. Defaults to 0. */
+  referralPct?: number;
 }
 
 export interface SliderProps {
@@ -210,6 +214,7 @@ export function useBet(params: UseBetParams): UseBetResult {
     defaultTickets,
     priceCoinsOptions,
     quoteStaleTime = 5_000,
+    referralPct = 0,
   } = params;
 
   const [side, setSide] = useState<BetSide>(defaultSide);
@@ -356,8 +361,8 @@ export function useBet(params: UseBetParams): UseBetResult {
   const underlyingQuote = useBetQuote(quoteParams, { staleTime: quoteStaleTime });
 
   const quote = useMemo<NormalizedQuote>(
-    () => normalizeQuote({ underlyingQuote, selectedCoin, yesOdds, isYes }),
-    [underlyingQuote, selectedCoin, yesOdds, isYes],
+    () => normalizeQuote({ underlyingQuote, selectedCoin, yesOdds, isYes, referralPct }),
+    [underlyingQuote, selectedCoin, yesOdds, isYes, referralPct],
   );
 
   // ─── Limits ──────────────────────────────────────────────────────────────

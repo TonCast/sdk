@@ -140,87 +140,95 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
         {t("page.paris.detail.back")}
       </button>
 
-      {/* Hero card */}
-      {isLoading || !snap?.pari ? (
-        <Skeleton style={{ height: 220, borderRadius: "var(--tc-radius)" }} />
-      ) : (
-        <div className="tc-card">
-          {img && (
-            <div className="tc-detail-img-wrapper">
-              {displaySrc ? (
-                <>
-                  <div
-                    className="tc-detail-img-blur"
-                    style={{ backgroundImage: `url(${displaySrc})` }}
-                  />
-                  <img
-                    src={displaySrc}
-                    alt={snap.pari.name}
-                    loading="eager"
-                    className="tc-detail-img"
-                    onError={onImgError}
-                  />
-                </>
-              ) : null}
+      {/* Wide-screen two-column layout: info left, bet right */}
+      <div className="tc-detail-layout">
+        {/* Left column: hero card + outcome */}
+        <div className="tc-detail-col-main">
+          {isLoading || !snap?.pari ? (
+            <Skeleton style={{ height: 220, borderRadius: "var(--tc-radius)" }} />
+          ) : (
+            <div className="tc-card">
+              {img && (
+                <div className="tc-detail-img-wrapper">
+                  {displaySrc ? (
+                    <>
+                      <div
+                        className="tc-detail-img-blur"
+                        style={{ backgroundImage: `url(${displaySrc})` }}
+                      />
+                      <img
+                        src={displaySrc}
+                        alt={snap.pari.name}
+                        loading="eager"
+                        className="tc-detail-img"
+                        onError={onImgError}
+                      />
+                    </>
+                  ) : null}
+                </div>
+              )}
+              <div className="tc-card-body tc-detail-card-body">
+                <div className="tc-detail-header-row">
+                  <h2 className="tc-detail-title">{snap.pari.name}</h2>
+                  <span className="tc-badge tc-badge-default tc-detail-meta-badge">
+                    {t(`pari.status.${snap.pari.status}` as Parameters<typeof t>[0]) ||
+                      snap.pari.status}
+                  </span>
+                </div>
+                <ExpandableDescription text={snap.pari.description} />
+                <div className="tc-detail-meta">
+                  <span>
+                    {t("pari.meta.yesVol")} <strong>{fmt.decimal(snap.pari.yesVolume)} TON</strong>
+                  </span>
+                  <span>
+                    {t("pari.meta.noVol")} <strong>{fmt.decimal(snap.pari.noVolume)} TON</strong>
+                  </span>
+                  {snap.pari.bestYesOdds !== null && (
+                    <span>
+                      {t("pari.meta.bestYes")} <strong>{snap.pari.bestYesOdds}</strong>
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           )}
-          <div className="tc-card-body tc-detail-card-body">
-            <div className="tc-detail-header-row">
-              <h2 className="tc-detail-title">{snap.pari.name}</h2>
-              <span className="tc-badge tc-badge-default tc-detail-meta-badge">
-                {t(`pari.status.${snap.pari.status}` as Parameters<typeof t>[0]) ||
-                  snap.pari.status}
-              </span>
-            </div>
-            <ExpandableDescription text={snap.pari.description} />
-            <div className="tc-detail-meta">
-              <span>
-                {t("pari.meta.yesVol")} <strong>{fmt.decimal(snap.pari.yesVolume)} TON</strong>
-              </span>
-              <span>
-                {t("pari.meta.noVol")} <strong>{fmt.decimal(snap.pari.noVolume)} TON</strong>
-              </span>
-              {snap.pari.bestYesOdds !== null && (
-                <span>
-                  {t("pari.meta.bestYes")} <strong>{snap.pari.bestYesOdds}</strong>
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
-      {snap?.pari ? <OutcomeBanner pari={snap.pari} /> : null}
+          {snap?.pari ? <OutcomeBanner pari={snap.pari} /> : null}
+        </div>
 
-      {/* Bet card — wait for pari data before mounting to avoid empty interactions */}
-      {!snap?.pari ? (
-        <div className="tc-card">
-          <Skeleton style={{ height: 180, borderRadius: "var(--tc-radius)" }} />
+        {/* Right column: bet card */}
+        <div className="tc-detail-col-bet">
+          {!snap?.pari ? (
+            <div className="tc-card">
+              <Skeleton style={{ height: 180, borderRadius: "var(--tc-radius)" }} />
+            </div>
+          ) : isSettledOutcome(snap.pari) ? (
+            <div className="tc-notice tc-notice-muted">{t("pari.bettingClosed")}</div>
+          ) : (
+            <div className="tc-card">
+              <BetCard pariId={view.pariId} initialSide={view.initialSide} onBetSent={onBet} />
+            </div>
+          )}
         </div>
-      ) : isSettledOutcome(snap.pari) ? (
-        <div className="tc-notice tc-notice-muted">{t("pari.bettingClosed")}</div>
-      ) : (
-        <div className="tc-card">
-          <BetCard pariId={view.pariId} initialSide={view.initialSide} onBetSent={onBet} />
-        </div>
-      )}
+      </div>
 
       {address && snap?.pari ? (
         <PariDetailMyBets pariId={view.pariId} userAddress={address} />
       ) : null}
 
-      {/* Chart */}
-      <div className="tc-card tc-card-body">
-        <CoefficientChart history={snap?.coefficientHistory ?? EMPTY_HISTORY} />
-      </div>
-
-      {/* Order book */}
-      <div className="tc-card">
-        <div className="tc-card-header">
-          <div className="tc-card-title">{t("orderBook.title")}</div>
+      {/* Chart + Order book: side by side on wide screens */}
+      <div className="tc-detail-bottom">
+        <div className="tc-card tc-card-body">
+          <CoefficientChart history={snap?.coefficientHistory ?? EMPTY_HISTORY} />
         </div>
-        <div className="tc-card-body">
-          <OrderBook oddsState={snap?.oddsState ?? null} />
+
+        <div className="tc-card">
+          <div className="tc-card-header">
+            <div className="tc-card-title">{t("orderBook.title")}</div>
+          </div>
+          <div className="tc-card-body">
+            <OrderBook oddsState={snap?.oddsState ?? null} />
+          </div>
         </div>
       </div>
     </div>

@@ -59,8 +59,10 @@ export function normalizeQuote(params: {
   selectedCoin: CoinCapacity | null;
   yesOdds: number;
   isYes: boolean;
+  /** Referral percentage (integer 0–7) — deducted from displayed winnings. */
+  referralPct?: number;
 }): NormalizedQuote {
-  const { underlyingQuote, selectedCoin, yesOdds, isYes } = params;
+  const { underlyingQuote, selectedCoin, yesOdds, isYes, referralPct = 0 } = params;
   const data = underlyingQuote.data;
   if (!data) return emptyNormalizedQuote(underlyingQuote, yesOdds, isYes);
 
@@ -77,7 +79,7 @@ export function normalizeQuote(params: {
     walletReserve: reserve,
     totals: breakdownTotals(data),
     decimalOdds: yesOddsToDecimalOdds(yesOdds, isYes),
-    winnings: calcWinnings(data.bets, 0),
+    winnings: calcWinnings(data.bets, referralPct),
     isFeasible: data.option.feasible,
     reason: data.option.feasible ? null : data.option.reason,
   };

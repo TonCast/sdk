@@ -210,7 +210,7 @@ export function App() {
             </button>
           ) : (
             <a
-              href="https://docs.toncast.app/widget"
+              href="https://docs.toncast.me/sdk/widget"
               target="_blank"
               rel="noreferrer"
               className="text-xs text-slate-500 hover:text-sky-400 transition-colors"

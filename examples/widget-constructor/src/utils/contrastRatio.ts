@@ -34,9 +34,9 @@ export function checkAccentOnBg(accent: string, bg: string): AccentContrastCheck
   const accentHex = accent.trim();
   const bgHex = bg.trim();
   if (!accentHex || !bgHex) {
-    return { ratio: null, level: "pass", fgHex: null };
+    return { ratio: null, level: "fail", fgHex: null };
   }
   const ratio = contrastRatio(accentHex, bgHex);
-  if (ratio === null) return { ratio: null, level: "pass", fgHex: accentHex };
+  if (ratio === null) return { ratio: null, level: "fail", fgHex: accentHex };
   return { ratio, level: levelFromRatio(ratio), fgHex: accentHex };
 }

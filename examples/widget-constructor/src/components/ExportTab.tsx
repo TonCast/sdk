@@ -1,3 +1,4 @@
+import { parseHttpUrl } from "@toncast/widget/url";
 import { useEffect, useRef, useState } from "react";
 import type { ConstructorConfig } from "../types";
 import { PLACEHOLDER_DOMAIN } from "../utils/buildWidgetConfig";
@@ -63,10 +64,15 @@ function CodeBlock({ title, code }: { title: string; code: string }) {
 export function ExportTab({ config }: { config: ConstructorConfig }) {
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
-  const domainMissing = !config.domain;
+
+  const domainError: string | null = !config.domain
+    ? "Set app domain in Config tab to enable ZIP download."
+    : !parseHttpUrl(config.domain)
+      ? "App domain must be a valid https:// URL (e.g. https://my-app.com)."
+      : null;
 
   const handleDownload = async () => {
-    if (domainMissing) return;
+    if (domainError) return;
     setDownloading(true);
     setDownloadError(null);
     try {
@@ -86,9 +92,9 @@ export function ExportTab({ config }: { config: ConstructorConfig }) {
         <code className="text-sky-300/90">widget.cssVars</code> in the generated config.
       </div>
 
-      {domainMissing && (
+      {domainError && (
         <div className="rounded-lg bg-amber-900/20 border border-amber-700/40 px-3 py-2 text-xs text-amber-400">
-          Set <strong>app domain</strong> in Config tab to enable ZIP download.
+          {domainError}
         </div>
       )}
 
@@ -111,7 +117,7 @@ export function ExportTab({ config }: { config: ConstructorConfig }) {
         </p>
         <button
           type="button"
-          disabled={domainMissing || downloading}
+          disabled={!!domainError || downloading}
           onClick={handleDownload}
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sky-500 text-white font-semibold text-xs hover:bg-sky-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >

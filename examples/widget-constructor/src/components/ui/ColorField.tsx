@@ -16,8 +16,6 @@ interface Props {
 const PICKER_FALLBACK_HEX = "#64748b";
 
 const rowCls = "flex min-w-0 items-center gap-2";
-const hexInputCls =
-  "min-w-0 flex-1 h-8 px-2.5 rounded-md border border-slate-700 bg-slate-800 text-slate-200 text-xs font-mono focus:outline-none focus:border-sky-500/50";
 const swatchCls =
   "w-8 h-8 rounded-md border border-slate-700 cursor-pointer bg-slate-800 p-0.5 shrink-0";
 const actionCls =
@@ -56,6 +54,14 @@ export function ColorField({
   const hint =
     value || previewColor || (isReset ? defaultValue || "optional" : placeholderHint || "optional");
 
+  const isInvalid = value.trim() !== "" && !safeHexColor(value);
+  const hexInputCls = [
+    "min-w-0 flex-1 h-8 px-2.5 rounded-md border bg-slate-800 text-xs font-mono focus:outline-none",
+    isInvalid
+      ? "border-red-500/70 text-red-400 focus:border-red-500"
+      : "border-slate-700 text-slate-200 focus:border-sky-500/50",
+  ].join(" ");
+
   return (
     <div>
       <div className="flex items-center justify-between mb-1.5">
@@ -82,6 +88,7 @@ export function ColorField({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           className={hexInputCls}
+          aria-invalid={isInvalid}
         />
         {showAction && (
           <button type="button" onClick={onAction} className={actionCls}>
@@ -89,6 +96,11 @@ export function ColorField({
           </button>
         )}
       </div>
+      {isInvalid && (
+        <p className="mt-1 text-[10px] text-red-400/80">
+          Invalid hex color — not applied to preview
+        </p>
+      )}
     </div>
   );
 }
