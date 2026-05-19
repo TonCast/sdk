@@ -85,6 +85,15 @@
   ],
   "license": "MIT",
   "author": "Toncast",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TonCast/sdk.git",
+    "directory": "packages/sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/TonCast/sdk/issues"
+  },
+  "homepage": "https://github.com/TonCast/sdk/tree/main/packages/sdk#readme",
   "publishConfig": {
     "access": "public"
   },

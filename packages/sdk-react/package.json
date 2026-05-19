@@ -41,6 +41,15 @@
   ],
   "license": "MIT",
   "author": "Toncast",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TonCast/sdk.git",
+    "directory": "packages/sdk-react"
+  },
+  "bugs": {
+    "url": "https://github.com/TonCast/sdk/issues"
+  },
+  "homepage": "https://github.com/TonCast/sdk/tree/main/packages/sdk-react#readme",
   "publishConfig": {
     "access": "public"
   },
