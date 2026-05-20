@@ -106,9 +106,9 @@ describe("normalizeConfig", () => {
     expect(out.theme.colorScheme).toBe(DEFAULT_CONFIG.theme.colorScheme);
   });
 
-  it("clamps radius to [0, 64] and falls back when NaN", () => {
+  it("clamps radius to [0, 32] and falls back when NaN", () => {
     expect(normalizeConfig({ theme: { ...DEFAULT_CONFIG.theme, radius: 999 } }).theme.radius).toBe(
-      64,
+     32,
     );
     expect(normalizeConfig({ theme: { ...DEFAULT_CONFIG.theme, radius: -5 } }).theme.radius).toBe(
       0,

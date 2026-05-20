@@ -26,7 +26,11 @@ describe("pari card responsive CSS", () => {
   it("renders compact pari meta as wrap-safe chips (chrome not gated on shell 759px)", async () => {
     const css = await readFile(pariCssPath, "utf8");
 
-    expect(css).not.toContain("@container (max-width: 759px)");
+    // Pari-card meta/button layout must not be gated on the 759px shell breakpoint.
+    // (The detail image-wrapper *is* allowed to use max-width:759px — it's a detail-page concern.)
+    expect(css).not.toMatch(
+      /@container\s*\(max-width:\s*759px\)[^}]*\{[^}]*\.tc-pari-meta/s,
+    );
     expect(css).toContain("flex-wrap: wrap;");
     expect(css).toContain(".tc-pari-meta-item {");
     expect(css).toContain("background: var(--tc-bg-muted);");

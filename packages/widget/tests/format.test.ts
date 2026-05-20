@@ -114,10 +114,13 @@ describe("format.parseLocalizedDecimal", () => {
 
 describe("format.formatDecimal", () => {
   it("formats numbers with locale separators and fraction control", () => {
-    expect(formatDecimal(1234.5, "en-US", { maximumFractionDigits: 2 })).toBe("1,234.50");
+    // maximumFractionDigits caps decimals but does NOT add trailing zeros (minimumFractionDigits defaults to 0)
+    expect(formatDecimal(1234.5, "en-US", { maximumFractionDigits: 2 })).toBe("1,234.5");
     expect(formatDecimal(1234.5, "de-DE", { maximumFractionDigits: 2 })).toMatch(
-      /^1[.\u202f]234,50$/,
+      /^1[.\u202f]234,5$/,
     );
+    // setting both min and max forces trailing zeros
+    expect(formatDecimal(1234.5, "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })).toBe("1,234.50");
     expect(formatDecimal(1.234, "en-US", { maximumFractionDigits: 0 })).toBe("1");
   });
 
