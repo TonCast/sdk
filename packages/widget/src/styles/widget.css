@@ -442,10 +442,10 @@
 }
 
 .tc-wallet-popover {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 6px);
-  z-index: 200;
+  position: fixed;
+  top: var(--tc-wallet-popover-top, 48px);
+  left: var(--tc-wallet-popover-left, auto);
+  z-index: 9999;
   min-width: 180px;
   background: var(--tc-bg-card);
   border: 1px solid var(--tc-border);
@@ -1215,6 +1215,7 @@
   border-radius: var(--tc-radius);
   background: var(--tc-bg-muted);
 }
+/* Limit image height on narrow viewports where full-width 16:9 is too tall */
 @container (max-width: 759px) {
   .tc-detail-img-wrapper {
     max-height: 240px;

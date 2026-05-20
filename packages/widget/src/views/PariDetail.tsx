@@ -24,6 +24,19 @@ function isSettledOutcome(pari: Pari): boolean {
 }
 
 /**
+ * True when placing a new bet is no longer possible:
+ * - the outcome is already settled (yes / no / draw), OR
+ * - the pari is inactive (awaiting oracle, cancelled, etc.), OR
+ * - the betting window has closed (`endTime` is in the past).
+ */
+function isBettingClosed(pari: Pari): boolean {
+  if (isSettledOutcome(pari)) return true;
+  if (pari.status === "inactive") return true;
+  if (pari.endTime > 0 && pari.endTime <= Math.floor(Date.now() / 1000)) return true;
+  return false;
+}
+
+/**
  * Stable empty array for `<CoefficientChart history={…} />`.
  *
  * Reusing the same reference avoids creating a fresh `[]` on every render of
@@ -202,7 +215,7 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
             <div className="tc-card">
               <Skeleton style={{ height: 180, borderRadius: "var(--tc-radius)" }} />
             </div>
-          ) : isSettledOutcome(snap.pari) ? (
+          ) : isBettingClosed(snap.pari) ? (
             <div className="tc-notice tc-notice-muted">{t("pari.bettingClosed")}</div>
           ) : (
             <div className="tc-card">
@@ -219,7 +232,11 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
       {/* Chart + Order book: side by side on wide screens */}
       <div className="tc-detail-bottom">
         <div className="tc-card tc-card-body">
-          <CoefficientChart history={snap?.coefficientHistory ?? EMPTY_HISTORY} />
+          {isLoading || !snap ? (
+            <Skeleton style={{ height: 120, borderRadius: "var(--tc-radius)" }} />
+          ) : (
+            <CoefficientChart history={snap.coefficientHistory ?? EMPTY_HISTORY} />
+          )}
         </div>
 
         <div className="tc-card">

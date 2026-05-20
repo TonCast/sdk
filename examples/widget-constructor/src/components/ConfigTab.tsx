@@ -6,6 +6,11 @@ import {
 } from "@toncast/sdk";
 import { parseHttpUrl, stripTrailingSlashes } from "@toncast/widget/url";
 import { type ConstructorConfig, resetConfigTabToDefaults } from "../types";
+import {
+  normalizeApiBaseUrl,
+  normalizeApiWsUrl,
+  normalizeReferralAddress,
+} from "../utils/normalizeConfig";
 import { PillButton } from "./ui/PillButton";
 import { SegmentedButtonGroup } from "./ui/SegmentedButtonGroup";
 import { TextFieldRow } from "./ui/TextFieldRow";
@@ -67,6 +72,13 @@ export function ConfigTab({ config, onChange }: Props) {
   const allSelected = config.languages.length === 0;
   const domainValid = parseHttpUrl(config.domain) !== null;
 
+  const apiBaseUrlInvalid = config.apiBaseUrl.trim() !== "" && !normalizeApiBaseUrl(config.apiBaseUrl);
+  const apiWsUrlInvalid = config.apiWsUrl.trim() !== "" && !normalizeApiWsUrl(config.apiWsUrl);
+  const iconUrlInvalid = config.iconUrl.trim() !== "" && !parseHttpUrl(config.iconUrl);
+  const referralAddressValid =
+    config.referralAddress.trim() !== "" &&
+    normalizeReferralAddress(config.referralAddress) !== "";
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-800/80">
@@ -122,7 +134,16 @@ export function ConfigTab({ config, onChange }: Props) {
         value={config.apiBaseUrl}
         onChange={(v) => set("apiBaseUrl", v)}
         placeholder={DEFAULT_BASE_URL}
-        hint="Leave empty for the public Toncast API. Override only for staging or self-hosted API."
+        hint={
+          apiBaseUrlInvalid ? (
+            <span className="text-red-400">
+              Must be an absolute https:// URL, e.g.{" "}
+              <span className="font-mono">{DEFAULT_BASE_URL}</span>
+            </span>
+          ) : (
+            "Leave empty for the public Toncast API. Override only for staging or self-hosted API."
+          )
+        }
       />
 
       <TextFieldRow
@@ -132,7 +153,16 @@ export function ConfigTab({ config, onChange }: Props) {
         value={config.apiWsUrl}
         onChange={(v) => set("apiWsUrl", v)}
         placeholder={DEFAULT_WS_URL}
-        hint={`Leave empty — WS is derived from the API URL (e.g. ${DEFAULT_BASE_URL} → ${DEFAULT_WS_URL}). Override only if streams live on another host.`}
+        hint={
+          apiWsUrlInvalid ? (
+            <span className="text-red-400">
+              Must be an absolute wss:// URL, e.g.{" "}
+              <span className="font-mono">{DEFAULT_WS_URL}</span>
+            </span>
+          ) : (
+            `Leave empty — WS is derived from the API URL (e.g. ${DEFAULT_BASE_URL} → ${DEFAULT_WS_URL}). Override only if streams live on another host.`
+          )
+        }
       />
 
       <TextFieldRow
@@ -151,7 +181,16 @@ export function ConfigTab({ config, onChange }: Props) {
         value={config.iconUrl}
         onChange={(v) => set("iconUrl", v)}
         placeholder="https://your-app.com/icon-192.png"
-        hint="Square PNG ≥ 180×180px for TonConnect wallet dialogs."
+        hint={
+          iconUrlInvalid ? (
+            <span className="text-red-400">
+              Must be an absolute https:// URL, e.g.{" "}
+              <span className="font-mono">https://your-app.com/icon-192.png</span>
+            </span>
+          ) : (
+            "Square PNG ≥ 180×180px for TonConnect wallet dialogs."
+          )
+        }
       />
 
       {/* Available languages */}
@@ -240,7 +279,12 @@ export function ConfigTab({ config, onChange }: Props) {
         {!config.referralAddress && (
           <p className="mt-1.5 text-[10px] text-slate-600">Enter address above to earn fees.</p>
         )}
-        {config.referralAddress && config.referralPct > 0 && (
+        {config.referralAddress && !referralAddressValid && (
+          <p className="mt-1.5 text-[10px] text-red-400">
+            Invalid TON address — referral will not be included in export.
+          </p>
+        )}
+        {referralAddressValid && config.referralPct > 0 && (
           <p className="mt-1.5 text-[10px] text-emerald-500">
             ✓ Every winner pays {config.referralPct}% to your wallet.
           </p>

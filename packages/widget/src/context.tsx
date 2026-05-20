@@ -17,6 +17,8 @@ export type { WidgetView };
 interface NavContextValue {
   view: WidgetView;
   navigate: (to: WidgetView) => void;
+  /** Reset the nav stack to a single root view (for NavBar tab clicks). */
+  reset: (to: WidgetView) => void;
   back: () => void;
   canGoBack: boolean;
 }
@@ -36,14 +38,17 @@ export function NavProvider({ children }: { children: ReactNode }) {
   const navigate = useCallback((to: WidgetView) => {
     dispatch({ type: "navigate", view: to });
   }, []);
+  const reset = useCallback((to: WidgetView) => {
+    dispatch({ type: "reset", view: to });
+  }, []);
   const back = useCallback(() => dispatch({ type: "back" }), []);
   const canGoBack = history.length > 1;
 
   // Stabilise context value to avoid spurious consumer re-renders when only
   // unrelated state changes upstream.
   const value = useMemo(
-    () => ({ view, navigate, back, canGoBack }),
-    [view, navigate, back, canGoBack],
+    () => ({ view, navigate, reset, back, canGoBack }),
+    [view, navigate, reset, back, canGoBack],
   );
 
   return <NavContext.Provider value={value}>{children}</NavContext.Provider>;

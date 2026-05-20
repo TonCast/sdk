@@ -95,7 +95,9 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
         validUntil: Math.floor(Date.now() / 1000) + BET_TX_VALID_FOR_SECONDS,
       });
       if (signal.aborted) return;
-      onBetSent?.(pariId, bet.quote.totalCost, bet.side);
+      // Use the confirmed quote's cost — not the live quote state — so the
+      // amount reported to the host matches what was actually signed on-chain.
+      onBetSent?.(pariId, confirmed.quote.totalCost, bet.side);
       void queryClient.invalidateQueries({ queryKey: ["toncast", "betting", "bets"] });
       void bet.refresh();
       if (refreshTimerRef.current !== null) clearTimeout(refreshTimerRef.current);

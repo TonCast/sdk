@@ -2,7 +2,7 @@ import type { ToncastWidgetConfig, ToncastWidgetLayout } from "@toncast/widget";
 import { stripTrailingSlashes } from "@toncast/widget/url";
 import type { ConstructorConfig } from "../types";
 import { buildCssVarsConfig } from "./cssVars";
-import { normalizeReferralAddress } from "./normalizeConfig";
+import { normalizeApiBaseUrl, normalizeApiWsUrl, normalizeReferralAddress } from "./normalizeConfig";
 import { normalizeGridColumnForDevice } from "./themeRules";
 
 /** Shown in export UI when no app domain is set; used in generated HTML/JS placeholders. */
@@ -32,9 +32,9 @@ function buildLayout(config: ConstructorConfig): ToncastWidgetLayout {
 }
 
 function buildClient(config: ConstructorConfig): ToncastWidgetConfig["client"] | undefined {
-  const baseUrl = stripTrailingSlashes(config.apiBaseUrl.trim());
+  const baseUrl = normalizeApiBaseUrl(config.apiBaseUrl);
   if (!baseUrl) return undefined;
-  const wsUrl = stripTrailingSlashes(config.apiWsUrl.trim());
+  const wsUrl = normalizeApiWsUrl(config.apiWsUrl);
   return wsUrl ? { type: "standalone", baseUrl, wsUrl } : { type: "standalone", baseUrl };
 }
 

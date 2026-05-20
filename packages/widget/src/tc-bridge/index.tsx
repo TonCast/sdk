@@ -143,14 +143,22 @@ export function IntegratedProvider({
   const [restored, setRestored] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
     // Re-sync in case the wallet connected/restored between initial render and this effect.
     setAddress(instance.account?.address ?? "");
     const unsubscribe = instance.onStatusChange((wallet) => {
       setAddress(wallet?.account?.address ?? "");
     });
-    // Mark as restored immediately — TonConnectUI restores from localStorage synchronously.
-    setRestored(true);
-    return unsubscribe;
+    // Wait for TonConnectUI's own restoration promise so the bet form is
+    // only unlocked after the wallet session is truly ready (not just
+    // after the first React effect flush).
+    void instance.connectionRestored.then(() => {
+      if (mounted) setRestored(true);
+    });
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, [instance]);
 
   useEffect(() => {

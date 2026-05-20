@@ -55,7 +55,12 @@ export default function LivePreview({ config, deviceMode }: LivePreviewProps) {
     return {
       height: HEIGHT_BY_DEVICE[deviceMode],
       borderRadius: r,
-      overflow: "hidden" as const,
+      /*
+       * clip-path instead of overflow:hidden — achieves the same visual
+       * border-radius clipping without creating an overflow scroll container,
+       * so position:fixed descendants (wallet popover) can escape the frame.
+       */
+      clipPath: `inset(0 round ${r})`,
       boxShadow,
     };
   }, [accentHex, config.theme.radius, deviceMode]);

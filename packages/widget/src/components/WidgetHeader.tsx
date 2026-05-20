@@ -1,9 +1,10 @@
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@toncast/sdk";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWidgetConfig } from "../context";
 import { useI18n } from "../i18n/I18nProvider";
 import { useT } from "../i18n/useT";
 import { useTcState } from "../tc-bridge";
+import { copyToClipboard } from "../utils/copyToClipboard";
 import { shortAddr } from "../utils/format";
 import { TonDiamond } from "./ui/TonDiamond";
 
@@ -65,7 +66,8 @@ export function WidgetHeader() {
   const t = useT();
   const { address, connect, disconnect, restored } = useTcState();
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"idle" | "ok" | "err">("idle");
+  const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties | null>(null);
   const walletRef = useRef<HTMLDivElement>(null);
   const config = useWidgetConfig();
   const connected = Boolean(address);
@@ -88,28 +90,54 @@ export function WidgetHeader() {
 
   const showPicker = availableLangs.length > 1;
 
+  /**
+   * Calculates the viewport-relative position for the popover and stores it
+   * as CSS custom properties so the `position:fixed` popover appears directly
+   * below the wallet button regardless of any overflow:hidden ancestor.
+   */
+  const openPopover = useCallback(() => {
+    if (walletRef.current) {
+      const rect = walletRef.current.getBoundingClientRect();
+      const POPOVER_MIN_W = 180;
+      const GAP = 6;
+      const left = Math.max(4, rect.right - POPOVER_MIN_W);
+      setPopoverStyle({
+        "--tc-wallet-popover-top": `${rect.bottom + GAP}px`,
+        "--tc-wallet-popover-left": `${left}px`,
+      } as React.CSSProperties);
+    }
+    setPopoverOpen(true);
+  }, []);
+
   useEffect(() => {
     if (!popoverOpen) return;
+    const close = () => setPopoverOpen(false);
     const onMouseDown = (e: MouseEvent) => {
       if (walletRef.current && !walletRef.current.contains(e.target as Node)) {
-        setPopoverOpen(false);
+        close();
       }
     };
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setPopoverOpen(false);
+      if (e.key === "Escape") close();
     };
     document.addEventListener("mousedown", onMouseDown);
     document.addEventListener("keydown", onKeyDown);
+    // Close on any scroll or resize so the fixed popover doesn't drift.
+    window.addEventListener("scroll", close, { capture: true, passive: true });
+    window.addEventListener("resize", close, { passive: true });
     return () => {
       document.removeEventListener("mousedown", onMouseDown);
       document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("scroll", close, { capture: true });
+      window.removeEventListener("resize", close);
     };
   }, [popoverOpen]);
 
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(address).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    copyToClipboard(address).then((ok) => {
+      setCopied(ok ? "ok" : "err");
+      setTimeout(() => setCopied("idle"), 1500);
+    });
   }, [address]);
 
   // Auto-reset to first available language if current is not in the list.
@@ -163,7 +191,7 @@ export function WidgetHeader() {
       <div className="tc-wallet-wrapper" ref={walletRef}>
         <button
           type="button"
-          onClick={connected ? () => setPopoverOpen((v) => !v) : connect}
+          onClick={connected ? (popoverOpen ? () => setPopoverOpen(false) : openPopover) : connect}
           className={`tc-header-connect${connected ? " tc-header-connected" : ""}`}
           aria-label={connected ? t("wallet.options") : undefined}
           aria-expanded={connected ? popoverOpen : undefined}
@@ -176,7 +204,12 @@ export function WidgetHeader() {
         </button>
 
         {connected && popoverOpen && (
-          <div className="tc-wallet-popover" role="dialog" aria-label={t("wallet.options")}>
+          <div
+            className="tc-wallet-popover"
+            role="dialog"
+            aria-label={t("wallet.options")}
+            style={popoverStyle ?? undefined}
+          >
             <div className="tc-wallet-popover-addr">
               <span className="tc-wallet-popover-addr-text" title={address}>
                 {shortAddr(address)}
@@ -187,7 +220,7 @@ export function WidgetHeader() {
                 aria-label={t("wallet.copyAddress")}
                 onClick={handleCopy}
               >
-                {copied ? "✓" : <CopyIcon />}
+                {copied === "ok" ? "✓" : copied === "err" ? "✗" : <CopyIcon />}
               </button>
             </div>
             <button

@@ -15,11 +15,14 @@ export function BetQuoteBox({ bet, sourceSym }: { bet: Bet; sourceSym: string })
       {!bet.quote.data && bet.quote.underlying.isFetching ? (
         <Skeleton style={{ height: 14, width: "40%" }} />
       ) : !bet.quote.data && bet.quote.underlying.error ? (
-        <span className="tc-quote-error">
-          {bet.quote.underlying.error instanceof Error
-            ? bet.quote.underlying.error.message
-            : String(bet.quote.underlying.error)}
-        </span>
+        <details className="tc-quote-error-details">
+          <summary className="tc-quote-error">{t("bet.quoteError")}</summary>
+          <span className="tc-text-xs tc-text-muted">
+            {bet.quote.underlying.error instanceof Error
+              ? bet.quote.underlying.error.message
+              : String(bet.quote.underlying.error)}
+          </span>
+        </details>
       ) : !bet.quote.data ? (
         <span className="tc-text-muted tc-text-sm">{t("bet.quoteWillAppear")}</span>
       ) : (

@@ -40,14 +40,14 @@ function isActive(view: WidgetView, name: string): boolean {
 
 export function NavBar() {
   const t = useT();
-  const { view, navigate } = useNav();
+  const { view, reset } = useNav();
 
   return (
     <nav className="tc-nav" aria-label={t("nav.ariaLabel")}>
       <button
         type="button"
         className={`tc-nav-btn${isActive(view, "list") ? " tc-active" : ""}`}
-        onClick={() => navigate({ name: "list" })}
+        onClick={() => reset({ name: "list" })}
         aria-current={isActive(view, "list") ? "page" : undefined}
       >
         <ListIcon />
@@ -56,7 +56,7 @@ export function NavBar() {
       <button
         type="button"
         className={`tc-nav-btn${isActive(view, "bets") ? " tc-active" : ""}`}
-        onClick={() => navigate({ name: "bets" })}
+        onClick={() => reset({ name: "bets" })}
         aria-current={isActive(view, "bets") ? "page" : undefined}
       >
         <BetsIcon />

@@ -51,7 +51,8 @@ function buildHostShellBackdropCss(config: ConstructorConfig): {
   bodyBackground: string;
   systemDarkCss: string;
 } {
-  const { light: bodyBgLight, dark: bodyBgDark } = resolveHostBackdropColors(config);
+  const { light: bodyBgLight, dark: bodyBgDark } =
+    resolveHostBackdropColors(config);
   const isSystem = config.theme.colorScheme === "system";
   const isDark = config.theme.colorScheme === "dark";
   const bodyBackground = isDark ? bodyBgDark : bodyBgLight;
@@ -70,7 +71,8 @@ export function buildIndexHtml(config: ConstructorConfig): string {
   const domain = stripTrailingSlashes(config.domain || PLACEHOLDER_DOMAIN);
   const widgetConfig = buildWidgetConfig(config, { domain });
 
-  const { rootColorScheme, bodyBackground, systemDarkCss } = buildHostShellBackdropCss(config);
+  const { rootColorScheme, bodyBackground, systemDarkCss } =
+    buildHostShellBackdropCss(config);
 
   const iifeCssLink =
     '\n    <link rel="stylesheet" href="index.iife.css" data-toncast-widget-css />';

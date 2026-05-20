@@ -1,4 +1,5 @@
 import { parseHttpUrl } from "@toncast/widget/url";
+import { WIDGET_CDN_JS_URL } from "@toncast/widget-loader";
 import { useEffect, useRef, useState } from "react";
 import type { ConstructorConfig } from "../types";
 import { PLACEHOLDER_DOMAIN } from "../utils/buildWidgetConfig";
@@ -130,6 +131,20 @@ export function ExportTab({ config }: { config: ConstructorConfig }) {
         <p className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">
           Option A — CDN snippet
         </p>
+        <div className="mb-2 rounded-md bg-amber-900/20 border border-amber-700/40 px-3 py-2 text-[11px] text-amber-400/90 leading-snug">
+          <strong>CDN URL:</strong>{" "}
+          <code className="text-amber-300/80 break-all">{WIDGET_CDN_JS_URL}</code>
+          {" — "}
+          major-version channel (<code>/v0/</code>). For production, pin to a specific release and
+          add an SRI hash.{" "}
+        </div>
+        {domainError && (
+          <div className="mb-2 rounded-md bg-rose-900/20 border border-rose-700/40 px-3 py-2 text-[11px] text-rose-400/90 leading-snug">
+            ⚠ Snippet contains a placeholder domain (
+            <code className="text-rose-300/80">{PLACEHOLDER_DOMAIN}</code>
+            ). Set a valid app domain in the Config tab before using this snippet.
+          </div>
+        )}
         <CodeBlock title="HTML" code={buildJsSnippet(config)} />
       </div>
 

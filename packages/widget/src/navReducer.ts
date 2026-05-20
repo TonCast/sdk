@@ -9,7 +9,11 @@ export type WidgetView =
   | { name: "detail"; pariId: string; initialSide?: "yes" | "no" }
   | { name: "bets" };
 
-export type NavAction = { type: "navigate"; view: WidgetView } | { type: "back" };
+export type NavAction =
+  | { type: "navigate"; view: WidgetView }
+  | { type: "back" }
+  /** Reset the stack to a single root view (used by NavBar tab clicks). */
+  | { type: "reset"; view: WidgetView };
 
 /** Maximum stack depth — prevents unbounded memory growth from runaway navigation. */
 export const NAV_MAX_DEPTH = 20;
@@ -27,6 +31,11 @@ function isSameView(a: WidgetView, b: WidgetView): boolean {
 export function navReducer(state: WidgetView[], action: NavAction): WidgetView[] {
   if (action.type === "back") {
     return state.length > 1 ? state.slice(0, -1) : state;
+  }
+  if (action.type === "reset") {
+    const current = state[state.length - 1];
+    if (state.length === 1 && current && isSameView(current, action.view)) return state;
+    return [action.view];
   }
   // navigate
   const current = state[state.length - 1];
