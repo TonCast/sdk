@@ -26,11 +26,13 @@ function pickerHex(
   value: string,
   previewColor: string | undefined,
   defaultValue: string | undefined,
+  placeholderHint: string | undefined,
 ): string {
   return (
     safeHexColor(value) ??
     safeHexColor(previewColor ?? "") ??
     safeHexColor(defaultValue ?? "") ??
+    safeHexColor(placeholderHint ?? "") ??
     PICKER_FALLBACK_HEX
   );
 }
@@ -46,7 +48,7 @@ export function ColorField({
 }: Props) {
   const inputId = useId();
   const isReset = defaultValue !== undefined;
-  const colorPickerValue = pickerHex(value, previewColor, defaultValue);
+  const colorPickerValue = pickerHex(value, previewColor, defaultValue, placeholderHint);
   const placeholder = value ? "" : (previewColor ?? defaultValue ?? placeholderHint ?? "");
   const showAction = isReset ? value !== defaultValue && value !== "" : value !== "";
   const actionLabel = isReset ? "Reset" : "Clear";
