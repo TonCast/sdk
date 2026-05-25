@@ -94,12 +94,17 @@ export function buildIndexHtml(config: ConstructorConfig): string {
         min-height: 100dvh;
         color-scheme: ${rootColorScheme};
         background: ${bodyBackground};
+        /* Prevent the WebView itself from bouncing/elastic-scrolling when the
+           user swipes on non-scrollable areas (header, nav bar). Scrolling
+           within .tc-content is unaffected — it has overscroll-behavior:contain. */
+        overscroll-behavior: none;
       }
       body {
         margin: 0;
         box-sizing: border-box;
         height: 100%;
         overflow: hidden;
+        overscroll-behavior: none;
         ${TG_SAFE_AREA_BODY_PADDING_CSS}
         display: flex;
         flex-direction: column;

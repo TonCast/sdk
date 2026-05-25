@@ -275,6 +275,8 @@ describe("widget export snippets", () => {
     );
     expect(html).toMatch(/body \{[\s\S]*height: 100%;/);
     expect(html).toMatch(/body \{[\s\S]*overflow: hidden;/);
+    expect(html).toMatch(/html \{[\s\S]*overscroll-behavior: none;/);
+    expect(html).toMatch(/body \{[\s\S]*overscroll-behavior: none;/);
     expect(html).toMatch(/env\(safe-area-inset-top, 0px\)/);
     expect(html).toMatch(/env\(safe-area-inset-left, 0px\)/);
     expect(html).toMatch(/var\(--tg-safe-area-inset-top, 0px\)/);

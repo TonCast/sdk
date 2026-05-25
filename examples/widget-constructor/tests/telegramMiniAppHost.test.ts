@@ -22,4 +22,13 @@ describe("telegramMiniAppHost", () => {
     expect(script).toContain("disableVerticalSwipes");
     expect(script).toContain("requestFullscreen");
   });
+
+  it("init script sums safeAreaInset and contentSafeAreaInset for fullscreen support", () => {
+    const script = buildTelegramHostInitScript();
+    // Both objects must be read (not OR'd) so fullscreen mode adds both values.
+    expect(script).toContain("tg.safeAreaInset");
+    expect(script).toContain("tg.contentSafeAreaInset");
+    // Values should be added (not max'd or OR'd).
+    expect(script).toMatch(/sa\.top.*csa\.top|csa\.top.*sa\.top/);
+  });
 });

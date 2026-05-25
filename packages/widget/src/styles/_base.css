@@ -1,4 +1,15 @@
 /* ===== LAYOUT ===== */
+
+/*
+ * Widget root — must fill whatever container the host provides so that
+ * .tc-shell's height:100% resolves against a definite parent height.
+ * Works in both full-page (flex-item with definite flex-allocated height)
+ * and embedded (explicit-height wrapper) scenarios.
+ */
+.tc-w {
+  height: 100%;
+}
+
 .tc-shell {
   display: flex;
   flex-direction: column;

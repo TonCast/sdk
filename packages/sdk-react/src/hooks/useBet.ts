@@ -335,6 +335,21 @@ export function useBet(params: UseBetParams): UseBetResult {
     return clampTicketCount(tickets, maxTickets);
   }, [tickets, maxTickets]);
 
+  // When the cap shrinks (e.g. coefficient changed in Fixed/Limit mode) pull
+  // the stored ticket count down to the new max so the input field stays in
+  // sync. Uses a functional update to avoid reading `tickets` as a dep — the
+  // effect should only fire when `maxTickets` or `ticketsKey` itself changes.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional — clamp only when the cap changes.
+  useEffect(() => {
+    if (maxTickets > 0 && ticketsKey) {
+      setTicketsByKey((prev) => {
+        const cur = prev[ticketsKey] ?? 0;
+        if (cur <= maxTickets) return prev;
+        return { ...prev, [ticketsKey]: maxTickets };
+      });
+    }
+  }, [maxTickets, ticketsKey]);
+
   const ticketsOverCap = maxTickets > 0 && tickets > maxTickets;
 
   // ─── Quote ────────────────────────────────────────────────────────────────

@@ -17,13 +17,16 @@ export function buildTelegramHostInitScript(): string {
         var tg = window.Telegram && window.Telegram.WebApp;
         if (!tg) return;
         function applySafeAreaInsets() {
-          var inset = tg.contentSafeAreaInset || tg.safeAreaInset;
-          if (!inset) return;
+          // In fullscreen mode both objects are non-zero: safeAreaInset covers the
+          // device notch/home-bar, contentSafeAreaInset covers TG UI overlays
+          // (header, swipe handle, etc.). Sum them so content clears both layers.
+          var sa  = tg.safeAreaInset        || {};
+          var csa = tg.contentSafeAreaInset || {};
           var root = document.documentElement;
-          root.style.setProperty("--tg-safe-area-inset-top", (inset.top || 0) + "px");
-          root.style.setProperty("--tg-safe-area-inset-right", (inset.right || 0) + "px");
-          root.style.setProperty("--tg-safe-area-inset-bottom", (inset.bottom || 0) + "px");
-          root.style.setProperty("--tg-safe-area-inset-left", (inset.left || 0) + "px");
+          root.style.setProperty("--tg-safe-area-inset-top",    ((sa.top    || 0) + (csa.top    || 0)) + "px");
+          root.style.setProperty("--tg-safe-area-inset-right",  ((sa.right  || 0) + (csa.right  || 0)) + "px");
+          root.style.setProperty("--tg-safe-area-inset-bottom", ((sa.bottom || 0) + (csa.bottom || 0)) + "px");
+          root.style.setProperty("--tg-safe-area-inset-left",   ((sa.left   || 0) + (csa.left   || 0)) + "px");
         }
         tg.ready();
         tg.expand();

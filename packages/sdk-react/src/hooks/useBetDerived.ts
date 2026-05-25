@@ -106,12 +106,15 @@ export function getMaxTickets(params: {
 }): number {
   const { selectedCoin, mode, yesOdds, isYes, affordableInWallet, isBookEmpty, oddsState } = params;
   if (!selectedCoin) return 0;
-  if (mode === "fixed") return fixedTicketsForBudget(selectedCoin.maxBetTon, yesOdds, isYes);
+  // Fixed and Limit both place unmatched tickets at the chosen yesOdds, so the
+  // ticket-count cap must track yesOdds changes for both modes.
+  if (mode === "fixed" || mode === "limit")
+    return fixedTicketsForBudget(selectedCoin.maxBetTon, yesOdds, isYes);
+  // Market mode: walk the actual book legs for the tightest affordable count.
   if (!isBookEmpty) return affordableInWallet;
 
-  const median = mode === "market" && oddsState ? sameSideMedianYesOdds(oddsState, isYes) : null;
-  const oddsForCap = median ?? (mode === "market" ? ODDS_MID : yesOdds);
-  return fixedTicketsForBudget(selectedCoin.maxBetTon, oddsForCap, isYes);
+  const median = oddsState ? sameSideMedianYesOdds(oddsState, isYes) : null;
+  return fixedTicketsForBudget(selectedCoin.maxBetTon, median ?? ODDS_MID, isYes);
 }
 
 export function getLiquidityMarkers(
