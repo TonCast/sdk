@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
 import { ToncastProvider, useTonConnectClient } from "../src";
 
-const canon = (addr: string) => Address.parse(addr).toString();
+const canon = (addr: string) => Address.parse(addr).toString({ bounceable: true });
 
 const TEST_ADDR = "UQABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAZAm";
 

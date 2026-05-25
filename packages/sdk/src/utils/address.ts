@@ -7,12 +7,12 @@ export type TonAddressString = string & { readonly [tonAddressBrand]: true };
 
 /**
  * Validate a TON friendly/raw address and return the canonical bounceable
- * EQ-form (`Address.parse(value).toString()`). Same wallet reconnecting as
- * `UQ…` vs `EQ…` must compare equal everywhere in SDK state and caches.
+ * EQ-form. Same wallet reconnecting as `UQ…` vs `EQ…` must compare equal
+ * everywhere in SDK state and caches.
  */
 export function parseTonAddress(value: string, field = "address"): TonAddressString {
   try {
-    return Address.parse(value).toString() as TonAddressString;
+    return Address.parse(value).toString({ bounceable: true }) as TonAddressString;
   } catch (err) {
     throw new ToncastError(`Invalid ${field}: expected a TON address`, "INVALID_ADDRESS", err);
   }
@@ -26,7 +26,10 @@ export function normalizeTonAddress(value: string, field = "address"): string {
 /** `true` when both values denote the same on-chain wallet (any friendly/raw format). */
 export function sameTonAddress(a: string, b: string): boolean {
   try {
-    return Address.parse(a).toString() === Address.parse(b).toString();
+    return (
+      Address.parse(a).toString({ bounceable: true }) ===
+      Address.parse(b).toString({ bounceable: true })
+    );
   } catch {
     return false;
   }

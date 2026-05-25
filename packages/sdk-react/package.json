@@ -1,6 +1,6 @@
 {
   "name": "@toncast/sdk-react",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "React hooks + provider for @toncast/sdk (paris, bets, live streams, betting flow, optional TonConnect sync)",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -54,7 +54,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@toncast/sdk": "0.0.3"
+    "@toncast/sdk": "0.0.5"
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.0.0",
