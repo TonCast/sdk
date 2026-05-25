@@ -1,7 +1,8 @@
-import { ALL_CATEGORY_FILTER, type CategoryFilter } from "@toncast/sdk";
+import { ALL_CATEGORY_FILTER, type CategoryFilter, isBenignFetchError } from "@toncast/sdk";
 import { useCategoryFilters, useStreamList } from "@toncast/sdk-react";
 import { useEffect, useState } from "react";
 import { PariCard } from "../components/PariCard";
+import { PariCardSkeleton } from "../components/PariCardSkeleton";
 import { Button } from "../components/ui/Button";
 import { SkeletonList } from "../components/ui/SkeletonList";
 import { useT } from "../i18n/useT";
@@ -12,8 +13,6 @@ export function ParisListView() {
   const categories = useCategoryFilters();
   const [active, setActive] = useState<CategoryFilter | null>(null);
 
-  // If categories are refetched and the selected category no longer exists
-  // (e.g. removed server-side), reset so the user isn't stuck on a ghost filter.
   useEffect(() => {
     if (!active || !categories.data) return;
     const activeKey = JSON.stringify(active.param);
@@ -22,13 +21,19 @@ export function ParisListView() {
   }, [categories.data, active]);
 
   const current = active ?? categories.data?.[0] ?? ALL_CATEGORY_FILTER;
-  const { data, isLoading, isError, error } = useStreamList(current.param);
+  const { data, isLoading, isError, error, isFetching } = useStreamList(current.param);
+
+  const items = data ?? [];
+  const hasItems = items.length > 0;
+  const showBlockingError =
+    isError && !isBenignFetchError(error) && !hasItems && !(isLoading || isFetching);
+  const showInlineError = isError && !isBenignFetchError(error) && hasItems;
+  const showInitialSkeleton = (isLoading || isFetching) && !hasItems && !showBlockingError;
 
   return (
     <div className="tc-form-col">
       <h2 className="tc-page-title">{t("page.paris.title")}</h2>
 
-      {/* Category filter */}
       <div className="tc-category-bar">
         {categories.isLoading ? (
           <SkeletonList
@@ -53,26 +58,35 @@ export function ParisListView() {
         )}
       </div>
 
-      {isError ? (
+      {showBlockingError ? (
         <div className="tc-error">
           {t("page.paris.loadFailed", {
             error: error instanceof Error ? error.message : String(error),
           })}
         </div>
-      ) : isLoading || !data ? (
-        <SkeletonList
-          count={8}
-          itemStyle={{ aspectRatio: "1 / 1.5" }}
-          wrapperClassName="tc-pari-grid"
-        />
-      ) : data.length === 0 ? (
-        <div className="tc-empty">{t("page.paris.empty")}</div>
-      ) : (
+      ) : showInitialSkeleton ? (
         <div className="tc-pari-grid">
-          {data.map((p) => (
-            <PariCard key={p.id} pari={p} />
+          {Array.from({ length: 8 }, (_, i) => (
+            <PariCardSkeleton key={`pari-skel-${i}`} />
           ))}
         </div>
+      ) : !hasItems ? (
+        <div className="tc-empty">{t("page.paris.empty")}</div>
+      ) : (
+        <>
+          {showInlineError && (
+            <div className="tc-error-sm">
+              {t("page.paris.loadFailedInline", {
+                error: error instanceof Error ? error.message : String(error),
+              })}
+            </div>
+          )}
+          <div className="tc-pari-grid">
+            {items.map((p) => (
+              <PariCard key={p.id} pari={p} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

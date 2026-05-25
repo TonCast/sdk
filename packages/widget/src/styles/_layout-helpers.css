@@ -37,7 +37,7 @@
 .tc-bet-side-toggle-title {
   flex: 1;
   font-weight: 600;
-  font-size: var(--tc-text-base);
+  font-size: var(--tc-text-lg);
   color: var(--tc-fg);
 }
 .tc-detail-card-body {
@@ -120,8 +120,9 @@
   color: var(--tc-warn-fg);
 }
 .tc-quote-notice {
-  font-size: var(--tc-text-xs);
-  margin-bottom: max(3px, calc(var(--tc-form-gap) * 0.3333333333));
+  font-size: var(--tc-text-sm);
+  line-height: 1.45;
+  margin-bottom: max(4px, calc(var(--tc-form-gap) * 0.3333333333));
 }
 .tc-coef-slider-wrap {
   position: relative;

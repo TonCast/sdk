@@ -140,6 +140,20 @@ export function parseLocalizedDecimal(input: string, lang: string): string {
   return s;
 }
 
+/** Locale-aware integer formatter for ticket counts (never uses scientific notation). */
+export function formatIntegerCount(n: number, lang: string): string {
+  const value = Math.trunc(n);
+  if (!Number.isFinite(value)) return String(n);
+  try {
+    return new Intl.NumberFormat(lang, {
+      maximumFractionDigits: 0,
+      useGrouping: true,
+    }).format(value);
+  } catch {
+    return String(value);
+  }
+}
+
 /** Locale-aware decimal formatter — trailing zeros stripped by default. */
 export function formatDecimal(
   value: number,

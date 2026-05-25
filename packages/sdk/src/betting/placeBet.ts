@@ -27,6 +27,7 @@ import type { Pari } from "../types/pari";
 import { parseTonAddress } from "../utils/address";
 import { ToncastObservable } from "../utils/observable";
 import { CachedStonApiClient } from "../wallet/cached-ston-api";
+import { assertPositiveUint32TicketCount } from "./validateTicketsCount";
 
 /** Re-exported for downstream apps that don't want to depend on tx-sdk directly. */
 export type { AvailableCoin, BetQuote, PricedCoin } from "@toncast/tx-sdk";
@@ -417,6 +418,7 @@ export class BettingResource {
    * so the breakdown shows the real matched/placement amounts.
    */
   async quoteFixedBet(params: QuoteFixedBetParams): Promise<BetQuote> {
+    assertPositiveUint32TicketCount(params.ticketsCount);
     const quote = await this.runQuote(params, (common) =>
       this.getTxSdk().quoteFixedBet({
         ...common,
@@ -458,6 +460,7 @@ export class BettingResource {
   }
 
   async quoteLimitBet(params: QuoteLimitBetParams): Promise<BetQuote> {
+    assertPositiveUint32TicketCount(params.ticketsCount);
     return this.runQuote(params, async (common) => {
       const oddsState = params.oddsState ?? (await this.deps.paris.getOddsState(params.pariId));
       return this.getTxSdk().quoteLimitBet({
@@ -490,12 +493,7 @@ export class BettingResource {
   async quoteMarketBet(params: QuoteMarketBetParams): Promise<BetQuote> {
     // Cheap validation up-front, before we touch the network or a TonClient.
     if (params.marketTickets !== undefined) {
-      if (!Number.isInteger(params.marketTickets) || params.marketTickets <= 0) {
-        throw new ToncastError(
-          `marketTickets must be a positive integer, got ${params.marketTickets}`,
-          "INVALID_MARKET_TICKETS",
-        );
-      }
+      assertPositiveUint32TicketCount(params.marketTickets, "marketTickets");
     }
     return this.runQuote(params, async (common) => {
       const oddsState = params.oddsState ?? (await this.deps.paris.getOddsState(params.pariId));

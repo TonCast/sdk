@@ -10,6 +10,7 @@ const en = {
   "page.paris.title": "Markets",
   "page.paris.empty": "No markets in this category.",
   "page.paris.loadFailed": "Failed to load: {error}",
+  "page.paris.loadFailedInline": "Couldn't refresh this category: {error}",
   "page.paris.detail.back": "← Back",
   "page.paris.detail.failed": "Failed: {error}",
   "page.paris.detail.myBetsTitle": "Your bets on this market",
@@ -53,10 +54,11 @@ const en = {
   "bet.previewOnly": "Preview — {reason}",
   "bet.connectPrompt": "Connect your wallet to place a bet.",
   "bet.quoteWillAppear": "Quote will appear after entering an amount.",
-  "bet.quoteError": "Couldn't load the quote. Retrying…",
+  "bet.quoteError": "Couldn't load the quote.",
   "bet.balanceTooLow": "Balance too low — try a higher coefficient.",
   "bet.loadingPrice": "loading…",
   "bet.maxOf": "{current} / {max}",
+  "bet.ticketsOverCap": "Maximum {max} tickets for this bet.",
   "bet.oneTicket": "1 ticket",
   "bet.ambiguousDecimal":
     "Ambiguous number: use your locale’s decimal separator (e.g. 35,572 in German) — a dot with three digits after it can mean thousands or a fraction.",
@@ -81,6 +83,8 @@ const en = {
   "bet.sendError.toncast.NO_LIQUIDITY": "No matched liquidity for this side right now.",
   "bet.sendError.toncast.INVALID_MARKET_TICKETS":
     "Invalid ticket count — use a positive whole number.",
+  "bet.sendError.toncast.INVALID_TICKETS_COUNT":
+    "Ticket count is too large — enter a smaller number.",
   "bet.sendError.toncast.INVALID_ADDRESS": "Invalid TON address — check beneficiary or sender.",
 
   "page.bets.title": "My Bets",
@@ -149,6 +153,7 @@ const ru = {
   "page.paris.title": "Рынки",
   "page.paris.empty": "В этой категории нет рынков.",
   "page.paris.loadFailed": "Ошибка загрузки: {error}",
+  "page.paris.loadFailedInline": "Не удалось обновить категорию: {error}",
   "page.paris.detail.back": "← Назад",
   "page.paris.detail.failed": "Ошибка: {error}",
   "page.paris.detail.myBetsTitle": "Ваши ставки на этом рынке",
@@ -192,10 +197,11 @@ const ru = {
   "bet.previewOnly": "Предпросмотр — {reason}",
   "bet.connectPrompt": "Подключите кошелёк для ставки.",
   "bet.quoteWillAppear": "Котировка появится после ввода суммы.",
-  "bet.quoteError": "Не удалось загрузить котировку. Повтор…",
+  "bet.quoteError": "Не удалось загрузить котировку.",
   "bet.balanceTooLow": "Недостаточно средств — попробуйте выше коэффициент.",
   "bet.loadingPrice": "загрузка…",
   "bet.maxOf": "{current} / {max}",
+  "bet.ticketsOverCap": "Максимум {max} билетов для этой ставки.",
   "bet.oneTicket": "1 билет",
   "bet.ambiguousDecimal":
     "Неоднозначное число: для дробной части используйте запятую (например 35,572) — точка с тремя цифрами после неё может означать и тысячи, и дробь.",
@@ -222,6 +228,8 @@ const ru = {
   "bet.sendError.toncast.NO_LIQUIDITY": "Нет совпадающей ликвидности по этой стороне.",
   "bet.sendError.toncast.INVALID_MARKET_TICKETS":
     "Неверное число билетов — укажите целое положительное число.",
+  "bet.sendError.toncast.INVALID_TICKETS_COUNT":
+    "Слишком большое число билетов — уменьшите значение.",
   "bet.sendError.toncast.INVALID_ADDRESS":
     "Неверный TON-адрес — проверьте получателя или отправителя.",
 
@@ -287,6 +295,7 @@ const hi = {
   "page.paris.title": "बाज़ार",
   "page.paris.empty": "इस श्रेणी में कोई बाज़ार नहीं।",
   "page.paris.loadFailed": "लोड विफल: {error}",
+  "page.paris.loadFailedInline": "Couldn't refresh this category: {error}",
   "page.paris.detail.back": "← वापस",
   "page.paris.detail.failed": "विफल: {error}",
   "page.paris.detail.myBetsTitle": "इस बाज़ार पर आपकी बाज़ियाँ",
@@ -330,6 +339,7 @@ const hi = {
   "bet.balanceTooLow": "बैलेंस कम — उच्च गुणांक आज़माएँ।",
   "bet.loadingPrice": "लोड हो रहा है…",
   "bet.maxOf": "{current} / {max}",
+  "bet.ticketsOverCap": "Maximum {max} tickets for this bet.",
   "bet.oneTicket": "1 टिकट",
   "bet.ambiguousDecimal": "अस्पष्ट संख्या: दशमलव के लिए स्थानीय अल्पविराम का प्रयोग करें (उदा. 35,572)।",
   "bet.sendError.walletRejected": "आपने वॉलेट में लेनदेन की पुष्टि नहीं की।",
@@ -347,6 +357,8 @@ const hi = {
   "bet.sendError.toncast.USER_ADDRESS_REQUIRED": "वॉलेट कनेक्ट करें या प्रेषक पता सेट करें।",
   "bet.sendError.toncast.NO_LIQUIDITY": "इस तरफ़ अभी कोई मेल खाती तरलता नहीं।",
   "bet.sendError.toncast.INVALID_MARKET_TICKETS": "अमान्य टिकट संख्या — धनात्मक पूर्णांक दर्ज करें।",
+  "bet.sendError.toncast.INVALID_TICKETS_COUNT":
+    "Ticket count is too large — enter a smaller number.",
   "bet.sendError.toncast.INVALID_ADDRESS": "अमान्य TON पता — लाभार्थी या प्रेषक जाँचें।",
   "page.bets.title": "मेरी बाज़ियाँ",
   "page.bets.empty": "अभी कोई बाज़ी नहीं।",
@@ -401,6 +413,7 @@ const es = {
   "page.paris.title": "Mercados",
   "page.paris.empty": "No hay mercados en esta categoría.",
   "page.paris.loadFailed": "Error al cargar: {error}",
+  "page.paris.loadFailedInline": "Couldn't refresh this category: {error}",
   "page.paris.detail.back": "← Atrás",
   "page.paris.detail.failed": "Error: {error}",
   "page.paris.detail.myBetsTitle": "Tus apuestas en este mercado",
@@ -440,10 +453,11 @@ const es = {
   "bet.previewOnly": "Vista previa — {reason}",
   "bet.connectPrompt": "Conecta tu cartera para apostar.",
   "bet.quoteWillAppear": "La cotización aparecerá al introducir un importe.",
-  "bet.quoteError": "No se pudo cargar la cotización. Reintentando…",
+  "bet.quoteError": "No se pudo cargar la cotización.",
   "bet.balanceTooLow": "Saldo insuficiente — prueba un coeficiente mayor.",
   "bet.loadingPrice": "cargando…",
   "bet.maxOf": "{current} / {max}",
+  "bet.ticketsOverCap": "Maximum {max} tickets for this bet.",
   "bet.oneTicket": "1 boleto",
   "bet.ambiguousDecimal":
     "Número ambiguo: usa la coma decimal de tu idioma (p. ej. 35,572) — un punto con tres cifras puede ser miles o decimales.",
@@ -471,6 +485,8 @@ const es = {
   "bet.sendError.toncast.NO_LIQUIDITY": "No hay liquidez emparejada para este lado ahora.",
   "bet.sendError.toncast.INVALID_MARKET_TICKETS":
     "Cantidad de boletos no válida — usa un entero positivo.",
+  "bet.sendError.toncast.INVALID_TICKETS_COUNT":
+    "Ticket count is too large — enter a smaller number.",
   "bet.sendError.toncast.INVALID_ADDRESS":
     "Dirección TON no válida — revisa beneficiario o emisor.",
 
@@ -527,6 +543,7 @@ const zh = {
   "page.paris.title": "市场",
   "page.paris.empty": "该分类下暂无市场。",
   "page.paris.loadFailed": "加载失败：{error}",
+  "page.paris.loadFailedInline": "Couldn't refresh this category: {error}",
   "page.paris.detail.back": "← 返回",
   "page.paris.detail.failed": "失败：{error}",
   "page.paris.detail.myBetsTitle": "您在此市场的投注",
@@ -566,10 +583,11 @@ const zh = {
   "bet.previewOnly": "预览 — {reason}",
   "bet.connectPrompt": "连接钱包以投注。",
   "bet.quoteWillAppear": "输入金额后将显示报价。",
-  "bet.quoteError": "无法加载报价。正在重试…",
+  "bet.quoteError": "无法加载报价。",
   "bet.balanceTooLow": "余额不足 — 可尝试更高系数。",
   "bet.loadingPrice": "加载中…",
   "bet.maxOf": "{current} / {max}",
+  "bet.ticketsOverCap": "Maximum {max} tickets for this bet.",
   "bet.oneTicket": "1 张",
   "bet.ambiguousDecimal": "数字有歧义：请使用当前语言的小数分隔符（例如德语用 35,572）。",
   "bet.sendError.walletRejected": "您未在钱包中确认交易。",
@@ -587,6 +605,8 @@ const zh = {
   "bet.sendError.toncast.USER_ADDRESS_REQUIRED": "请连接钱包或设置发送地址。",
   "bet.sendError.toncast.NO_LIQUIDITY": "该方向当前没有可撮合流动性。",
   "bet.sendError.toncast.INVALID_MARKET_TICKETS": "票数无效 — 请输入正整数。",
+  "bet.sendError.toncast.INVALID_TICKETS_COUNT":
+    "Ticket count is too large — enter a smaller number.",
   "bet.sendError.toncast.INVALID_ADDRESS": "TON 地址无效 — 请检查收款人或发送人。",
   "page.bets.title": "我的投注",
   "page.bets.empty": "暂无投注。",
@@ -641,6 +661,7 @@ const fr = {
   "page.paris.title": "Marchés",
   "page.paris.empty": "Aucun marché dans cette catégorie.",
   "page.paris.loadFailed": "Échec du chargement : {error}",
+  "page.paris.loadFailedInline": "Couldn't refresh this category: {error}",
   "page.paris.detail.back": "← Retour",
   "page.paris.detail.failed": "Échec : {error}",
   "page.paris.detail.myBetsTitle": "Vos paris sur ce marché",
@@ -680,10 +701,11 @@ const fr = {
   "bet.previewOnly": "Aperçu — {reason}",
   "bet.connectPrompt": "Connectez votre portefeuille pour parier.",
   "bet.quoteWillAppear": "Le devis apparaîtra après saisie du montant.",
-  "bet.quoteError": "Impossible de charger le devis. Nouvelle tentative…",
+  "bet.quoteError": "Impossible de charger le devis.",
   "bet.balanceTooLow": "Solde insuffisant — essayez un coefficient plus élevé.",
   "bet.loadingPrice": "chargement…",
   "bet.maxOf": "{current} / {max}",
+  "bet.ticketsOverCap": "Maximum {max} tickets for this bet.",
   "bet.oneTicket": "1 ticket",
   "bet.ambiguousDecimal":
     "Nombre ambigu : utilisez le séparateur décimal local (ex. 35,572 en allemand).",
@@ -711,6 +733,8 @@ const fr = {
   "bet.sendError.toncast.NO_LIQUIDITY": "Pas de liquidité assortie de ce côté pour le moment.",
   "bet.sendError.toncast.INVALID_MARKET_TICKETS":
     "Nombre de tickets invalide — utilisez un entier positif.",
+  "bet.sendError.toncast.INVALID_TICKETS_COUNT":
+    "Ticket count is too large — enter a smaller number.",
   "bet.sendError.toncast.INVALID_ADDRESS":
     "Adresse TON invalide — vérifiez bénéficiaire ou expéditeur.",
 
@@ -767,6 +791,7 @@ const de = {
   "page.paris.title": "Märkte",
   "page.paris.empty": "Keine Märkte in dieser Kategorie.",
   "page.paris.loadFailed": "Laden fehlgeschlagen: {error}",
+  "page.paris.loadFailedInline": "Couldn't refresh this category: {error}",
   "page.paris.detail.back": "← Zurück",
   "page.paris.detail.failed": "Fehler: {error}",
   "page.paris.detail.myBetsTitle": "Ihre Wetten auf diesem Markt",
@@ -806,10 +831,11 @@ const de = {
   "bet.previewOnly": "Vorschau — {reason}",
   "bet.connectPrompt": "Wallet verbinden, um zu wetten.",
   "bet.quoteWillAppear": "Kurs erscheint nach Eingabe eines Betrags.",
-  "bet.quoteError": "Kurs konnte nicht geladen werden. Erneuter Versuch…",
+  "bet.quoteError": "Kurs konnte nicht geladen werden.",
   "bet.balanceTooLow": "Guthaben zu niedrig — höheren Koeffizienten versuchen.",
   "bet.loadingPrice": "lädt…",
   "bet.maxOf": "{current} / {max}",
+  "bet.ticketsOverCap": "Maximum {max} tickets for this bet.",
   "bet.oneTicket": "1 Ticket",
   "bet.ambiguousDecimal":
     "Zahl unklar: Dezimaltrennzeichen ist das Komma (z. B. 35,572) — ein Punkt mit drei Nachkommastellen ist mehrdeutig.",
@@ -837,6 +863,8 @@ const de = {
   "bet.sendError.toncast.NO_LIQUIDITY": "Auf dieser Seite gerade keine passende Liquidität.",
   "bet.sendError.toncast.INVALID_MARKET_TICKETS":
     "Ungültige Ticketanzahl — positive ganze Zahl verwenden.",
+  "bet.sendError.toncast.INVALID_TICKETS_COUNT":
+    "Ticket count is too large — enter a smaller number.",
   "bet.sendError.toncast.INVALID_ADDRESS":
     "Ungültige TON-Adresse — Empfänger oder Absender prüfen.",
 
@@ -893,6 +921,7 @@ const pt = {
   "page.paris.title": "Mercados",
   "page.paris.empty": "Não há mercados nesta categoria.",
   "page.paris.loadFailed": "Falha ao carregar: {error}",
+  "page.paris.loadFailedInline": "Couldn't refresh this category: {error}",
   "page.paris.detail.back": "← Voltar",
   "page.paris.detail.failed": "Falha: {error}",
   "page.paris.detail.myBetsTitle": "Suas apostas neste mercado",
@@ -932,10 +961,11 @@ const pt = {
   "bet.previewOnly": "Pré-visualização — {reason}",
   "bet.connectPrompt": "Conecte sua carteira para apostar.",
   "bet.quoteWillAppear": "A cotação aparece após informar o valor.",
-  "bet.quoteError": "Não foi possível carregar a cotação. Tentando novamente…",
+  "bet.quoteError": "Não foi possível carregar a cotação.",
   "bet.balanceTooLow": "Saldo baixo — tente um coeficiente maior.",
   "bet.loadingPrice": "carregando…",
   "bet.maxOf": "{current} / {max}",
+  "bet.ticketsOverCap": "Maximum {max} tickets for this bet.",
   "bet.oneTicket": "1 bilhete",
   "bet.ambiguousDecimal": "Número ambíguo: use a vírgula como separador decimal (ex.: 35,572).",
   "bet.sendError.walletRejected": "Você não confirmou a transação na carteira.",
@@ -960,6 +990,8 @@ const pt = {
   "bet.sendError.toncast.NO_LIQUIDITY": "Sem liquidez correspondente neste lado no momento.",
   "bet.sendError.toncast.INVALID_MARKET_TICKETS":
     "Quantidade de bilhetes inválida — use um inteiro positivo.",
+  "bet.sendError.toncast.INVALID_TICKETS_COUNT":
+    "Ticket count is too large — enter a smaller number.",
   "bet.sendError.toncast.INVALID_ADDRESS":
     "Endereço TON inválido — verifique beneficiário ou remetente.",
   "page.bets.title": "Minhas apostas",
@@ -1015,6 +1047,7 @@ const fa = {
   "page.paris.title": "بازارها",
   "page.paris.empty": "در این دسته بازاری نیست.",
   "page.paris.loadFailed": "بارگذاری ناموفق: {error}",
+  "page.paris.loadFailedInline": "Couldn't refresh this category: {error}",
   "page.paris.detail.back": "← بازگشت",
   "page.paris.detail.failed": "ناموفق: {error}",
   "page.paris.detail.myBetsTitle": "شرط‌های شما در این بازار",
@@ -1054,10 +1087,11 @@ const fa = {
   "bet.previewOnly": "پیش‌نمایش — {reason}",
   "bet.connectPrompt": "برای شرط، کیف را وصل کنید.",
   "bet.quoteWillAppear": "پس از وارد کردن مبلغ، قیمت نمایش داده می‌شود.",
-  "bet.quoteError": "بارگذاری قیمت ممکن نشد. در حال تلاش مجدد…",
+  "bet.quoteError": "بارگذاری قیمت ممکن نشد.",
   "bet.balanceTooLow": "موجودی کم — ضریب بالاتر امتحان کنید.",
   "bet.loadingPrice": "در حال بارگذاری…",
   "bet.maxOf": "{current} / {max}",
+  "bet.ticketsOverCap": "Maximum {max} tickets for this bet.",
   "bet.oneTicket": "۱ بلیت",
   "bet.ambiguousDecimal": "عدد مبهم: از جداکننده اعشاری زبان خود استفاده کنید (مثلاً ۳۵٬۵۷۲).",
   "bet.sendError.walletRejected": "تراکنش را در کیف پول تأیید نکردید.",
@@ -1077,6 +1111,8 @@ const fa = {
   "bet.sendError.toncast.USER_ADDRESS_REQUIRED": "کیف را وصل کنید یا آدرس فرستنده را تنظیم کنید.",
   "bet.sendError.toncast.NO_LIQUIDITY": "الان نقدینگی منطبق برای این طرف نیست.",
   "bet.sendError.toncast.INVALID_MARKET_TICKETS": "تعداد بلیت نامعتبر — عدد صحیح مثبت وارد کنید.",
+  "bet.sendError.toncast.INVALID_TICKETS_COUNT":
+    "Ticket count is too large — enter a smaller number.",
   "bet.sendError.toncast.INVALID_ADDRESS": "آدرس TON نامعتبر — ذینفع یا فرستنده را بررسی کنید.",
   "page.bets.title": "شرط‌های من",
   "page.bets.empty": "هنوز شرطی نیست.",
@@ -1131,6 +1167,7 @@ const ar = {
   "page.paris.title": "الأسواق",
   "page.paris.empty": "لا توجد أسواق في هذه الفئة.",
   "page.paris.loadFailed": "فشل التحميل: {error}",
+  "page.paris.loadFailedInline": "Couldn't refresh this category: {error}",
   "page.paris.detail.back": "← رجوع",
   "page.paris.detail.failed": "فشل: {error}",
   "page.paris.detail.myBetsTitle": "رهاناتك في هذا السوق",
@@ -1170,10 +1207,11 @@ const ar = {
   "bet.previewOnly": "معاينة — {reason}",
   "bet.connectPrompt": "صِل محفظتك لوضع رهان.",
   "bet.quoteWillAppear": "يظهر السعر بعد إدخال المبلغ.",
-  "bet.quoteError": "تعذّر تحميل السعر. إعادة المحاولة…",
+  "bet.quoteError": "تعذّر تحميل السعر.",
   "bet.balanceTooLow": "رصيد منخفض — جرّب معاملًا أعلى.",
   "bet.loadingPrice": "جارٍ التحميل…",
   "bet.maxOf": "{current} / {max}",
+  "bet.ticketsOverCap": "Maximum {max} tickets for this bet.",
   "bet.oneTicket": "تذكرة واحدة",
   "bet.ambiguousDecimal": "رقم غامض: استخدم فاصلة عشرية حسب لغتك (مثل ٣٥٬٥٧٢ في الألمانية).",
   "bet.sendError.walletRejected": "لم تُؤكّد المعاملة في المحفظة.",
@@ -1191,6 +1229,8 @@ const ar = {
   "bet.sendError.toncast.USER_ADDRESS_REQUIRED": "صِل المحفظة أو عيّن عنوان المرسل.",
   "bet.sendError.toncast.NO_LIQUIDITY": "لا سيولة مطابقة لهذا الجانب الآن.",
   "bet.sendError.toncast.INVALID_MARKET_TICKETS": "عدد التذاكر غير صالح — استخدم عددًا صحيحًا موجبًا.",
+  "bet.sendError.toncast.INVALID_TICKETS_COUNT":
+    "Ticket count is too large — enter a smaller number.",
   "bet.sendError.toncast.INVALID_ADDRESS": "عنوان TON غير صالح — تحقّق من المستفيد أو المرسل.",
   "page.bets.title": "رهاناتي",
   "page.bets.empty": "لا رهانات بعد.",

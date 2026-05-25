@@ -93,7 +93,7 @@
   margin: 8px 0;
 }
 .tc-page-title {
-  font-size: clamp(15px, 11px + 1.1cqi, var(--tc-text-2xl));
+  font-size: clamp(var(--tc-text-base), 12px + 1.1cqi, var(--tc-text-2xl));
   font-weight: 600;
   color: var(--tc-fg);
   margin-bottom: var(--tc-form-gap);
@@ -125,7 +125,7 @@
   }
 }
 .tc-label {
-  font-size: var(--tc-text-xs);
+  font-size: var(--tc-text-sm);
   color: var(--tc-fg-muted);
   margin-bottom: 4px;
 }

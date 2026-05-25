@@ -1,5 +1,5 @@
 export type { BetFlowErrorDescriptor, BetFlowErrorKind } from "./betFlowError";
-export { classifyBetFlowError, resolveBetSendErrorTranslationKey } from "./betFlowError";
+export { classifyBetFlowError, isBenignFetchError, resolveBetQuoteErrorTranslationKey, resolveBetSendErrorTranslationKey } from "./betFlowError";
 export type {
   BetQuote,
   PricedCoin,

@@ -177,8 +177,26 @@ const TONCAST_SEND_TRANSLATION_CODES: readonly string[] = [
   "USER_ADDRESS_REQUIRED",
   "NO_LIQUIDITY",
   "INVALID_MARKET_TICKETS",
+  "INVALID_TICKETS_COUNT",
   "INVALID_ADDRESS",
 ];
+
+/**
+ * True for fetch cancellations that should not replace stale UI with an error banner.
+ */
+export function isBenignFetchError(err: unknown): boolean {
+  if (err instanceof DOMException && err.name === "AbortError") return true;
+  if (err instanceof Error && err.name === "AbortError") return true;
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg === "Aborted" || msg === "The operation was aborted.";
+}
+
+/**
+ * Stable i18n key path for quote fetch failures (same catalog as send errors).
+ */
+export function resolveBetQuoteErrorTranslationKey(d: BetFlowErrorDescriptor): string {
+  return resolveBetSendErrorTranslationKey(d);
+}
 
 /**
  * Stable i18n key path for bet confirm / wallet send failures (same string in

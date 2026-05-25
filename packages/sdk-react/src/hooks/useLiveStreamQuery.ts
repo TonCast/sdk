@@ -24,6 +24,8 @@ export interface UseLiveStreamQueryResult<T> {
   status: LiveQueryStatus;
   streamStatus: string | undefined;
   isLoading: boolean;
+  /** True while the stream is fetching a fresh snapshot (including category switches). */
+  isFetching: boolean;
   isError: boolean;
   isSuccess: boolean;
   refetch: () => Promise<void>;
@@ -140,6 +142,7 @@ export function useLiveStreamQuery<T>({
   return {
     ...snapshot,
     isLoading: snapshot.status === "pending",
+    isFetching: snapshot.streamStatus === "loading" || snapshot.status === "pending",
     isError: snapshot.status === "error",
     isSuccess: snapshot.status === "success",
     refetch: async () => {

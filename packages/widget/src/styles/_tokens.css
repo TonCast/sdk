@@ -58,14 +58,14 @@
   --tc-header-padding-x: 10px;
   --tc-nav-padding-y: 10px;
   /* Typography scale (absolute px — predictable inside embedded UIs). */
-  --tc-text-2xs: 10px;
-  --tc-text-xs: 11px;
-  --tc-text-sm: 12px;
-  --tc-text-md: 13px;
-  --tc-text-base: 14px;
-  --tc-text-lg: 15px;
-  --tc-text-xl: 16px;
-  --tc-text-2xl: 17px;
+  --tc-text-2xs: 11px;
+  --tc-text-xs: 12px;
+  --tc-text-sm: 13px;
+  --tc-text-md: 14px;
+  --tc-text-base: 15px;
+  --tc-text-lg: 16px;
+  --tc-text-xl: 17px;
+  --tc-text-2xl: 18px;
   /* Pari / bet inner spacing derived from density tokens. */
   --tc-pari-body-padding: max(8px, calc(var(--tc-card-padding) - 4px));
   --tc-pari-stack-gap: max(4px, calc(var(--tc-form-gap) * 0.5));

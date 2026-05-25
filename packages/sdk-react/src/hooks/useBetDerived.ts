@@ -24,6 +24,16 @@ import type { BetMode, NormalizedQuote, QuoteRow } from "./useBet";
 
 export const ODDS_MID = Math.round((ODDS_MIN + ODDS_MAX) / 2);
 
+/** On-chain ticket counts are uint32 — keep UI state within the same bounds. */
+export const MAX_UINT32_TICKETS = 4_294_967_295;
+
+/** Clamp a raw ticket input to [1 … min(maxTickets, uint32 max)]. */
+export function clampTicketCount(n: number, maxTickets: number): number {
+  const truncated = Math.max(1, Math.trunc(n));
+  const cap = maxTickets > 0 ? maxTickets : MAX_UINT32_TICKETS;
+  return Math.min(truncated, cap, MAX_UINT32_TICKETS);
+}
+
 export function buildCoinOptions(summary: BetSummary | undefined): CoinCapacity[] {
   const capacities = summary?.capacities ?? [];
   const loading = summary?.loadingCoins ?? [];

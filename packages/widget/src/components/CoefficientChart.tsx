@@ -7,6 +7,7 @@ const VIEW_H = 200;
 const PAD_X = 8;
 const PAD_Y = 16;
 
+/** Maps coefficient history into SVG path coordinates for the sparkline. */
 function buildPath(history: readonly CoefficientHistoryPoint[]) {
   const xs = history.map((p) => p.timestamp);
   const minX = Math.min(...xs);
@@ -25,6 +26,10 @@ function buildPath(history: readonly CoefficientHistoryPoint[]) {
   return { path, lastX, lastY };
 }
 
+/**
+ * YES-probability sparkline with KPI readout.
+ * Wide cards: KPI column + full-width sparkline (`@container` in `_chart.css`).
+ */
 export function CoefficientChart({ history }: { history: readonly CoefficientHistoryPoint[] }) {
   const t = useT();
   const { fmt } = useI18n();
@@ -44,31 +49,44 @@ export function CoefficientChart({ history }: { history: readonly CoefficientHis
   const lineColor = trendUp ? successColor : dangerColor;
   const mutedColor = "var(--tc-fg-muted)";
 
+  const ariaLabel =
+    lastPct !== null
+      ? `${t("chart.title")}: ${fmt.decimal(lastPct, { maximumFractionDigits: 0 })}%`
+      : t("chart.title");
+
   return (
-    <div>
-      <div className="tc-chart-header">
-        <span>{t("chart.title")}</span>
-        {lastPct !== null && (
-          <span className="tc-chart-meta">
-            {fmt.decimal(lastPct, { maximumFractionDigits: 0 })}%
-          </span>
-        )}
-        {history.length > 1 && (
-          <span className={trendUp ? "tc-chart-trend-up" : "tc-chart-trend-down"}>
-            {trendUp ? t("chart.trendUp") : t("chart.trendDown")}{" "}
-            {fmt.decimal(Math.abs(delta), { maximumFractionDigits: 0 })}
-          </span>
+    <div className="tc-chart">
+      <div className="tc-chart-kpi">
+        <div className="tc-chart-kpi-title">{t("chart.title")}</div>
+        {(lastPct !== null || history.length > 1) && (
+          <div className="tc-chart-kpi-row">
+            {lastPct !== null && (
+              <span className="tc-chart-kpi-value">
+                {fmt.decimal(lastPct, { maximumFractionDigits: 0 })}%
+              </span>
+            )}
+            {history.length > 1 && (
+              <span
+                className={
+                  trendUp ? "tc-chart-trend-chip tc-chart-trend-chip--up" : "tc-chart-trend-chip tc-chart-trend-chip--down"
+                }
+              >
+                {trendUp ? t("chart.trendUp") : t("chart.trendDown")}{" "}
+                {fmt.decimal(Math.abs(delta), { maximumFractionDigits: 0 })}
+              </span>
+            )}
+          </div>
         )}
       </div>
       <div className="tc-chart-canvas">
         <svg
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-          preserveAspectRatio="none"
+          preserveAspectRatio="xMidYMid slice"
           className="tc-chart-svg"
           role="img"
-          aria-label={t("chart.title")}
+          aria-label={ariaLabel}
         >
-          <title>{t("chart.title")}</title>
+          <title>{ariaLabel}</title>
           {[0, 25, 50, 75, 100].map((p) => {
             const y = PAD_Y + ((100 - p) / 100) * (VIEW_H - 2 * PAD_Y);
             return (
@@ -87,9 +105,9 @@ export function CoefficientChart({ history }: { history: readonly CoefficientHis
           {points ? (
             <>
               <path
+                className="tc-chart-area"
                 d={`${points.path} L ${VIEW_W - PAD_X},${VIEW_H - PAD_Y} L ${PAD_X},${VIEW_H - PAD_Y} Z`}
                 fill={lineColor}
-                opacity={0.12}
               />
               <path
                 d={points.path}
@@ -119,7 +137,7 @@ export function CoefficientChart({ history }: { history: readonly CoefficientHis
         </svg>
         {history.length === 0 && (
           <div className="tc-chart-empty-overlay">
-            <span className="tc-text-xs tc-text-muted">{t("chart.noTrades")}</span>
+            <span className="tc-text-sm tc-text-muted">{t("chart.noTrades")}</span>
           </div>
         )}
       </div>

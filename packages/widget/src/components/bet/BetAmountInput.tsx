@@ -5,6 +5,7 @@ import { useI18n } from "../../i18n/I18nProvider";
 import { useT } from "../../i18n/useT";
 import {
   AmbiguousLocalizedDecimalError,
+  formatIntegerCount,
   formatRawLocalized,
   parseLocalizedDecimal,
 } from "../../utils/format";
@@ -70,6 +71,7 @@ export function BetAmountInput({ bet, sourceSym, sourceDecimals }: Props) {
           className="tc-input tc-stepper-input"
           value={draft}
           placeholder={amountPlaceholder}
+          maxLength={32}
           onChange={(e) => {
             setParseHint(null);
             setDraft(e.target.value);
@@ -92,7 +94,10 @@ export function BetAmountInput({ bet, sourceSym, sourceDecimals }: Props) {
             } catch {
               return;
             }
-            bet.setTickets(Math.max(1, bet.ticketsForSourceAmount(typed)));
+            const count = bet.ticketsForSourceAmount(typed);
+            const capped =
+              bet.maxTickets > 0 ? Math.min(Math.max(1, count), bet.maxTickets) : Math.max(1, count);
+            bet.setTickets(capped);
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") (e.target as HTMLInputElement).blur();
@@ -104,6 +109,11 @@ export function BetAmountInput({ bet, sourceSym, sourceDecimals }: Props) {
           {parseHint}
         </p>
       ) : null}
+      {bet.ticketsOverCap ? (
+        <p className="tc-text-xs tc-text-warn" role="alert">
+          {t("bet.ticketsOverCap", { max: bet.maxTickets })}
+        </p>
+      ) : null}
       <Slider
         {...bet.ticketsSliderProps}
         hideRange={false}
@@ -111,7 +121,12 @@ export function BetAmountInput({ bet, sourceSym, sourceDecimals }: Props) {
       />
       <div className="tc-form-row-between tc-text-xs tc-text-muted">
         <span>{t("bet.oneTicket")}</span>
-        <span>{t("bet.maxOf", { current: bet.tickets, max: bet.maxTickets })}</span>
+        <span>
+          {t("bet.maxOf", {
+            current: formatIntegerCount(bet.effectiveTickets, lang),
+            max: formatIntegerCount(bet.maxTickets, lang),
+          })}
+        </span>
       </div>
     </div>
   );

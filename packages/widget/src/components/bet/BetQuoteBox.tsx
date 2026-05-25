@@ -1,8 +1,9 @@
-import { formatBetQuoteReason } from "@toncast/sdk";
+import { classifyBetFlowError, formatBetQuoteReason } from "@toncast/sdk";
 import type { useBet } from "@toncast/sdk-react";
 import { useI18n } from "../../i18n/I18nProvider";
 import { useT } from "../../i18n/useT";
 import { Skeleton } from "../ui/Skeleton";
+import { resolveBetQuoteErrorTranslationKey } from "./resolveBetQuoteErrorTranslationKey";
 
 type Bet = ReturnType<typeof useBet>;
 
@@ -17,6 +18,13 @@ export function BetQuoteBox({ bet, sourceSym }: { bet: Bet; sourceSym: string })
       ) : !bet.quote.data && bet.quote.underlying.error ? (
         <details className="tc-quote-error-details">
           <summary className="tc-quote-error">{t("bet.quoteError")}</summary>
+          <span className="tc-text-xs tc-text-muted">
+            {t(
+              resolveBetQuoteErrorTranslationKey(
+                classifyBetFlowError(bet.quote.underlying.error),
+              ),
+            )}
+          </span>
           <span className="tc-text-xs tc-text-muted">
             {bet.quote.underlying.error instanceof Error
               ? bet.quote.underlying.error.message

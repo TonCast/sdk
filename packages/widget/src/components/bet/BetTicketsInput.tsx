@@ -10,8 +10,6 @@ export function BetTicketsInput({ bet }: { bet: Bet }) {
   const t = useT();
   const [draft, setDraft] = useState<string>("");
 
-  // Sync draft from `bet.tickets` / `bet.mode` only — do not depend on the whole
-  // `bet` object or the draft resets on unrelated bet updates while the user types.
   useEffect(() => {
     if (bet.mode === "market") return;
     setDraft(bet.tickets > 0 ? String(bet.tickets) : "");
@@ -19,37 +17,46 @@ export function BetTicketsInput({ bet }: { bet: Bet }) {
 
   const commit = (raw: number) => {
     const clean = Math.max(1, Math.trunc(raw || 1));
-    return bet.mode === "fixed" ? Math.min(clean, bet.maxTickets) : clean;
+    if (bet.maxTickets <= 0) return clean;
+    return Math.min(clean, bet.maxTickets);
   };
 
   return (
-    <BetStepper
-      label={t("bet.tickets")}
-      canDecrement={bet.ticketsStepper.canDecrement}
-      canIncrement={bet.ticketsStepper.canIncrement}
-      onDecrement={bet.ticketsStepper.decrement}
-      onIncrement={bet.ticketsStepper.increment}
-    >
-      <input
-        type="text"
-        inputMode="numeric"
-        className="tc-input tc-stepper-input"
-        value={draft}
-        placeholder="1"
-        onChange={(e) => {
-          const val = e.target.value.replace(/\D/g, "");
-          setDraft(val);
-          if (val) bet.setTickets(commit(Number(val)));
-        }}
-        onBlur={() => {
-          const final = commit(Number(draft));
-          bet.setTickets(final);
-          setDraft(String(final));
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-        }}
-      />
-    </BetStepper>
+    <div className="tc-form-col-sm">
+      <BetStepper
+        label={t("bet.tickets")}
+        canDecrement={bet.ticketsStepper.canDecrement}
+        canIncrement={bet.ticketsStepper.canIncrement}
+        onDecrement={bet.ticketsStepper.decrement}
+        onIncrement={bet.ticketsStepper.increment}
+      >
+        <input
+          type="text"
+          inputMode="numeric"
+          className="tc-input tc-stepper-input"
+          value={draft}
+          placeholder="1"
+          maxLength={10}
+          onChange={(e) => {
+            const val = e.target.value.replace(/\D/g, "");
+            setDraft(val);
+            if (val) bet.setTickets(Number(val));
+          }}
+          onBlur={() => {
+            const final = commit(Number(draft));
+            bet.setTickets(final);
+            setDraft(String(final));
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+          }}
+        />
+      </BetStepper>
+      {bet.ticketsOverCap ? (
+        <p className="tc-text-xs tc-text-warn" role="alert">
+          {t("bet.ticketsOverCap", { max: bet.maxTickets })}
+        </p>
+      ) : null}
+    </div>
   );
 }

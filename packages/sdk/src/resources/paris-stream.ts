@@ -67,6 +67,8 @@ export class ParisListStream {
   private activeConsumers = 0;
   private stopped = false;
   private inflightLoadMore: Promise<void> | null = null;
+  /** Bumps on each first-page fetch so stale responses are ignored after param changes. */
+  private fetchGeneration = 0;
 
   constructor(
     private readonly deps: ParisStreamDeps,
@@ -245,6 +247,7 @@ export class ParisListStream {
 
   /** Returns true on success, false on failure. */
   private async refetchFirstPage({ initial = false } = {}): Promise<boolean> {
+    const generation = ++this.fetchGeneration;
     try {
       const page = await this.deps.paris.list({
         feed: this.params.feed,
@@ -252,13 +255,14 @@ export class ParisListStream {
         search: this.params.search,
         limit: this.params.pageSize,
       });
-      if (this.stopped) return false;
+      if (this.stopped || generation !== this.fetchGeneration) return false;
       this.items = [...page.items];
       this.nextCursor = (page.nextCursor as { sortValue: number; address: string } | null) ?? null;
       this.hasMoreFlag = page.hasMore;
       this.emit();
       return true;
     } catch (err) {
+      if (generation !== this.fetchGeneration) return false;
       this.deps.logger.warn("paris.streamList fetch failed", err);
       // Only fail the stream on the initial fetch — mid-stream refetches are
       // best-effort (the WS keeps pushing fresh state).

@@ -50,7 +50,8 @@
 .tc-notice {
   border-radius: calc(var(--tc-radius) - 2px);
   padding: 10px 12px;
-  font-size: var(--tc-text-sm);
+  font-size: var(--tc-text-base);
+  line-height: 1.45;
 }
 .tc-notice-warn {
   background: var(--tc-warn-bg);

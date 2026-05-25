@@ -10,7 +10,16 @@ export function OrderBook({ oddsState }: { oddsState: OddsState | null }) {
   const { fmt } = useI18n();
 
   if (!oddsState) {
-    return <SkeletonList count={6} gap={4} itemStyle={{ height: 28, width: "100%" }} />;
+    return (
+      <div className="tc-ob" aria-hidden="true">
+        <div className="tc-ob-header">
+          <div className="tc-ob-yes-label">{t("orderBook.buyYes")}</div>
+          <div className="tc-ob-price-label">{t("orderBook.price")}</div>
+          <div className="tc-ob-no-label">{t("orderBook.buyNo")}</div>
+        </div>
+        <SkeletonList count={6} gap={4} itemStyle={{ height: 28, width: "100%" }} />
+      </div>
+    );
   }
 
   const buckets = orderBookLadder(oddsState);

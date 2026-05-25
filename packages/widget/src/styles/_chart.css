@@ -1,35 +1,82 @@
-/* ===== CHART ===== */
-.tc-chart-header {
+/* ===== CHART (KPI + sparkline) ===== */
+.tc-chart {
+  container-type: inline-size;
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
   gap: var(--tc-stepper-gap);
-  margin-bottom: var(--tc-stepper-gap);
-  font-size: var(--tc-text-md);
-  font-weight: 500;
 }
-.tc-chart-meta {
-  font-family: monospace;
-  font-size: var(--tc-text-xs);
+
+.tc-chart-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: max(4px, calc(var(--tc-form-gap) * 0.3333333333));
+  min-width: 0;
+}
+
+.tc-chart-kpi-title {
+  font-size: var(--tc-text-sm);
+  font-weight: 500;
   color: var(--tc-fg-muted);
 }
-.tc-chart-trend-up {
+
+.tc-chart-kpi-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tc-stepper-gap);
+}
+
+.tc-chart-kpi-value {
+  font-family: monospace;
+  font-size: var(--tc-text-2xl);
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--tc-fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.tc-chart-trend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 10px;
+  border-radius: 999px;
   font-family: monospace;
   font-size: var(--tc-text-xs);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.tc-chart-trend-chip--up {
+  background: var(--tc-success-bg);
   color: var(--tc-success-fg);
+  border: 1px solid var(--tc-success-border);
 }
-.tc-chart-trend-down {
-  font-family: monospace;
-  font-size: var(--tc-text-xs);
+
+.tc-chart-trend-chip--down {
+  background: var(--tc-danger-bg);
   color: var(--tc-danger-fg);
+  border: 1px solid var(--tc-danger-border);
 }
-.tc-chart-svg {
-  width: 100%;
-  height: 96px;
-}
+
 .tc-chart-canvas {
   position: relative;
   width: 100%;
+  min-width: 0;
+  min-height: 96px;
 }
+
+.tc-chart-svg {
+  display: block;
+  width: 100%;
+  height: 96px;
+}
+
+.tc-chart-area {
+  opacity: 0.12;
+}
+
 .tc-chart-empty-overlay {
   position: absolute;
   inset: 0;
@@ -37,6 +84,49 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
+}
+
+.tc-chart-kpi-title-skeleton {
+  width: 100%;
+  max-width: 118px;
+  height: 14px;
+}
+
+.tc-chart-canvas-skeleton {
+  display: block;
+  width: 100%;
+  height: 96px;
+  border-radius: calc(var(--tc-radius) - 2px);
+}
+
+@container (min-width: 420px) {
+  .tc-chart {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--tc-form-gap);
+  }
+
+  .tc-chart-kpi {
+    width: max-content;
+    max-width: 118px;
+  }
+
+  .tc-chart-canvas {
+    min-height: 112px;
+  }
+
+  .tc-chart-svg {
+    height: 112px;
+  }
+
+  .tc-chart-canvas-skeleton {
+    height: 112px;
+  }
+
+  .tc-chart-area {
+    opacity: 0.18;
+  }
 }
 
 /* ===== MY BETS ===== */

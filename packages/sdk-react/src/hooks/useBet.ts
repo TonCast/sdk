@@ -26,6 +26,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useToncastClient } from "../client/useToncastClient";
 import {
   buildCoinOptions,
+  clampTicketCount,
   getLiquidityMarkers,
   getMaxTickets,
   normalizeQuote,
@@ -131,6 +132,10 @@ export interface UseBetResult {
   setYesOdds: (n: number) => void;
   tickets: number;
   setTickets: (n: number) => void;
+  /** Tickets after wallet / uint32 clamping — used for quotes and sliders. */
+  effectiveTickets: number;
+  /** True when the raw ticket input exceeds {@link maxTickets}. */
+  ticketsOverCap: boolean;
 
   // ─── Data ─────────────────────────────────────────────────────────────────
   summary: UseObservableQueryResult<BetSummary>;
@@ -309,63 +314,7 @@ export function useBet(params: UseBetParams): UseBetResult {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, isBookEmpty]);
 
-  // ─── Quote ────────────────────────────────────────────────────────────────
-  const quoteParams = useMemo(() => {
-    if (!summary.data || !selectedCoin || tickets <= 0 || !pariId) return null;
-    const common = {
-      pariId,
-      isYes,
-      source: selectedCoin.source.address,
-      pricedCoins: summary.data.pricedCoins,
-    };
-    if (mode === "market") {
-      // Empty counter side: a "market" order has nothing to match against.
-      // Route it as a limit order at the same-side median (or 50 % when even
-      // the same side is empty) so the order lands at "where the market is",
-      // not at the neutral midpoint.
-      if (isBookEmpty) {
-        const median = sameSideMedianYesOdds(summary.data.oddsState, isYes);
-        return {
-          mode: "limit" as const,
-          ...common,
-          worstYesOdds: median ?? ODDS_MID,
-          ticketsCount: tickets,
-          oddsState: summary.data.oddsState,
-        };
-      }
-      return {
-        mode: "market" as const,
-        ...common,
-        marketTickets: tickets,
-        oddsState: summary.data.oddsState,
-      };
-    }
-    if (mode === "limit") {
-      return {
-        mode: "limit" as const,
-        ...common,
-        worstYesOdds: yesOdds,
-        ticketsCount: tickets,
-        oddsState: summary.data.oddsState,
-      };
-    }
-    return {
-      mode: "fixed" as const,
-      ...common,
-      yesOdds,
-      ticketsCount: tickets,
-      oddsState: summary.data.oddsState,
-    };
-  }, [summary.data, selectedCoin, tickets, pariId, isYes, mode, yesOdds, isBookEmpty]);
-
-  const underlyingQuote = useBetQuote(quoteParams, { staleTime: quoteStaleTime });
-
-  const quote = useMemo<NormalizedQuote>(
-    () => normalizeQuote({ underlyingQuote, selectedCoin, yesOdds, isYes, referralPct }),
-    [underlyingQuote, selectedCoin, yesOdds, isYes, referralPct],
-  );
-
-  // ─── Limits ──────────────────────────────────────────────────────────────
+  // ─── Limits (before quote — effective ticket counts depend on caps) ───────
   const minTickets = 1;
   const maxTickets = useMemo(
     () =>
@@ -381,6 +330,75 @@ export function useBet(params: UseBetParams): UseBetResult {
     [selectedCoin, mode, yesOdds, isYes, affordableInWallet, isBookEmpty, summary.data],
   );
 
+  const effectiveTickets = useMemo(() => {
+    if (tickets <= 0 || maxTickets <= 0) return 0;
+    return clampTicketCount(tickets, maxTickets);
+  }, [tickets, maxTickets]);
+
+  const ticketsOverCap = maxTickets > 0 && tickets > maxTickets;
+
+  // ─── Quote ────────────────────────────────────────────────────────────────
+  const quoteParams = useMemo(() => {
+    if (!summary.data || !selectedCoin || effectiveTickets <= 0 || !pariId) return null;
+    const common = {
+      pariId,
+      isYes,
+      source: selectedCoin.source.address,
+      pricedCoins: summary.data.pricedCoins,
+    };
+    if (mode === "market") {
+      if (isBookEmpty) {
+        const median = sameSideMedianYesOdds(summary.data.oddsState, isYes);
+        return {
+          mode: "limit" as const,
+          ...common,
+          worstYesOdds: median ?? ODDS_MID,
+          ticketsCount: effectiveTickets,
+          oddsState: summary.data.oddsState,
+        };
+      }
+      return {
+        mode: "market" as const,
+        ...common,
+        marketTickets: effectiveTickets,
+        oddsState: summary.data.oddsState,
+      };
+    }
+    if (mode === "limit") {
+      return {
+        mode: "limit" as const,
+        ...common,
+        worstYesOdds: yesOdds,
+        ticketsCount: effectiveTickets,
+        oddsState: summary.data.oddsState,
+      };
+    }
+    return {
+      mode: "fixed" as const,
+      ...common,
+      yesOdds,
+      ticketsCount: effectiveTickets,
+      oddsState: summary.data.oddsState,
+    };
+  }, [
+    summary.data,
+    selectedCoin,
+    effectiveTickets,
+    pariId,
+    isYes,
+    mode,
+    yesOdds,
+    isBookEmpty,
+  ]);
+
+  const underlyingQuote = useBetQuote(quoteParams, { staleTime: quoteStaleTime });
+
+  const quote = useMemo<NormalizedQuote>(
+    () => normalizeQuote({ underlyingQuote, selectedCoin, yesOdds, isYes, referralPct }),
+    [underlyingQuote, selectedCoin, yesOdds, isYes, referralPct],
+  );
+
+  // ─── Limits (exported caps — see block above quote) ─────────────────────
   // ─── Source-coin conversion (bound to currently selected coin) ───────────
   const sourcePriced = useMemo(
     () => summary.data?.pricedCoins.find((p) => p.address === source) ?? null,
@@ -443,16 +461,16 @@ export function useBet(params: UseBetParams): UseBetResult {
 
   const ticketsSliderProps: SliderProps = useMemo(
     () => ({
-      value: [Math.min(Math.max(tickets, 1), Math.max(1, maxTickets))],
+      value: [Math.min(Math.max(effectiveTickets, 1), Math.max(1, maxTickets))],
       min: 1,
       max: Math.max(1, maxTickets),
       step: 1,
       disabled: maxTickets <= 0,
       onValueChange: (v) => {
-        if (v[0] !== undefined) setTickets(Math.max(1, Math.trunc(v[0])));
+        if (v[0] !== undefined) setTickets(clampTicketCount(v[0], maxTickets));
       },
     }),
-    [tickets, maxTickets, setTickets],
+    [effectiveTickets, maxTickets, setTickets],
   );
 
   const oddsStepper: StepperState = useMemo(() => {
@@ -469,13 +487,13 @@ export function useBet(params: UseBetParams): UseBetResult {
   const ticketsStepper: StepperState = useMemo(() => {
     const cap = maxTickets > 0 ? maxTickets : Number.POSITIVE_INFINITY;
     return {
-      value: tickets,
-      canIncrement: tickets < cap,
-      canDecrement: tickets > 1,
-      increment: () => setTickets(Math.min(tickets + 1, cap)),
-      decrement: () => setTickets(Math.max(1, tickets - 1)),
+      value: effectiveTickets,
+      canIncrement: effectiveTickets < cap,
+      canDecrement: effectiveTickets > 1,
+      increment: () => setTickets(clampTicketCount(effectiveTickets + 1, maxTickets)),
+      decrement: () => setTickets(Math.max(1, effectiveTickets - 1)),
     };
-  }, [tickets, maxTickets, setTickets]);
+  }, [effectiveTickets, maxTickets, setTickets]);
 
   const liquidityMarkers = useMemo(
     () => getLiquidityMarkers(summary.data, isYes),
@@ -519,6 +537,8 @@ export function useBet(params: UseBetParams): UseBetResult {
     setYesOdds,
     tickets,
     setTickets,
+    effectiveTickets,
+    ticketsOverCap,
     summary,
     coins,
     selectedCoin,
