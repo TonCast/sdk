@@ -211,6 +211,7 @@
   display: flex;
   gap: max(4px, calc(var(--tc-form-gap) * 0.5));
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   padding-bottom: 4px;
   scrollbar-width: none;
 }

@@ -12,6 +12,9 @@
    mainly for the dialog sheet. */
 .tc-w {
   height: 100%;
+  /* Let flex hosts (TMA / full-viewport shells) shrink the widget instead of growing the page. */
+  min-height: 0;
+  max-height: 100%;
   /* Default light theme */
   --tc-accent: #0098ea;
   --tc-accent-fg: #ffffff;
@@ -306,6 +309,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  max-height: 100%;
   min-height: min(460px, 100dvh);
   background: var(--tc-bg);
   border-radius: var(--tc-shell-radius);
@@ -317,7 +321,11 @@
 .tc-content {
   flex: 1;
   min-width: 0;
+  /* Required for overflow-y in a column flex shell (Telegram Mini App / mobile WebViews). */
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: var(--tc-content-padding);
   scrollbar-width: thin;
   scrollbar-color: var(--tc-border) transparent;
@@ -1161,6 +1169,7 @@
   display: flex;
   gap: max(4px, calc(var(--tc-form-gap) * 0.5));
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   padding-bottom: 4px;
   scrollbar-width: none;
 }

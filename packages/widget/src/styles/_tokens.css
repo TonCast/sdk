@@ -6,6 +6,9 @@
    mainly for the dialog sheet. */
 .tc-w {
   height: 100%;
+  /* Let flex hosts (TMA / full-viewport shells) shrink the widget instead of growing the page. */
+  min-height: 0;
+  max-height: 100%;
   /* Default light theme */
   --tc-accent: #0098ea;
   --tc-accent-fg: #ffffff;

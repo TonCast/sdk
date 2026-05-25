@@ -5,6 +5,11 @@ import type { ConstructorConfig } from "../types";
 import { buildWidgetConfig, PLACEHOLDER_DOMAIN } from "./buildWidgetConfig";
 import { escapeHtml } from "./manifest";
 import { HOST_PAGE_BACKDROP } from "./themeDefaults";
+import {
+  buildTelegramHostInitScript,
+  TELEGRAM_WEB_APP_SCRIPT_URL,
+  TG_SAFE_AREA_BODY_PADDING_CSS,
+} from "./telegramMiniAppHost";
 
 /** Serializes a value for embedding as JS inside HTML `<script>` (HTML/script breakout-safe). */
 export function stringifyForScript(value: unknown, space: number): string {
@@ -94,8 +99,8 @@ export function buildIndexHtml(config: ConstructorConfig): string {
         margin: 0;
         box-sizing: border-box;
         height: 100%;
-        /* Horizontal safe-area omitted so the widget can span edge-to-edge like a normal page. */
-        padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px) 0;
+        overflow: hidden;
+        ${TG_SAFE_AREA_BODY_PADDING_CSS}
         display: flex;
         flex-direction: column;
         background: ${bodyBackground};
@@ -113,8 +118,10 @@ export function buildIndexHtml(config: ConstructorConfig): string {
   <body>
     <div id="toncast-widget"></div>
 
+    <script src="${TELEGRAM_WEB_APP_SCRIPT_URL}"></script>
     <script src="${WIDGET_CDN_JS_URL}"></script>
     <script>
+      ${buildTelegramHostInitScript()}
       const widget = new window.ToncastWidget.ToncastWidget(${stringifyForScript(widgetConfig, 6).replace(/^/gm, "      ").trimStart()});
       widget.mount(document.getElementById('toncast-widget'));
     </script>
@@ -127,7 +134,8 @@ export function buildJsSnippet(config: ConstructorConfig): string {
   const domain = stripTrailingSlashes(config.domain || PLACEHOLDER_DOMAIN);
   const widgetConfig = buildWidgetConfig(config, { domain });
 
-  return `<div id="toncast-widget"></div>
+  return `<!-- Telegram Mini App: load ${TELEGRAM_WEB_APP_SCRIPT_URL} and run initToncastTelegramHost() from telegramMiniAppHost.ts before mount. -->
+<div id="toncast-widget"></div>
 
 <script src="${WIDGET_CDN_JS_URL}"></script>
 <script>

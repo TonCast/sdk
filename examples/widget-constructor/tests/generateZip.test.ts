@@ -274,9 +274,10 @@ describe("widget export snippets", () => {
       /html \{[\s\S]*height: 100%;[\s\S]*min-height: 100vh;[\s\S]*min-height: 100dvh;/,
     );
     expect(html).toMatch(/body \{[\s\S]*height: 100%;/);
-    expect(html).toMatch(
-      /padding: env\(safe-area-inset-top, 0px\) 0 env\(safe-area-inset-bottom, 0px\) 0;/,
-    );
+    expect(html).toMatch(/body \{[\s\S]*overflow: hidden;/);
+    expect(html).toMatch(/env\(safe-area-inset-top, 0px\)/);
+    expect(html).toMatch(/env\(safe-area-inset-left, 0px\)/);
+    expect(html).toMatch(/var\(--tg-safe-area-inset-top, 0px\)/);
     expect(html).toMatch(/body \{[\s\S]*display: flex;/);
     expect(html).toMatch(/body \{[\s\S]*flex-direction: column;/);
     expect(html).toMatch(
@@ -285,6 +286,19 @@ describe("widget export snippets", () => {
     expect(html).toContain("--tc-content-padding: 0");
     expect(html).not.toContain("padding: 16px;");
     expect(html).not.toContain("@media (max-width: 640px)");
+  });
+
+  it("buildIndexHtml initializes Telegram Mini App host (fullscreen, no vertical swipes, safe area)", () => {
+    const html = buildIndexHtml(config({}));
+
+    expect(html).toContain("https://telegram.org/js/telegram-web-app.js");
+    expect(html.indexOf("telegram-web-app.js")).toBeLessThan(html.indexOf("index.iife.js"));
+    expect(html).toContain("tg.ready()");
+    expect(html).toContain("tg.expand()");
+    expect(html).toContain("tg.disableVerticalSwipes()");
+    expect(html).toContain("tg.requestFullscreen()");
+    expect(html).toContain("contentSafeAreaChanged");
+    expect(html).toContain("--tg-safe-area-inset-top");
   });
 
   it("buildIndexHtml does not link style.css (theme via widget.cssVars only)", () => {
