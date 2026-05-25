@@ -20,9 +20,6 @@
     "lint:fix": "biome check --write .",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
-  "optionalDependencies": {
-    "@tailwindcss/oxide-linux-x64-gnu": "^4.2.4"
-  },
   "devDependencies": {
     "@biomejs/biome": "^2.4.13",
     "@types/node": "^25.6.0",
