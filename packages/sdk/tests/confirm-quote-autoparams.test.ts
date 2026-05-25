@@ -1,7 +1,10 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: stub objects mimicking tx-sdk shapes for tests
+import { Address } from "@ton/core";
 import { ToncastTxSdk } from "@toncast/tx-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ToncastClient } from "../src";
+
+const canon = (addr: string) => Address.parse(addr).toString();
 
 const SIGNER = "UQABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAZAm";
 const RECIPIENT = "UQACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICApfn";
@@ -82,9 +85,9 @@ describe("confirmQuote auto-tracks params", () => {
     // confirmQuote at the tx-sdk layer must have received the SAME beneficiary
     // we passed at quote time (not the SDK userAddress fallback).
     const confirmCallArg = confirmSpy.mock.calls[0]?.[1] as Record<string, unknown> | undefined;
-    expect(confirmCallArg?.beneficiary).toBe(RECIPIENT);
-    expect(confirmCallArg?.senderAddress).toBe(SIGNER);
-    expect(confirmCallArg?.pariAddress).toBe(PARI_ID);
+    expect(confirmCallArg?.beneficiary).toBe(canon(RECIPIENT));
+    expect(confirmCallArg?.senderAddress).toBe(canon(SIGNER));
+    expect(confirmCallArg?.pariAddress).toBe(canon(PARI_ID));
   });
 
   it("explicit params override the auto-tracked ones", async () => {
@@ -117,7 +120,7 @@ describe("confirmQuote auto-tracks params", () => {
     });
 
     const arg = confirmSpy.mock.calls[0]?.[1] as Record<string, unknown> | undefined;
-    expect(arg?.beneficiary).toBe(otherRecipient);
+    expect(arg?.beneficiary).toBe(canon(otherRecipient));
   });
 
   it("throws QUOTE_PARAMS_MISSING for foreign quotes without explicit params", async () => {

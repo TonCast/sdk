@@ -1,6 +1,9 @@
+import { Address } from "@ton/core";
 import { ToncastTxSdk } from "@toncast/tx-sdk";
 import { describe, expect, it, vi } from "vitest";
 import { ToncastClient, ToncastError } from "../src";
+
+const canon = (addr: string) => Address.parse(addr).toString();
 
 const SIGNER = "UQABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAZAm";
 const RECIPIENT = "UQACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICApfn";
@@ -58,8 +61,8 @@ describe("betting address resolution", () => {
     });
 
     const arg = spy.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
-    expect(arg?.beneficiary).toBe(SIGNER);
-    expect(arg?.senderAddress).toBe(SIGNER);
+    expect(arg?.beneficiary).toBe(canon(SIGNER));
+    expect(arg?.senderAddress).toBe(canon(SIGNER));
     expect(arg?.referral).toBeNull();
     expect(arg?.referralPct).toBe(0);
     spy.mockRestore();
@@ -81,9 +84,9 @@ describe("betting address resolution", () => {
     });
 
     const arg = spy.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
-    expect(arg?.beneficiary).toBe(RECIPIENT);
+    expect(arg?.beneficiary).toBe(canon(RECIPIENT));
     // CRITICAL: senderAddress must remain the signer, not silently fall through to beneficiary.
-    expect(arg?.senderAddress).toBe(SIGNER);
+    expect(arg?.senderAddress).toBe(canon(SIGNER));
     spy.mockRestore();
   });
 
@@ -105,8 +108,8 @@ describe("betting address resolution", () => {
     });
 
     const arg = spy.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
-    expect(arg?.senderAddress).toBe(otherSigner);
-    expect(arg?.beneficiary).toBe(RECIPIENT);
+    expect(arg?.senderAddress).toBe(canon(otherSigner));
+    expect(arg?.beneficiary).toBe(canon(RECIPIENT));
     spy.mockRestore();
   });
 
@@ -128,7 +131,7 @@ describe("betting address resolution", () => {
     });
 
     const arg = spy.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
-    expect(arg?.referral).toBe(REFERRAL);
+    expect(arg?.referral).toBe(canon(REFERRAL));
     expect(arg?.referralPct).toBe(5);
     spy.mockRestore();
   });
@@ -166,7 +169,7 @@ describe("betting address resolution", () => {
     });
 
     const arg = spy.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
-    expect(arg?.referral).toBe(REFERRAL);
+    expect(arg?.referral).toBe(canon(REFERRAL));
     expect(arg?.referralPct).toBe(5);
     spy.mockRestore();
   });
@@ -192,7 +195,7 @@ describe("betting address resolution", () => {
     });
 
     const arg = spy.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
-    expect(arg?.referral).toBe(otherReferral);
+    expect(arg?.referral).toBe(canon(otherReferral));
     expect(arg?.referralPct).toBe(3);
     spy.mockRestore();
   });
@@ -225,7 +228,7 @@ describe("betting address resolution", () => {
     const spy = captureQuoteFixedBet();
     const client = new ToncastClient({ userAddress: SIGNER });
     client.setReferral({ address: REFERRAL, pct: 7 });
-    expect(client.getReferral()).toEqual({ address: REFERRAL, pct: 7 });
+    expect(client.getReferral()).toEqual({ address: canon(REFERRAL), pct: 7 });
 
     await client.betting.quoteFixedBet({
       pariId: PARI_ID,
@@ -238,7 +241,7 @@ describe("betting address resolution", () => {
     });
 
     const arg = spy.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
-    expect(arg?.referral).toBe(REFERRAL);
+    expect(arg?.referral).toBe(canon(REFERRAL));
     expect(arg?.referralPct).toBe(7);
 
     client.setReferral(undefined);

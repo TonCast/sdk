@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { sameTonAddress } from "@toncast/sdk";
 import { useTonConnectClient } from "@toncast/sdk-react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { NavBar } from "./components/NavBar";
@@ -34,9 +35,10 @@ export function WidgetShell() {
   // Flush only user-scoped caches when the wallet changes. Public data
   // (paris list, categories, pari details) is wallet-agnostic and should
   // NOT be invalidated — doing so causes a visible blank-then-refetch cycle.
-  const prevAddrRef = useRef(address);
+  const prevAddrRef = useRef<string | undefined>(address);
   useEffect(() => {
-    if (prevAddrRef.current === address) return;
+    const prev = prevAddrRef.current;
+    if (prev === address || (prev && address && sameTonAddress(prev, address))) return;
     prevAddrRef.current = address;
     void Promise.all([
       queryClient.invalidateQueries({ queryKey: ["toncast", "betting"] }),

@@ -1,5 +1,8 @@
+import { Address } from "@ton/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ToncastClient, ToncastError } from "../src";
+
+const canon = (addr: string) => Address.parse(addr).toString();
 
 describe("ToncastClient", () => {
   afterEach(() => {
@@ -16,13 +19,23 @@ describe("ToncastClient", () => {
     expect(client.getUserAddress()).toBeUndefined();
   });
 
+  it("setUserAddress is a no-op when the same wallet reconnects in another friendly format", () => {
+    const uq = "UQABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAZAm";
+    const eq = canon(uq);
+    const client = new ToncastClient({ userAddress: uq });
+    const invalidateSpy = vi.spyOn(client.coins, "invalidate");
+    client.setUserAddress(eq);
+    expect(invalidateSpy).not.toHaveBeenCalled();
+    expect(client.getUserAddress()).toBe(eq);
+  });
+
   it("persists and swaps userAddress", () => {
     const first = "UQABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAZAm";
     const second = "UQACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICApfn";
     const client = new ToncastClient({ userAddress: first });
-    expect(client.getUserAddress()).toBe(first);
+    expect(client.getUserAddress()).toBe(canon(first));
     client.setUserAddress(second);
-    expect(client.getUserAddress()).toBe(second);
+    expect(client.getUserAddress()).toBe(canon(second));
     client.clearUserAddress();
     expect(client.getUserAddress()).toBeUndefined();
   });

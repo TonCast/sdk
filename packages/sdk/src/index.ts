@@ -88,7 +88,9 @@ export type {
   PariWinner,
 } from "./types";
 export {
+  normalizeTonAddress,
   parseTonAddress,
+  sameTonAddress,
   type TonAddressString,
 } from "./utils/address";
 export { orderBookLadder } from "./utils/odds";

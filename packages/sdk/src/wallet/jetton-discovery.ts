@@ -133,67 +133,82 @@ const ToncenterV3JettonsResponse = z
   })
   .passthrough();
 
+const JETTON_WALLETS_PAGE_SIZE = 256;
+
 async function discoverViaToncenterV3(
   ownerAddress: string,
   opts: { endpoint: string; apiKey?: string | undefined },
   signal?: AbortSignal | undefined,
 ): Promise<DiscoveredJetton[]> {
-  const url = new URL(`${opts.endpoint.replace(/\/+$/, "")}/jetton/wallets`);
-  url.searchParams.set("owner_address", ownerAddress);
-  url.searchParams.set("exclude_zero_balance", "true");
-  url.searchParams.set("limit", "256");
-
+  const base = `${opts.endpoint.replace(/\/+$/, "")}/jetton/wallets`;
   const headers: Record<string, string> = { accept: "application/json" };
   if (opts.apiKey) headers["X-Api-Key"] = opts.apiKey;
 
-  // Toncenter v3 (and the public v2) aggressively rate-limit anonymous
-  // traffic. Wrap in our shared retry policy so a single 429 doesn't kill
-  // the whole `coins.list` call.
-  const json = await withRetry(
-    async () => {
-      const init: RequestInit = { headers };
-      if (signal) init.signal = signal;
-      const res = await fetch(url, init);
-      if (!res.ok) {
-        const body = await res.text().catch(() => "");
-        throw new ToncastApiError(
-          `Toncenter v3 ${res.status} ${res.statusText}: ${body.slice(0, 200)}`,
-          res.status,
-          "/jetton/wallets",
-        );
-      }
-      return (await res.json()) as unknown;
-    },
-    { maxAttempts: 3, delayMs: 1000, rateLimitBackoffMultiplier: 3 },
-  );
-  const parsed = ToncenterV3JettonsResponse.safeParse(json);
-  if (!parsed.success) {
-    throw new ToncastValidationError(
-      "Toncenter v3 /jetton/wallets response shape unexpected",
-      parsed.error,
+  const out: DiscoveredJetton[] = [];
+  const mergedMeta: NonNullable<z.infer<typeof ToncenterV3JettonsResponse>["metadata"]> = {};
+
+  for (let offset = 0; ; offset += JETTON_WALLETS_PAGE_SIZE) {
+    if (signal?.aborted) {
+      throw new DOMException("Aborted", "AbortError");
+    }
+
+    const url = new URL(base);
+    url.searchParams.set("owner_address", ownerAddress);
+    url.searchParams.set("exclude_zero_balance", "true");
+    url.searchParams.set("limit", String(JETTON_WALLETS_PAGE_SIZE));
+    url.searchParams.set("offset", String(offset));
+
+    const json = await withRetry(
+      async () => {
+        const init: RequestInit = { headers };
+        if (signal) init.signal = signal;
+        const res = await fetch(url, init);
+        if (!res.ok) {
+          const body = await res.text().catch(() => "");
+          throw new ToncastApiError(
+            `Toncenter v3 ${res.status} ${res.statusText}: ${body.slice(0, 200)}`,
+            res.status,
+            "/jetton/wallets",
+          );
+        }
+        return (await res.json()) as unknown;
+      },
+      { maxAttempts: 3, delayMs: 1000, rateLimitBackoffMultiplier: 3, signal },
     );
+    const parsed = ToncenterV3JettonsResponse.safeParse(json);
+    if (!parsed.success) {
+      throw new ToncastValidationError(
+        "Toncenter v3 /jetton/wallets response shape unexpected",
+        parsed.error,
+      );
+    }
+
+    if (parsed.data.metadata) {
+      Object.assign(mergedMeta, parsed.data.metadata);
+    }
+
+    const page = parsed.data.jetton_wallets;
+    for (const w of page) {
+      let amount: bigint;
+      try {
+        amount = BigInt(w.balance);
+      } catch {
+        continue;
+      }
+      if (amount <= 0n) continue;
+      const tokenInfo = mergedMeta[w.jetton]?.token_info?.[0];
+      const jetton: DiscoveredJetton = {
+        address: w.jetton,
+        amount,
+        decimals: extractDecimals(tokenInfo?.extra) ?? TEP74_DEFAULT_DECIMALS,
+      };
+      if (tokenInfo?.symbol !== undefined) jetton.symbol = tokenInfo.symbol;
+      out.push(jetton);
+    }
+
+    if (page.length < JETTON_WALLETS_PAGE_SIZE) break;
   }
 
-  const meta = parsed.data.metadata ?? {};
-  const out: DiscoveredJetton[] = [];
-  for (const w of parsed.data.jetton_wallets) {
-    let amount: bigint;
-    try {
-      amount = BigInt(w.balance);
-    } catch {
-      continue;
-    }
-    if (amount <= 0n) continue;
-    const tokenInfo = meta[w.jetton]?.token_info?.[0];
-    const jetton: DiscoveredJetton = {
-      address: w.jetton,
-      amount,
-      // TEP-74 spec default: 9 if master didn't publish `decimals`.
-      decimals: extractDecimals(tokenInfo?.extra) ?? TEP74_DEFAULT_DECIMALS,
-    };
-    if (tokenInfo?.symbol !== undefined) jetton.symbol = tokenInfo.symbol;
-    out.push(jetton);
-  }
   return out;
 }
 

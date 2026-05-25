@@ -345,7 +345,7 @@ export function parisFeedQuery(feed: ParisFeed | undefined): {
 function streamKey(params: object): string {
   const entries = Object.entries(params)
     .filter(([, v]) => v !== undefined)
-    .sort(([a], [b]) => a.localeCompare(b));
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   return JSON.stringify(entries);
 }
 

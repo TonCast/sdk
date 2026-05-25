@@ -2,6 +2,7 @@ import { ToncastError } from "../errors";
 import { Endpoints } from "../http/endpoints";
 import type { HttpClient } from "../http/HttpClient";
 import { type Bet, BetSchema } from "../types/bet";
+import { parseTonAddress } from "../utils/address";
 import { type Cursor, envelopeSchema, iteratePages, type Page } from "../utils/pagination";
 
 const BetsPageSchema = envelopeSchema(BetSchema);
@@ -57,10 +58,14 @@ export class BetsResource {
    * Backed by `GET /v1/bets/{pariAddress}/user/{userAddress}`.
    */
   async listForPariByUser(params: ListForPariByUserParams): Promise<Page<Bet>> {
-    const addr = params.userAddress ?? this.deps.getUserAddress();
-    if (!addr) throw userAddressRequired("listForPariByUser");
+    const addr = resolveBetUserAddress(
+      params.userAddress,
+      this.deps.getUserAddress,
+      "listForPariByUser",
+    );
+    const pariId = parseTonAddress(params.pariId, "pariId");
     return this.deps.http.request({
-      path: Endpoints.bets.forPariByUser(params.pariId, addr),
+      path: Endpoints.bets.forPariByUser(pariId, addr),
       query: {
         pageSize: params.pageSize,
         cursor: params.cursor ?? undefined,
@@ -80,8 +85,11 @@ export class BetsResource {
    * Backed by `GET /v1/bets/user/{userAddress}`.
    */
   async listForUser(params: ListForUserParams = {}): Promise<Page<Bet>> {
-    const addr = params.userAddress ?? this.deps.getUserAddress();
-    if (!addr) throw userAddressRequired("listForUser");
+    const addr = resolveBetUserAddress(
+      params.userAddress,
+      this.deps.getUserAddress,
+      "listForUser",
+    );
     return this.deps.http.request({
       path: Endpoints.bets.forUser(addr),
       query: {
@@ -104,4 +112,16 @@ function userAddressRequired(method: string): ToncastError {
     `${method} requires userAddress — pass it in options, set in ToncastClient constructor, or use client.setUserAddress(addr).`,
     "USER_ADDRESS_REQUIRED",
   );
+}
+
+/** Explicit `userAddress` is normalised; SDK default is already canonical from `parseTonAddress`. */
+function resolveBetUserAddress(
+  explicit: string | undefined,
+  getUserAddress: () => string | undefined,
+  method: string,
+): string {
+  if (explicit !== undefined) return parseTonAddress(explicit, "userAddress");
+  const fromClient = getUserAddress();
+  if (!fromClient) throw userAddressRequired(method);
+  return fromClient;
 }

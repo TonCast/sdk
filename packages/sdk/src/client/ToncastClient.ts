@@ -187,7 +187,7 @@ export class ToncastClient {
    */
   setUserAddress(address: string): void {
     const parsed = parseTonAddress(address, "userAddress");
-    if (this.userAddress === address) return;
+    if (this.userAddress === parsed) return;
     // Drop ALL cached balances — we don't want to keep a stale entry for
     // the previous user lying around in memory either.
     this.coins.invalidate();
@@ -328,6 +328,8 @@ function validateReferral(r: ReferralConfig | undefined): ReferralConfig | undef
       "INVALID_REFERRAL",
     );
   }
-  if (r.address) parseTonAddress(r.address, "referral.address");
+  if (r.address) {
+    return { pct: r.pct, address: parseTonAddress(r.address, "referral.address") };
+  }
   return r;
 }

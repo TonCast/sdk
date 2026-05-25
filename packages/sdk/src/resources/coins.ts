@@ -72,6 +72,8 @@ const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000;
 export class CoinsResource {
   private readonly cache = new Map<string, CacheEntry>();
   private readonly inflight = new Map<string, Promise<AvailableCoin[]>>();
+  /** Bumped on invalidate — in-flight fetches skip cache write when stale. */
+  private readonly fetchGeneration = new Map<string, number>();
   private readonly cacheTtlMs: number;
 
   constructor(private readonly deps: CoinsResourceDeps) {
@@ -95,18 +97,20 @@ export class CoinsResource {
     if (!params.noCache) {
       const cached = this.cache.get(key);
       if (cached && this.isFresh(cached)) return cached.coins;
-      const pending = this.inflight.get(key);
-      if (pending) return pending;
     }
 
+    const pending = this.inflight.get(key);
+    if (pending) return pending;
+
+    const generation = this.fetchGeneration.get(key) ?? 0;
     const tonClient = this.deps.tonClient;
-    const owner = Address.parse(rawAddr);
+    const owner = Address.parse(key);
     const discoveryOpts = params.jettonDiscovery ?? this.deps.jettonDiscovery;
 
     const promise = (async () => {
       const [tonBalance, jettons] = await Promise.all([
         tonClient.getBalance(owner),
-        discoverJettons(rawAddr, tonClient, this.deps.logger, params.signal, discoveryOpts),
+        discoverJettons(key, tonClient, this.deps.logger, params.signal, discoveryOpts),
       ]);
       const coins: AvailableCoin[] = [{ address: TON_ADDRESS, amount: tonBalance }];
       for (const j of jettons) {
@@ -118,10 +122,12 @@ export class CoinsResource {
         if (j.decimals !== undefined) coin.decimals = j.decimals;
         coins.push(coin);
       }
-      this.cache.set(key, { coins, fetchedAt: Date.now() });
+      if ((this.fetchGeneration.get(key) ?? 0) === generation) {
+        this.cache.set(key, { coins, fetchedAt: Date.now() });
+      }
       return coins;
     })().finally(() => {
-      this.inflight.delete(key);
+      if (this.inflight.get(key) === promise) this.inflight.delete(key);
     });
 
     this.inflight.set(key, promise);
@@ -139,9 +145,11 @@ export class CoinsResource {
     if (userAddress) {
       const key = normaliseAddress(userAddress);
       this.cache.delete(key);
+      this.fetchGeneration.set(key, (this.fetchGeneration.get(key) ?? 0) + 1);
       this.inflight.delete(key);
     } else {
       this.cache.clear();
+      this.fetchGeneration.clear();
       this.inflight.clear();
     }
   }

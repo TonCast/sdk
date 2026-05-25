@@ -322,7 +322,7 @@ export class BettingResource {
       this.cachedApi = new CachedStonApiClient(
         undefined,
         undefined,
-        getNodeEnv() !== "production"
+        typeof process !== "undefined" && process.env.NODE_ENV !== "production"
           ? (event) => {
               // biome-ignore lint/suspicious/noExplicitAny: opt-in dev hook
               const g = globalThis as any;
@@ -1014,14 +1014,6 @@ export { TON_ADDRESS };
  */
 function isTonAddress(addr: string): boolean {
   return addr.toLowerCase() === TON_ADDRESS.toLowerCase();
-}
-
-function getNodeEnv(): string | undefined {
-  const proc =
-    typeof globalThis === "undefined"
-      ? undefined
-      : (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process;
-  return proc?.env?.NODE_ENV;
 }
 
 /**

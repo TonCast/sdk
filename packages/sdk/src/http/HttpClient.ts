@@ -48,25 +48,18 @@ export class HttpClient {
     const url = this.buildUrl(req.path, req.query);
     const hasBody = req.body !== undefined;
     const timeout = createTimeoutSignal(req.signal, this.opts.requestTimeoutMs);
+    const headers = this.buildHeaders(hasBody);
+    const method = (req.method ?? "GET") as "GET" | "POST" | "PUT" | "DELETE";
     try {
-      const init: RequestInit = {
-        method: req.method ?? "GET",
-        headers: this.buildHeaders(hasBody),
-      };
-      if (timeout.signal) init.signal = timeout.signal;
-      if (hasBody) {
-        init.body = JSON.stringify(req.body);
-      }
-
       return await withRetry(
         async () => {
-          const transportReq = {
-            method: (req.method ?? "GET") as "GET" | "POST" | "PUT" | "DELETE",
+          const transportReq: Parameters<HttpTransport["request"]>[0] = {
+            method,
             url,
-            headers: init.headers as Record<string, string>,
+            headers,
           };
-          if (hasBody) Object.assign(transportReq, { body: req.body });
-          if (timeout.signal) Object.assign(transportReq, { signal: timeout.signal });
+          if (hasBody) transportReq.body = req.body;
+          if (timeout.signal) transportReq.signal = timeout.signal;
           const res = await this.transport.request(transportReq);
           if (res.status < 200 || res.status >= 300) {
             const detail = extractErrorDetail(res.body);
