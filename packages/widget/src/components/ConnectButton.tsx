@@ -1,5 +1,5 @@
 import { useT } from "../i18n/useT";
-import { useTcState, useStandaloneManifestOk } from "../tc-bridge";
+import { useStandaloneManifestOk, useTcState } from "../tc-bridge";
 import { TonDiamond } from "./ui/TonDiamond";
 
 export function ConnectButton() {

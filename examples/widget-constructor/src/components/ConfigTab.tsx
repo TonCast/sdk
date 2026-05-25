@@ -72,12 +72,12 @@ export function ConfigTab({ config, onChange }: Props) {
   const allSelected = config.languages.length === 0;
   const domainValid = parseHttpUrl(config.domain) !== null;
 
-  const apiBaseUrlInvalid = config.apiBaseUrl.trim() !== "" && !normalizeApiBaseUrl(config.apiBaseUrl);
+  const apiBaseUrlInvalid =
+    config.apiBaseUrl.trim() !== "" && !normalizeApiBaseUrl(config.apiBaseUrl);
   const apiWsUrlInvalid = config.apiWsUrl.trim() !== "" && !normalizeApiWsUrl(config.apiWsUrl);
   const iconUrlInvalid = config.iconUrl.trim() !== "" && !parseHttpUrl(config.iconUrl);
   const referralAddressValid =
-    config.referralAddress.trim() !== "" &&
-    normalizeReferralAddress(config.referralAddress) !== "";
+    config.referralAddress.trim() !== "" && normalizeReferralAddress(config.referralAddress) !== "";
 
   return (
     <div className="space-y-5">

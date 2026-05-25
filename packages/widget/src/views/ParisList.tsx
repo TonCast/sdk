@@ -67,6 +67,7 @@ export function ParisListView() {
       ) : showInitialSkeleton ? (
         <div className="tc-pari-grid">
           {Array.from({ length: 8 }, (_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list, order never changes
             <PariCardSkeleton key={`pari-skel-${i}`} />
           ))}
         </div>

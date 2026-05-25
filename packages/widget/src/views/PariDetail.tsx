@@ -9,7 +9,7 @@ import { useMemo, useState } from "react";
 import { BetCard } from "../components/BetCard";
 import { CoefficientChart } from "../components/CoefficientChart";
 import { OrderBook } from "../components/OrderBook";
-import { PariDetailSkeleton, PariChartSkeleton } from "../components/PariDetailSkeleton";
+import { PariChartSkeleton, PariDetailSkeleton } from "../components/PariDetailSkeleton";
 import { DESCRIPTION_PREVIEW_CHARS } from "../constants";
 import { useEmitBet, useNav, type WidgetView } from "../context";
 import { useI18n } from "../i18n/I18nProvider";
@@ -213,11 +213,7 @@ export function PariDetailView({ view }: { view: Extract<WidgetView, { name: "de
                 <div className="tc-notice tc-notice-muted">{t("pari.bettingClosed")}</div>
               ) : (
                 <div className="tc-card">
-                  <BetCard
-                    pariId={view.pariId}
-                    initialSide={view.initialSide}
-                    onBetSent={onBet}
-                  />
+                  <BetCard pariId={view.pariId} initialSide={view.initialSide} onBetSent={onBet} />
                 </div>
               )}
             </div>

@@ -120,7 +120,9 @@ describe("format.formatDecimal", () => {
       /^1[.\u202f]234,5$/,
     );
     // setting both min and max forces trailing zeros
-    expect(formatDecimal(1234.5, "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })).toBe("1,234.50");
+    expect(
+      formatDecimal(1234.5, "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    ).toBe("1,234.50");
     expect(formatDecimal(1.234, "en-US", { maximumFractionDigits: 0 })).toBe("1");
   });
 

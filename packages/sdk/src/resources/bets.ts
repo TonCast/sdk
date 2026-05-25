@@ -85,11 +85,7 @@ export class BetsResource {
    * Backed by `GET /v1/bets/user/{userAddress}`.
    */
   async listForUser(params: ListForUserParams = {}): Promise<Page<Bet>> {
-    const addr = resolveBetUserAddress(
-      params.userAddress,
-      this.deps.getUserAddress,
-      "listForUser",
-    );
+    const addr = resolveBetUserAddress(params.userAddress, this.deps.getUserAddress, "listForUser");
     return this.deps.http.request({
       path: Endpoints.bets.forUser(addr),
       query: {

@@ -2,7 +2,11 @@ import type { ToncastWidgetConfig, ToncastWidgetLayout } from "@toncast/widget";
 import { stripTrailingSlashes } from "@toncast/widget/url";
 import type { ConstructorConfig } from "../types";
 import { buildCssVarsConfig } from "./cssVars";
-import { normalizeApiBaseUrl, normalizeApiWsUrl, normalizeReferralAddress } from "./normalizeConfig";
+import {
+  normalizeApiBaseUrl,
+  normalizeApiWsUrl,
+  normalizeReferralAddress,
+} from "./normalizeConfig";
 import { normalizeGridColumnForDevice } from "./themeRules";
 
 /** Shown in export UI when no app domain is set; used in generated HTML/JS placeholders. */

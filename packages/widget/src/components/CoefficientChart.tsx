@@ -68,7 +68,9 @@ export function CoefficientChart({ history }: { history: readonly CoefficientHis
             {history.length > 1 && (
               <span
                 className={
-                  trendUp ? "tc-chart-trend-chip tc-chart-trend-chip--up" : "tc-chart-trend-chip tc-chart-trend-chip--down"
+                  trendUp
+                    ? "tc-chart-trend-chip tc-chart-trend-chip--up"
+                    : "tc-chart-trend-chip tc-chart-trend-chip--down"
                 }
               >
                 {trendUp ? t("chart.trendUp") : t("chart.trendDown")}{" "}

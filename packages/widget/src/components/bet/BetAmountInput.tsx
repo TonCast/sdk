@@ -96,7 +96,9 @@ export function BetAmountInput({ bet, sourceSym, sourceDecimals }: Props) {
             }
             const count = bet.ticketsForSourceAmount(typed);
             const capped =
-              bet.maxTickets > 0 ? Math.min(Math.max(1, count), bet.maxTickets) : Math.max(1, count);
+              bet.maxTickets > 0
+                ? Math.min(Math.max(1, count), bet.maxTickets)
+                : Math.max(1, count);
             bet.setTickets(capped);
           }}
           onKeyDown={(e) => {

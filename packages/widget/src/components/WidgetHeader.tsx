@@ -1,5 +1,6 @@
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@toncast/sdk";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWidgetConfig } from "../context";
 import { useI18n } from "../i18n/I18nProvider";
 import { useT } from "../i18n/useT";

@@ -28,9 +28,7 @@ describe("pari card responsive CSS", () => {
 
     // Pari-card meta/button layout must not be gated on the 759px shell breakpoint.
     // (The detail image-wrapper *is* allowed to use max-width:759px — it's a detail-page concern.)
-    expect(css).not.toMatch(
-      /@container\s*\(max-width:\s*759px\)[^}]*\{[^}]*\.tc-pari-meta/s,
-    );
+    expect(css).not.toMatch(/@container\s*\(max-width:\s*759px\)[^}]*\{[^}]*\.tc-pari-meta/s);
     expect(css).toContain("flex-wrap: wrap;");
     expect(css).toContain(".tc-pari-meta-item {");
     expect(css).toContain("background: var(--tc-bg-muted);");

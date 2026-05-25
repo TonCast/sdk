@@ -48,6 +48,7 @@ export function WidgetShell() {
 
   // Reset scroll position immediately before the browser paints so the new
   // view always starts at the top (no flash of the previous scroll position).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: view.name is an intentional trigger, not a consumed value
   useLayoutEffect(() => {
     contentRef.current?.scrollTo({ top: 0 });
   }, [view.name]);

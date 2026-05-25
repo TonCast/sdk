@@ -108,7 +108,7 @@ describe("normalizeConfig", () => {
 
   it("clamps radius to [0, 32] and falls back when NaN", () => {
     expect(normalizeConfig({ theme: { ...DEFAULT_CONFIG.theme, radius: 999 } }).theme.radius).toBe(
-     32,
+      32,
     );
     expect(normalizeConfig({ theme: { ...DEFAULT_CONFIG.theme, radius: -5 } }).theme.radius).toBe(
       0,

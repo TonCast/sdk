@@ -380,16 +380,7 @@ export function useBet(params: UseBetParams): UseBetResult {
       ticketsCount: effectiveTickets,
       oddsState: summary.data.oddsState,
     };
-  }, [
-    summary.data,
-    selectedCoin,
-    effectiveTickets,
-    pariId,
-    isYes,
-    mode,
-    yesOdds,
-    isBookEmpty,
-  ]);
+  }, [summary.data, selectedCoin, effectiveTickets, pariId, isYes, mode, yesOdds, isBookEmpty]);
 
   const underlyingQuote = useBetQuote(quoteParams, { staleTime: quoteStaleTime });
 

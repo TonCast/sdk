@@ -20,9 +20,7 @@ export function BetQuoteBox({ bet, sourceSym }: { bet: Bet; sourceSym: string })
           <summary className="tc-quote-error">{t("bet.quoteError")}</summary>
           <span className="tc-text-xs tc-text-muted">
             {t(
-              resolveBetQuoteErrorTranslationKey(
-                classifyBetFlowError(bet.quote.underlying.error),
-              ),
+              resolveBetQuoteErrorTranslationKey(classifyBetFlowError(bet.quote.underlying.error)),
             )}
           </span>
           <span className="tc-text-xs tc-text-muted">
