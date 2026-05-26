@@ -548,6 +548,13 @@
   display: flex;
   border-top: 1px solid var(--tc-border);
   background: var(--tc-bg-chrome);
+  /*
+   * Bottom safe area lives here (not on <body>) — native-app pattern where the
+   * TabBar/NavBar owns the home-indicator inset. Uses both the CSS env() variable
+   * (standard for standalone PWA / full-screen browser) and the Telegram JS-set
+   * var (updated by initToncastTelegramHost on safeAreaChanged / viewportChanged).
+   */
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--tg-safe-area-inset-bottom, 0px));
 }
 
 .tc-nav-btn {
