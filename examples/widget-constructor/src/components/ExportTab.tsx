@@ -72,6 +72,8 @@ export function ExportTab({ config }: { config: ConstructorConfig }) {
       ? "App domain must be a valid https:// URL (e.g. https://my-app.com)."
       : null;
 
+  const iconUrlMissing = !config.iconUrl || !parseHttpUrl(config.iconUrl);
+
   const handleDownload = async () => {
     if (domainError) return;
     setDownloading(true);
@@ -116,6 +118,14 @@ export function ExportTab({ config }: { config: ConstructorConfig }) {
           <code className="text-slate-400">tonconnect-manifest.json</code> (theme in embedded{" "}
           <code className="text-slate-400">widget.cssVars</code>)
         </p>
+        {iconUrlMissing && !domainError && (
+          <p className="mb-3 rounded-md bg-amber-900/20 border border-amber-700/40 px-3 py-2 text-[11px] text-amber-400/90 leading-snug text-left">
+            <strong>Wallet icon:</strong> No App icon URL set — manifest will reference{" "}
+            <code className="text-amber-300/80">{config.domain}/icon-192.png</code>. Upload a square
+            PNG (&ge;180&times;180 px) to that path after deploy, or set the{" "}
+            <strong>App icon URL</strong> in the Config tab.
+          </p>
+        )}
         <button
           type="button"
           disabled={!!domainError || downloading}
