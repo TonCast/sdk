@@ -56,7 +56,8 @@ export function CoefficientChart({ history }: { history: readonly CoefficientHis
 
   return (
     <div className="tc-chart">
-      <div className="tc-chart-kpi">
+      <div className="tc-chart-layout">
+        <div className="tc-chart-kpi">
         <div className="tc-chart-kpi-title">{t("chart.title")}</div>
         {(lastPct !== null || history.length > 1) && (
           <div className="tc-chart-kpi-row">
@@ -142,6 +143,7 @@ export function CoefficientChart({ history }: { history: readonly CoefficientHis
             <span className="tc-text-sm tc-text-muted">{t("chart.noTrades")}</span>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

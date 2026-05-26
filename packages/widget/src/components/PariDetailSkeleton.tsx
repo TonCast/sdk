@@ -39,15 +39,17 @@ export function PariDetailSkeleton() {
 export function PariChartSkeleton() {
   return (
     <div className="tc-chart" aria-hidden="true">
-      <div className="tc-chart-kpi">
-        <Skeleton className="tc-chart-kpi-title-skeleton" />
-        <div className="tc-chart-kpi-row">
-          <Skeleton style={{ width: 56, height: 28 }} />
-          <Skeleton style={{ width: 52, height: 22, borderRadius: 999 }} />
+      <div className="tc-chart-layout">
+        <div className="tc-chart-kpi">
+          <Skeleton className="tc-chart-kpi-title-skeleton" />
+          <div className="tc-chart-kpi-row">
+            <Skeleton style={{ width: 56, height: 28 }} />
+            <Skeleton style={{ width: 52, height: 22, borderRadius: 999 }} />
+          </div>
         </div>
-      </div>
-      <div className="tc-chart-canvas">
-        <Skeleton className="tc-chart-canvas-skeleton" />
+        <div className="tc-chart-canvas">
+          <Skeleton className="tc-chart-canvas-skeleton" />
+        </div>
       </div>
     </div>
   );

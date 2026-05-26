@@ -34,6 +34,13 @@
   padding: var(--tc-content-padding);
   scrollbar-width: thin;
   scrollbar-color: var(--tc-border) transparent;
+  /*
+   * Establish an inline-size containment context so all @container queries
+   * inside the widget respond to the widget's own width, not the viewport.
+   * Without this, @container(min-width:760px) on .tc-detail-layout fires
+   * based on the page viewport — breaking embedded narrow-widget scenarios.
+   */
+  container-type: inline-size;
 }
 
 .tc-content::-webkit-scrollbar {

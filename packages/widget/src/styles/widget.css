@@ -340,6 +340,13 @@
   padding: var(--tc-content-padding);
   scrollbar-width: thin;
   scrollbar-color: var(--tc-border) transparent;
+  /*
+   * Establish an inline-size containment context so all @container queries
+   * inside the widget respond to the widget's own width, not the viewport.
+   * Without this, @container(min-width:760px) on .tc-detail-layout fires
+   * based on the page viewport — breaking embedded narrow-widget scenarios.
+   */
+  container-type: inline-size;
 }
 
 .tc-content::-webkit-scrollbar {
@@ -1539,8 +1546,18 @@
 
 /* ----- _chart.css ----- */
 /* ===== CHART (KPI + sparkline) ===== */
+
+/*
+ * .tc-chart is a pure container-query anchor — it does NOT lay itself out.
+ * Layout (flex↔grid switch) belongs to .tc-chart-layout so that the
+ * @container query can target it without the forbidden self-query pattern
+ * (an element cannot query its own inline-size).
+ */
 .tc-chart {
   container-type: inline-size;
+}
+
+.tc-chart-layout {
   display: flex;
   flex-direction: column;
   gap: var(--tc-stepper-gap);
@@ -1640,7 +1657,7 @@
 }
 
 @container (min-width: 420px) {
-  .tc-chart {
+  .tc-chart-layout {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     align-items: center;

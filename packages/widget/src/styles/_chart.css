@@ -1,6 +1,16 @@
 /* ===== CHART (KPI + sparkline) ===== */
+
+/*
+ * .tc-chart is a pure container-query anchor — it does NOT lay itself out.
+ * Layout (flex↔grid switch) belongs to .tc-chart-layout so that the
+ * @container query can target it without the forbidden self-query pattern
+ * (an element cannot query its own inline-size).
+ */
 .tc-chart {
   container-type: inline-size;
+}
+
+.tc-chart-layout {
   display: flex;
   flex-direction: column;
   gap: var(--tc-stepper-gap);
@@ -100,7 +110,7 @@
 }
 
 @container (min-width: 420px) {
-  .tc-chart {
+  .tc-chart-layout {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
