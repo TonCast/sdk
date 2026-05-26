@@ -5,8 +5,8 @@ import { toncastQueryKeys } from "../queryKeys";
 
 /**
  * One page of paris with TanStack-Query semantics (cache, dedup, refetch).
- * For an infinite-scroll feed prefer {@link useStreamList} — it appends
- * pages and pushes WS broadcasts.
+ * For an infinite-scroll feed use {@link useStreamList} with `fetchNextPage` /
+ * `hasNextPage` (live WS + cursor pagination on the same stream).
  */
 export function useParis(
   params: ListParisParams = {},

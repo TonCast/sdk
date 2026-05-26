@@ -15,26 +15,9 @@ import { useEmitBet, useNav, type WidgetView } from "../context";
 import { useI18n } from "../i18n/I18nProvider";
 import { useT } from "../i18n/useT";
 import { useTcState } from "../tc-bridge";
+import { isBettingClosed } from "../utils/pariBetting";
 import { useReliablePariCoverUrl } from "../utils/useReliablePariCoverUrl";
 import { PariDetailMyBets } from "./PariDetailMyBets";
-
-function isSettledOutcome(pari: Pari): boolean {
-  const r = pari.result.trim().toLowerCase();
-  return r === "yes" || r === "no" || r === "draw";
-}
-
-/**
- * True when placing a new bet is no longer possible:
- * - the outcome is already settled (yes / no / draw), OR
- * - the pari is inactive (awaiting oracle, cancelled, etc.), OR
- * - the betting window has closed (`endTime` is in the past).
- */
-function isBettingClosed(pari: Pari): boolean {
-  if (isSettledOutcome(pari)) return true;
-  if (pari.status === "inactive") return true;
-  if (pari.endTime > 0 && pari.endTime <= Math.floor(Date.now() / 1000)) return true;
-  return false;
-}
 
 /**
  * Stable empty array for `<CoefficientChart history={…} />`.

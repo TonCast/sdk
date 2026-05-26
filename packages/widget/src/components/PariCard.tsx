@@ -7,6 +7,7 @@ import { useNav } from "../context";
 import { useI18n } from "../i18n/I18nProvider";
 import { useT } from "../i18n/useT";
 import { formatTimeLeft } from "../utils/format";
+import { isBettingClosed } from "../utils/pariBetting";
 import { useReliablePariCoverUrl } from "../utils/useReliablePariCoverUrl";
 import { Button } from "./ui/Button";
 
@@ -76,7 +77,7 @@ export function PariCard({ pari }: { pari: Pari }) {
   const yesDecimal = oddsOk ? fmt.decimal(yesOddsToDecimalOdds(yesOdds, true)) : null;
   const noDecimal = oddsOk ? fmt.decimal(yesOddsToDecimalOdds(yesOdds, false)) : null;
   const timeLeft = formatTimeLeft(pari.endTime, t as Parameters<typeof formatTimeLeft>[1]);
-  const ended = pari.endTime - Date.now() / 1000 <= 0;
+  const bettingClosed = isBettingClosed(pari);
 
   const goDetail = () => navigate({ name: "detail", pariId: pari.id });
 
@@ -107,26 +108,26 @@ export function PariCard({ pari }: { pari: Pari }) {
           </div>
         </div>
       </button>
-      <div className="tc-pari-btns">
-        <Button
-          variant="yes"
-          size="sm"
-          disabled={ended}
-          onClick={() => navigate({ name: "detail", pariId: pari.id, initialSide: "yes" })}
-        >
-          {t("side.yes")}
-          {yesDecimal ? ` ×${yesDecimal}` : ""}
-        </Button>
-        <Button
-          variant="no"
-          size="sm"
-          disabled={ended}
-          onClick={() => navigate({ name: "detail", pariId: pari.id, initialSide: "no" })}
-        >
-          {t("side.no")}
-          {noDecimal ? ` ×${noDecimal}` : ""}
-        </Button>
-      </div>
+      {!bettingClosed ? (
+        <div className="tc-pari-btns">
+          <Button
+            variant="yes"
+            size="sm"
+            onClick={() => navigate({ name: "detail", pariId: pari.id, initialSide: "yes" })}
+          >
+            {t("side.yes")}
+            {yesDecimal ? ` ×${yesDecimal}` : ""}
+          </Button>
+          <Button
+            variant="no"
+            size="sm"
+            onClick={() => navigate({ name: "detail", pariId: pari.id, initialSide: "no" })}
+          >
+            {t("side.no")}
+            {noDecimal ? ` ×${noDecimal}` : ""}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

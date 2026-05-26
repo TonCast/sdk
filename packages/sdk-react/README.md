@@ -85,7 +85,7 @@ void queryClient.prefetchQuery({
 Pass any TanStack `UseQueryOptions` (`enabled`, `staleTime`, `select`, `refetchInterval`, …) as a second arg to any read hook.
 
 ### Live (`useSyncExternalStore`)
-- **`useStreamList(params)`** — wraps `paris.streamList`. `data` is the latest `Pari[]` snapshot; updates on every WS broadcast (`pari_created`, `coefficient_update`, `volume_update`, `pari_paused`, `pari_result_set`). Returns live `{ data, status, error, isLoading, isError, isSuccess, refetch }`.
+- **`useStreamList(params, options?)`** — wraps `paris.streamList`. `data` is the latest `Pari[]` snapshot; updates on every WS broadcast. Also exposes `hasNextPage`, `fetchNextPage`, `isFetchingNextPage` for infinite scroll. Options: `keepPreviousData` (default `true`; set `false` to reset the list when category/filter changes).
 - **`useSubscribe(pariId)`** — wraps `paris.subscribe`. `data` is the latest `PariStreamSnapshot` (`{ pari, oddsState, coefficientHistory }`). Returns the same live state shape as `useStreamList`.
 - **`useBetSummary(pariId)`** — wraps `betting.subscribeSummary`. Emits two phases: TON-only (~200 ms) then full jetton pricing (STON.fi, warm: instant / cold: 3–8 s). Uses `useObservableQuery` internally, not a simple `useQuery`.
 

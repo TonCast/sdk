@@ -1,5 +1,5 @@
 import type { Observer, Subscribable, Subscription } from "@toncast/sdk/core";
-import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { serializeKey } from "../utils/serializeKey";
 
 export type LiveQueryStatus = "pending" | "success" | "error";
@@ -9,6 +9,13 @@ export interface LiveStream<T> extends Subscribable<T> {
   getError?(): Error | null;
   onStatus?(listener: (status: string) => void): () => void;
   refresh?(): Promise<void> | void;
+}
+
+/** `paris.streamList()` streams — cursor pagination via `loadMore()`. */
+export interface PaginatedLiveStream<T> extends LiveStream<T> {
+  readonly hasMore: boolean;
+  loadMore(): Promise<void>;
+  getLoadMoreError?(): Error | null;
 }
 
 export interface UseLiveStreamQueryOptions<T> {
@@ -28,7 +35,11 @@ export interface UseLiveStreamQueryResult<T> {
   isFetching: boolean;
   isError: boolean;
   isSuccess: boolean;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  fetchNextPageError: unknown;
   refetch: () => Promise<void>;
+  fetchNextPage: () => Promise<void>;
 }
 
 interface LiveState<T> {
@@ -36,6 +47,9 @@ interface LiveState<T> {
   error: unknown;
   status: LiveQueryStatus;
   streamStatus: string | undefined;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  fetchNextPageError: unknown;
 }
 
 class LiveStore<T> {
@@ -58,6 +72,27 @@ class LiveStore<T> {
   }
 }
 
+function isPaginatedStream<T>(stream: LiveStream<T>): stream is PaginatedLiveStream<T> {
+  return (
+    typeof (stream as PaginatedLiveStream<T>).loadMore === "function" &&
+    "hasMore" in stream
+  );
+}
+
+function readHasNextPage<T>(stream: LiveStream<T>): boolean {
+  return isPaginatedStream(stream) ? stream.hasMore : false;
+}
+
+function readLoadMoreError<T>(stream: LiveStream<T>): Error | null {
+  return isPaginatedStream(stream) ? (stream.getLoadMoreError?.() ?? null) : null;
+}
+
+const emptyPagination = {
+  hasNextPage: false,
+  isFetchingNextPage: false,
+  fetchNextPageError: undefined as unknown,
+};
+
 export function useLiveStreamQuery<T>({
   queryKey,
   requestFn,
@@ -78,6 +113,7 @@ export function useLiveStreamQuery<T>({
         error: undefined,
         status: keepPreviousData && previous?.data !== undefined ? "success" : "pending",
         streamStatus: undefined,
+        ...emptyPagination,
       }),
     };
   }
@@ -88,7 +124,12 @@ export function useLiveStreamQuery<T>({
   useEffect(() => {
     if (!enabled) {
       currentStreamRef.current = null;
-      store.set({ error: undefined, status: "pending", streamStatus: undefined });
+      store.set({
+        error: undefined,
+        status: "pending",
+        streamStatus: undefined,
+        ...emptyPagination,
+      });
       return;
     }
 
@@ -100,21 +141,26 @@ export function useLiveStreamQuery<T>({
       if (closed) return;
       const error =
         streamStatus === "error" ? (stream.getError?.() ?? new Error("Stream error")) : undefined;
+      const snap = store.getSnapshot();
       store.set({
         error,
         streamStatus,
-        status: error ? "error" : store.getSnapshot().data === undefined ? "pending" : "success",
+        status: error ? "error" : snap.data === undefined ? "pending" : "success",
+        hasNextPage: readHasNextPage(stream),
       });
     };
 
     const subscription: Subscription = stream.subscribe({
       next: (value: T) => {
         if (closed) return;
+        const loadMoreError = readLoadMoreError(stream);
         store.set({
           data: value,
           error: undefined,
           status: "success",
           streamStatus: stream.getStatus?.(),
+          hasNextPage: readHasNextPage(stream),
+          fetchNextPageError: loadMoreError ?? undefined,
         });
       },
       error: (error: unknown) => {
@@ -135,9 +181,32 @@ export function useLiveStreamQuery<T>({
       subscription.unsubscribe();
       if (currentStreamRef.current === stream) currentStreamRef.current = null;
     };
-  }, [enabled, store]);
+  }, [enabled, stableKey, store]);
 
   const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+
+  const fetchNextPage = useCallback(async () => {
+    const stream = currentStreamRef.current;
+    if (!stream || !isPaginatedStream(stream) || !stream.hasMore) return;
+    const current = store.getSnapshot();
+    if (current.isFetchingNextPage) return;
+
+    store.set({ isFetchingNextPage: true, fetchNextPageError: undefined });
+    try {
+      await stream.loadMore();
+      const loadMoreError = readLoadMoreError(stream);
+      store.set({
+        hasNextPage: readHasNextPage(stream),
+        fetchNextPageError: loadMoreError ?? undefined,
+      });
+    } finally {
+      store.set({ isFetchingNextPage: false });
+    }
+  }, [store]);
+
+  const refetch = useCallback(async () => {
+    await currentStreamRef.current?.refresh?.();
+  }, []);
 
   return {
     ...snapshot,
@@ -145,8 +214,7 @@ export function useLiveStreamQuery<T>({
     isFetching: snapshot.streamStatus === "loading" || snapshot.status === "pending",
     isError: snapshot.status === "error",
     isSuccess: snapshot.status === "success",
-    refetch: async () => {
-      await currentStreamRef.current?.refresh?.();
-    },
+    refetch,
+    fetchNextPage,
   };
 }

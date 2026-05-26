@@ -29,6 +29,7 @@ export { useConfirmBet } from "./hooks/useConfirmBet";
 export {
   type LiveQueryStatus,
   type LiveStream,
+  type PaginatedLiveStream,
   type UseLiveStreamQueryOptions,
   type UseLiveStreamQueryResult,
   useLiveStreamQuery,
@@ -42,7 +43,11 @@ export {
 export { usePari } from "./hooks/usePari";
 export { useParis } from "./hooks/useParis";
 // Live hooks (stream snapshots → useSyncExternalStore)
-export { useStreamList } from "./hooks/useStreamList";
+export {
+  type UseStreamListOptions,
+  type UseStreamListResult,
+  useStreamList,
+} from "./hooks/useStreamList";
 export { useSubscribe } from "./hooks/useSubscribe";
 // TonConnect bridge (peer-dep)
 export { useTonConnectClient } from "./hooks/useTonConnectClient";

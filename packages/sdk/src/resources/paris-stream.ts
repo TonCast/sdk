@@ -67,6 +67,8 @@ export class ParisListStream {
   private activeConsumers = 0;
   private stopped = false;
   private inflightLoadMore: Promise<void> | null = null;
+  /** Set when `loadMore` / `fetchNextPage` fails; cleared on success or first-page refetch. */
+  private loadMoreError: Error | null = null;
   /** Bumps on each first-page fetch so stale responses are ignored after param changes. */
   private fetchGeneration = 0;
 
@@ -150,6 +152,11 @@ export class ParisListStream {
   /** The error that caused `status === "error"`, if any. */
   getError(): Error | null {
     return this.lastError;
+  }
+
+  /** The error from the most recent failed `loadMore()`, if any. */
+  getLoadMoreError(): Error | null {
+    return this.loadMoreError;
   }
 
   /** Has `stop()` been called? Used by `paris.streamList` to decide whether to re-use. */
@@ -259,6 +266,7 @@ export class ParisListStream {
       this.items = [...page.items];
       this.nextCursor = (page.nextCursor as { sortValue: number; address: string } | null) ?? null;
       this.hasMoreFlag = page.hasMore;
+      this.loadMoreError = null;
       this.emit();
       return true;
     } catch (err) {
@@ -290,9 +298,12 @@ export class ParisListStream {
       for (const p of page.items) if (!existing.has(p.id)) this.items.push(p);
       this.nextCursor = (page.nextCursor as { sortValue: number; address: string } | null) ?? null;
       this.hasMoreFlag = page.hasMore;
+      this.loadMoreError = null;
       this.emit();
     } catch (err) {
+      this.loadMoreError = err instanceof Error ? err : new Error(String(err));
       this.deps.logger.warn("paris.streamList loadMore failed", err);
+      this.emit();
     }
   }
 

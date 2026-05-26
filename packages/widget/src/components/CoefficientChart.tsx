@@ -84,7 +84,7 @@ export function CoefficientChart({ history }: { history: readonly CoefficientHis
       <div className="tc-chart-canvas">
         <svg
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-          preserveAspectRatio="xMidYMid slice"
+          preserveAspectRatio="none"
           className="tc-chart-svg"
           role="img"
           aria-label={ariaLabel}

@@ -1,12 +1,13 @@
 import { ALL_CATEGORY_FILTER, type CategoryFilter, isBenignFetchError } from "@toncast/sdk";
 import { useCategoryFilters, useStreamList } from "@toncast/sdk-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PariCard } from "../components/PariCard";
 import { PariCardSkeleton } from "../components/PariCardSkeleton";
 import { Button } from "../components/ui/Button";
 import { SkeletonList } from "../components/ui/SkeletonList";
 import { useT } from "../i18n/useT";
 import { categoryFilterChipKey, categoryFilterChipLabel } from "../utils/categoryFilterChipLabel";
+import { useInfiniteScroll } from "../utils/useInfiniteScroll";
 
 export function ParisListView() {
   const t = useT();
@@ -21,7 +22,25 @@ export function ParisListView() {
   }, [categories.data, active]);
 
   const current = active ?? categories.data?.[0] ?? ALL_CATEGORY_FILTER;
-  const { data, isLoading, isError, error, isFetching } = useStreamList(current.param);
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    isFetching,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPageError,
+    fetchNextPage,
+  } = useStreamList(current.param, { keepPreviousData: false });
+
+  const handleLoadMore = useCallback(() => fetchNextPage(), [fetchNextPage]);
+  const { sentinelRef } = useInfiniteScroll({
+    enabled: true,
+    hasNextPage,
+    isFetchingNextPage,
+    onLoadMore: handleLoadMore,
+  });
 
   const items = data ?? [];
   const hasItems = items.length > 0;
@@ -29,6 +48,8 @@ export function ParisListView() {
     isError && !isBenignFetchError(error) && !hasItems && !(isLoading || isFetching);
   const showInlineError = isError && !isBenignFetchError(error) && hasItems;
   const showInitialSkeleton = (isLoading || isFetching) && !hasItems && !showBlockingError;
+  const showPaginationError =
+    fetchNextPageError !== undefined && !isBenignFetchError(fetchNextPageError);
 
   return (
     <div className="tc-form-col">
@@ -87,6 +108,25 @@ export function ParisListView() {
               <PariCard key={p.id} pari={p} />
             ))}
           </div>
+          {isFetchingNextPage ? (
+            <div className="tc-pari-grid tc-pari-grid-more">
+              {Array.from({ length: 4 }, (_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list, order never changes
+                <PariCardSkeleton key={`pari-more-skel-${i}`} />
+              ))}
+            </div>
+          ) : null}
+          {showPaginationError ? (
+            <div className="tc-error-sm">
+              {t("pagination.loadMoreFailed", {
+                error:
+                  fetchNextPageError instanceof Error
+                    ? fetchNextPageError.message
+                    : String(fetchNextPageError),
+              })}
+            </div>
+          ) : null}
+          <div ref={sentinelRef} className="tc-infinite-scroll-sentinel" aria-hidden="true" />
         </>
       )}
     </div>

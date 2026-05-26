@@ -128,4 +128,29 @@
   --tc-fg-muted: #94a3b8;
   --tc-border: #2d3f55;
   --tc-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+  /* Success — brighter green so chips/badges are readable on dark surfaces */
+  --tc-success: #4ade80;
+  --tc-success-fg: #4ade80;
+  --tc-success-bg: rgba(74, 222, 128, 0.14);
+  --tc-success-border: rgba(74, 222, 128, 0.30);
+  --tc-success-hover-bg: rgba(74, 222, 128, 0.22);
+  --tc-success-active-bg: rgba(74, 222, 128, 0.28);
+  --tc-success-active-border: rgba(74, 222, 128, 0.45);
+  --tc-success-active-shadow: 0 4px 12px -4px rgba(74, 222, 128, 0.35);
+  --tc-success-fill-bg: rgba(74, 222, 128, 0.35);
+  /* Danger — brighter red for dark surfaces */
+  --tc-danger: #f87171;
+  --tc-danger-fg: #f87171;
+  --tc-danger-bg: rgba(248, 113, 113, 0.14);
+  --tc-danger-border: rgba(248, 113, 113, 0.30);
+  --tc-danger-hover-bg: rgba(248, 113, 113, 0.22);
+  --tc-danger-active-bg: rgba(248, 113, 113, 0.28);
+  --tc-danger-active-border: rgba(248, 113, 113, 0.45);
+  --tc-danger-active-shadow: 0 4px 12px -4px rgba(248, 113, 113, 0.35);
+  --tc-danger-fill-bg: rgba(248, 113, 113, 0.35);
+  /* Warn */
+  --tc-warn: #fbbf24;
+  --tc-warn-fg: #fbbf24;
+  --tc-warn-bg: rgba(251, 191, 36, 0.14);
+  --tc-warn-border: rgba(251, 191, 36, 0.30);
 }

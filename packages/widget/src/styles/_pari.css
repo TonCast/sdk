@@ -107,6 +107,17 @@
   stroke-linejoin: round;
 }
 
+.tc-pari-grid-more {
+  margin-top: var(--tc-pari-actions-gap);
+}
+
+.tc-infinite-scroll-sentinel {
+  width: 100%;
+  height: 1px;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
 .tc-pari-btns {
   display: grid;
   grid-template-columns: 1fr 1fr;
