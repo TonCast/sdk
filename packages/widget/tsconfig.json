@@ -15,7 +15,8 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "baseUrl": ".",
     "paths": {
-      "@toncast/sdk": ["../sdk/src/index.ts"]
+      "@toncast/sdk": ["../sdk/src/index.ts"],
+      "@toncast/sdk-react": ["../sdk-react/src/index.ts"]
     }
   },
   "include": ["src", "tests"],

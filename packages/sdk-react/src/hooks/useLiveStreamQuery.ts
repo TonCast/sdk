@@ -73,10 +73,7 @@ class LiveStore<T> {
 }
 
 function isPaginatedStream<T>(stream: LiveStream<T>): stream is PaginatedLiveStream<T> {
-  return (
-    typeof (stream as PaginatedLiveStream<T>).loadMore === "function" &&
-    "hasMore" in stream
-  );
+  return typeof (stream as PaginatedLiveStream<T>).loadMore === "function" && "hasMore" in stream;
 }
 
 function readHasNextPage<T>(stream: LiveStream<T>): boolean {
@@ -181,7 +178,7 @@ export function useLiveStreamQuery<T>({
       subscription.unsubscribe();
       if (currentStreamRef.current === stream) currentStreamRef.current = null;
     };
-  }, [enabled, stableKey, store]);
+  }, [enabled, store]);
 
   const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 

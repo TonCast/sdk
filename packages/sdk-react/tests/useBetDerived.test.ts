@@ -1,6 +1,12 @@
 import { type BetSummary, type CoinCapacity, TON_ADDRESS } from "@toncast/sdk";
 import { describe, expect, it } from "vitest";
-import { buildCoinOptions, pickSource } from "../src/hooks/useBetDerived";
+import {
+  BOOK_EXPLORATION_BUDGET_NANOTON,
+  buildCoinOptions,
+  getBookExplorationMaxTickets,
+  getWalletMaxTickets,
+  pickSource,
+} from "../src/hooks/useBetDerived";
 
 function capacity(address: string, feasible: boolean): CoinCapacity {
   return {
@@ -37,15 +43,44 @@ describe("useBet derived helpers", () => {
     ]);
   });
 
-  it("keeps a requested feasible source, otherwise falls back to TON then first viable coin", () => {
+  it("keeps a requested source even when infeasible, otherwise TON then first coin", () => {
     const jetA = capacity("JET_A", true);
     const jetB = capacity("JET_B", true);
+    const tonInfeasible = capacity(TON_ADDRESS, false);
 
     expect(pickSource([capacity(TON_ADDRESS, true), jetA], jetA.source.address)).toBe(
       jetA.source.address,
     );
+    expect(pickSource([tonInfeasible, jetA], TON_ADDRESS)).toBe(TON_ADDRESS);
     expect(pickSource([capacity(TON_ADDRESS, true), jetA], "MISSING")).toBe(TON_ADDRESS);
-    expect(pickSource([capacity(TON_ADDRESS, false), jetA, jetB], null)).toBe(jetA.source.address);
+    expect(pickSource([tonInfeasible, jetA, jetB], null)).toBe(TON_ADDRESS);
     expect(pickSource([], "LAST_REQUESTED")).toBe("LAST_REQUESTED");
+  });
+
+  it("ui max tickets is the greater of wallet cap and book exploration cap", () => {
+    const coin = capacity(TON_ADDRESS, false);
+    coin.maxBetTon = 0n;
+
+    const walletCap = getWalletMaxTickets({
+      selectedCoin: coin,
+      mode: "market",
+      yesOdds: 50,
+      isYes: true,
+      affordableInWallet: 0,
+      isBookEmpty: false,
+      oddsState: undefined,
+    });
+    const bookCap = getBookExplorationMaxTickets({
+      mode: "market",
+      yesOdds: 50,
+      isYes: true,
+      isBookEmpty: false,
+      bookAffordableTickets: 42,
+    });
+
+    expect(walletCap).toBe(0);
+    expect(bookCap).toBe(42);
+    expect(Math.max(walletCap, bookCap)).toBe(42);
+    expect(BOOK_EXPLORATION_BUDGET_NANOTON).toBeGreaterThan(0n);
   });
 });

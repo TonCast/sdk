@@ -86,8 +86,12 @@ export class ParisListStream {
     this.retain();
     let closed = false;
     this.listeners.add(listener);
-    // Always emit the current state synchronously so the integrator gets a baseline.
-    if (this.items.length > 0 || this.status !== "loading") listener([...this.items]);
+    // Emit the current state synchronously so the integrator gets a baseline —
+    // but skip the emission when the stream is in error state with no data:
+    // delivering [] to a new subscriber would look like "loaded but empty",
+    // hiding the fact that the initial fetch actually failed.
+    if (this.items.length > 0 || (this.status !== "loading" && this.status !== "error"))
+      listener([...this.items]);
     return () => {
       if (closed) return;
       closed = true;

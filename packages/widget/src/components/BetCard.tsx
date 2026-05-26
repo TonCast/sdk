@@ -1,5 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { type BetFlowErrorDescriptor, classifyBetFlowError, TON_ADDRESS } from "@toncast/sdk";
+import {
+  type BetFlowErrorDescriptor,
+  classifyBetFlowError,
+  type PricedCoin,
+  TON_ADDRESS,
+} from "@toncast/sdk";
 import { type BetMode, useBet, useTonConnectClient } from "@toncast/sdk-react";
 import { useContext, useEffect, useRef, useState } from "react";
 import { BET_REFRESH_DELAY_MS, BET_TX_VALID_FOR_SECONDS } from "../constants";
@@ -57,7 +62,9 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
   });
 
   const isYes = bet.side === "yes";
-  const sourcePriced = bet.summary.data?.pricedCoins.find((p) => p.address === bet.source);
+  const sourcePriced = bet.summary.data?.pricedCoins.find(
+    (p: PricedCoin) => p.address === bet.source,
+  );
   const isTonSource = bet.source === TON_ADDRESS;
   const sourceSym = sourcePriced?.symbol ?? (isTonSource ? "TON" : "");
   const sourceDecimals = sourcePriced?.decimals ?? 9;
@@ -180,10 +187,6 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
               <BetAmountInput bet={bet} sourceSym={sourceSym} sourceDecimals={sourceDecimals} />
             )}
 
-            {bet.selectedCoin && bet.maxTickets <= 0 && bet.mode !== "market" && (
-              <div className="tc-notice tc-notice-muted">{t("bet.balanceTooLow")}</div>
-            )}
-
             <Button
               variant="primary"
               size="lg"
@@ -192,7 +195,9 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
             >
               {bet.confirm.isPending || sending
                 ? t("bet.action.confirming")
-                : t("bet.action", { side: t(`side.${bet.side}` as const) })}
+                : t("bet.action", {
+                    side: bet.side === "yes" ? t("side.yes") : t("side.no"),
+                  })}
             </Button>
 
             {sendError && (

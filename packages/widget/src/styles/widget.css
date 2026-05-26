@@ -1495,6 +1495,10 @@
   margin: max(3px, calc(var(--tc-form-gap) * 0.3333333333)) 0;
 }
 
+.tc-bet-preview-hint {
+  margin-bottom: var(--tc-form-gap);
+}
+
 /* ----- _order-book.css ----- */
 /* ===== ORDER BOOK ===== */
 .tc-ob {

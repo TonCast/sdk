@@ -31,8 +31,8 @@ describe("telegramMiniAppHost", () => {
     // versions but throw on older clients. Must use isVersionAtLeast.
     expect(script).toContain("isVersionAtLeast");
     // Both 7.7+ APIs must be behind the version gate.
-    expect(script).toMatch(/v\("7\.7"\)[^]*disableVerticalSwipes/s);
-    expect(script).toMatch(/v\("7\.7"\)[^]*requestFullscreen/s);
+    expect(script).toMatch(/v\("7\.7"\)[\s\S]*disableVerticalSwipes/s);
+    expect(script).toMatch(/v\("7\.7"\)[\s\S]*requestFullscreen/s);
     // requestFullscreen must be wrapped in try-catch (it throws on some clients).
     expect(script).toMatch(/try\s*\{[^}]*requestFullscreen/s);
   });

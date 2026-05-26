@@ -57,11 +57,33 @@ export function pickSource(coins: CoinCapacity[], requestedSource: string | null
   if (coins.length === 0) return requestedSource;
   if (requestedSource) {
     const requested = coins.find((coin) => coin.source.address === requestedSource);
-    if (requested?.feasible) return requestedSource;
+    if (requested) return requestedSource;
   }
   const ton = coins.find((coin) => coin.source.address === TON_ADDRESS);
-  if (ton?.feasible) return ton.source.address;
-  return coins.find((coin) => coin.feasible)?.source.address ?? null;
+  if (ton) return ton.source.address;
+  return coins[0]?.source.address ?? null;
+}
+
+/** TON budget used only to walk the order book when computing UI ticket caps. */
+export const BOOK_EXPLORATION_BUDGET_NANOTON = 1000n * 1_000_000_000n;
+
+/** Max tickets the UI may explore along the book, ignoring wallet balance. */
+export function getBookExplorationMaxTickets(params: {
+  mode: BetMode;
+  yesOdds: number;
+  isYes: boolean;
+  isBookEmpty: boolean;
+  oddsState: BetSummary["oddsState"] | undefined;
+  /** Market-mode cap from `ticketsForBudget(legs, BOOK_EXPLORATION_BUDGET_NANOTON)`. */
+  bookAffordableTickets: number;
+}): number {
+  const { mode, yesOdds, isYes, isBookEmpty, oddsState, bookAffordableTickets } = params;
+  if (mode === "market" && !isBookEmpty) return bookAffordableTickets;
+  if (mode === "fixed" || mode === "limit") {
+    return fixedTicketsForBudget(BOOK_EXPLORATION_BUDGET_NANOTON, yesOdds, isYes);
+  }
+  const median = oddsState ? sameSideMedianYesOdds(oddsState, isYes) : null;
+  return fixedTicketsForBudget(BOOK_EXPLORATION_BUDGET_NANOTON, median ?? ODDS_MID, isYes);
 }
 
 export function normalizeQuote(params: {
@@ -95,7 +117,8 @@ export function normalizeQuote(params: {
   };
 }
 
-export function getMaxTickets(params: {
+/** Wallet-funded ticket cap (min bet, balance, book walk with `maxBetTon`). */
+export function getWalletMaxTickets(params: {
   selectedCoin: CoinCapacity | null;
   mode: BetMode;
   yesOdds: number;

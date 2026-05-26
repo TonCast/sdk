@@ -785,12 +785,15 @@ export class BettingResource {
     return new ToncastObservable<BetSummary>((observer) => {
       let cancelled = false;
 
+      const linkedAddress = this.deps.getUserAddress()?.trim();
       // Phase 1 — pari + oddsState + raw balances. TON-only pricing is
       // synthesized from the wallet balance (no swap routing needed).
       void Promise.all([
         this.deps.paris.get(pariId),
         this.deps.paris.getOddsState(pariId),
-        this.deps.coins.list(),
+        linkedAddress
+          ? this.deps.coins.list({ userAddress: linkedAddress })
+          : Promise.resolve([] as AvailableCoin[]),
       ])
         .then(([pari, oddsState, allCoins]) => {
           if (cancelled) return;
@@ -798,8 +801,14 @@ export class BettingResource {
           // Jettons exist in the wallet but their TON value is unknown until
           // STON.fi markets resolve — surface them via `loadingCoins` so the
           // UI can render them as "loading" without confusing the quote engine.
-          const loadingJettons = allCoins.filter((c) => c.address !== TON_ADDRESS);
+          const loadingJettons = linkedAddress
+            ? allCoins.filter((c) => c.address !== TON_ADDRESS)
+            : [];
           observer.next?.(this.buildSummary(pari, oddsState, tonOnlyPriced, opts, loadingJettons));
+          if (!linkedAddress) {
+            observer.complete?.();
+            return;
+          }
           // Phase 2 — full priceCoins with STON.fi swap routing for jettons.
           // Re-uses `allCoins` to avoid a second balance round-trip.
           return this.priceCoins({ ...opts, availableCoins: allCoins }).then((fullPriced) => {

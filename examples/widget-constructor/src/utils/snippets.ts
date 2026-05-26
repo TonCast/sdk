@@ -4,12 +4,12 @@ import { WIDGET_CDN_JS_URL } from "@toncast/widget-loader";
 import type { ConstructorConfig } from "../types";
 import { buildWidgetConfig, PLACEHOLDER_DOMAIN } from "./buildWidgetConfig";
 import { escapeHtml } from "./manifest";
-import { HOST_PAGE_BACKDROP } from "./themeDefaults";
 import {
   buildTelegramHostInitScript,
   TELEGRAM_WEB_APP_SCRIPT_URL,
   TG_SAFE_AREA_BODY_PADDING_CSS,
 } from "./telegramMiniAppHost";
+import { HOST_PAGE_BACKDROP } from "./themeDefaults";
 
 /** Serializes a value for embedding as JS inside HTML `<script>` (HTML/script breakout-safe). */
 export function stringifyForScript(value: unknown, space: number): string {

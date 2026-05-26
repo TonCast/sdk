@@ -239,7 +239,9 @@ export class ParisResource {
   streamList(params: StreamListParams = {}): ParisListStream {
     const key = streamKey(params);
     const existing = this.listStreams.get(key);
-    if (existing && !existing.isStopped()) return existing;
+    // Don't reuse a stream that has permanently failed its initial fetch —
+    // a new subscriber deserves a fresh bootstrap attempt, not a stale error.
+    if (existing && !existing.isStopped() && existing.getStatus() !== "error") return existing;
     let stream: ParisListStream;
     stream = new ParisListStream(
       {

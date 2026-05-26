@@ -16,7 +16,6 @@ import {
   ODDS_STEP,
 } from "@toncast/sdk/betting";
 import {
-  fixedTicketsForBudget,
   sameSideMedianYesOdds,
   sliderPositionToYesOdds,
   stepOdds,
@@ -25,10 +24,12 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useToncastClient } from "../client/useToncastClient";
 import {
+  BOOK_EXPLORATION_BUDGET_NANOTON,
   buildCoinOptions,
   clampTicketCount,
+  getBookExplorationMaxTickets,
   getLiquidityMarkers,
-  getMaxTickets,
+  getWalletMaxTickets,
   normalizeQuote,
   ODDS_MID,
   pickSource,
@@ -147,9 +148,9 @@ export interface UseBetResult {
 
   // ─── Limits ───────────────────────────────────────────────────────────────
   minTickets: number;
-  /** Hard cap for ticket inputs / steppers / sliders. For `market`/`limit`
-   *  this is the wallet ceiling along the cheapest book legs; for `fixed`
-   *  it's the cap at the chosen `yesOdds` bucket. */
+  /** Hard cap for ticket inputs / steppers / sliders — the greater of the
+   *  wallet-funded cap and the order-book exploration cap so low-balance
+   *  users can still explore coefficients and ticket counts. */
   maxTickets: number;
   /** True when the order book has no counter-side liquidity for the current
    *  side in market mode.  Integrators should surface a "be the first to bet"
@@ -268,28 +269,11 @@ export function useBet(params: UseBetParams): UseBetResult {
     if (!selectedCoin || legs.length === 0) return 0;
     return client.betting.ticketsForBudget(legs, selectedCoin.maxBetTon);
   }, [client, selectedCoin, legs]);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: first-sight seed only.
-  useEffect(() => {
-    if (!ticketsKey || !selectedCoin) return;
-    if (seededRef.current.has(ticketsKey)) return;
-    if (ticketsByKey[ticketsKey] !== undefined) {
-      seededRef.current.add(ticketsKey);
-      return;
-    }
-    // Seed budget = book-walk capacity when there's matching counter-side
-    // liquidity, otherwise the wallet's fixed-price capacity at the same-side
-    // median (matches the empty-book branch in `maxTickets` below).
-    let cap = affordableInWallet;
-    if (cap <= 0) {
-      const oddsState = summary.data?.oddsState;
-      const median = oddsState ? sameSideMedianYesOdds(oddsState, isYes) : null;
-      cap = fixedTicketsForBudget(selectedCoin.maxBetTon, median ?? ODDS_MID, isYes);
-    }
-    if (cap <= 0) return;
-    const initial = defaultTickets ?? Math.max(1, Math.floor(cap / 2));
-    seededRef.current.add(ticketsKey);
-    setTicketsByKey((prev) => ({ ...prev, [ticketsKey]: initial }));
-  }, [ticketsKey, selectedCoin, affordableInWallet, isYes]);
+
+  const affordableOnBook = useMemo<number>(() => {
+    if (!selectedCoin || legs.length === 0) return 0;
+    return client.betting.ticketsForBudget(legs, BOOK_EXPLORATION_BUDGET_NANOTON);
+  }, [client, selectedCoin, legs]);
 
   // Seed yesOdds to the best counter-side leg on mode switch (Limit/Fixed
   // only; Market doesn't use it). `legs` is sorted "best for the chosen side
@@ -316,9 +300,9 @@ export function useBet(params: UseBetParams): UseBetResult {
 
   // ─── Limits (before quote — effective ticket counts depend on caps) ───────
   const minTickets = 1;
-  const maxTickets = useMemo(
+  const walletMaxTickets = useMemo(
     () =>
-      getMaxTickets({
+      getWalletMaxTickets({
         selectedCoin,
         mode,
         yesOdds,
@@ -330,6 +314,35 @@ export function useBet(params: UseBetParams): UseBetResult {
     [selectedCoin, mode, yesOdds, isYes, affordableInWallet, isBookEmpty, summary.data],
   );
 
+  const bookExplorationMaxTickets = useMemo(
+    () =>
+      getBookExplorationMaxTickets({
+        mode,
+        yesOdds,
+        isYes,
+        isBookEmpty,
+        oddsState: summary.data?.oddsState,
+        bookAffordableTickets: affordableOnBook,
+      }),
+    [mode, yesOdds, isYes, isBookEmpty, summary.data, affordableOnBook],
+  );
+
+  const maxTickets = Math.max(walletMaxTickets, bookExplorationMaxTickets);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: first-sight seed only.
+  useEffect(() => {
+    if (!ticketsKey || !selectedCoin) return;
+    if (seededRef.current.has(ticketsKey)) return;
+    if (ticketsByKey[ticketsKey] !== undefined) {
+      seededRef.current.add(ticketsKey);
+      return;
+    }
+    if (maxTickets <= 0) return;
+    const initial = defaultTickets ?? Math.max(1, Math.floor(maxTickets / 2));
+    seededRef.current.add(ticketsKey);
+    setTicketsByKey((prev) => ({ ...prev, [ticketsKey]: initial }));
+  }, [ticketsKey, selectedCoin, maxTickets, isYes]);
+
   const effectiveTickets = useMemo(() => {
     if (tickets <= 0 || maxTickets <= 0) return 0;
     return clampTicketCount(tickets, maxTickets);
@@ -339,7 +352,6 @@ export function useBet(params: UseBetParams): UseBetResult {
   // the stored ticket count down to the new max so the input field stays in
   // sync. Uses a functional update to avoid reading `tickets` as a dep — the
   // effect should only fire when `maxTickets` or `ticketsKey` itself changes.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional — clamp only when the cap changes.
   useEffect(() => {
     if (maxTickets > 0 && ticketsKey) {
       setTicketsByKey((prev) => {

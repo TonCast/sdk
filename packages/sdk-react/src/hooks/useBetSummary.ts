@@ -13,8 +13,9 @@ import {
  * the UI sliders. The hook subscribes to the SDK's two-phase summary stream:
  *
  *   1. **TON-only** snapshot — lands in ~200 ms (just pari + oddsState +
- *      wallet balance; no STON.fi swap routing). Lets the bet card render
- *      immediately with TON as a usable source coin.
+ *      wallet balance; no STON.fi swap routing). Without a linked wallet,
+ *      the SDK synthesizes a preview TON budget so the bet card is still
+ *      interactive (order-book sliders; connect wallet to quote/send).
  *   2. **Full** snapshot — same shape but `pricedCoins` now includes every
  *      viable jetton routed through STON.fi. Arrives once the markets cache
  *      is warm (cold: 3-8 s, warm: instant).
