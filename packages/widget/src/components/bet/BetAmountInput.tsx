@@ -96,8 +96,8 @@ export function BetAmountInput({ bet, sourceSym, sourceDecimals }: Props) {
             }
             const count = bet.ticketsForSourceAmount(typed);
             const capped =
-              bet.maxTickets > 0
-                ? Math.min(Math.max(1, count), bet.maxTickets)
+              bet.sliderMaxTickets > 0
+                ? Math.min(Math.max(1, count), bet.sliderMaxTickets)
                 : Math.max(1, count);
             bet.setTickets(capped);
           }}
@@ -126,7 +126,7 @@ export function BetAmountInput({ bet, sourceSym, sourceDecimals }: Props) {
         <span>
           {t("bet.maxOf", {
             current: formatIntegerCount(bet.effectiveTickets, lang),
-            max: formatIntegerCount(bet.maxTickets, lang),
+            max: formatIntegerCount(bet.maxTickets > 0 ? bet.maxTickets : bet.sliderMaxTickets, lang),
           })}
         </span>
       </div>

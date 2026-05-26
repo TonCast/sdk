@@ -17,8 +17,8 @@ export function BetTicketsInput({ bet }: { bet: Bet }) {
 
   const commit = (raw: number) => {
     const clean = Math.max(1, Math.trunc(raw || 1));
-    if (bet.maxTickets <= 0) return clean;
-    return Math.min(clean, bet.maxTickets);
+    if (bet.sliderMaxTickets <= 0) return clean;
+    return Math.min(clean, bet.sliderMaxTickets);
   };
 
   return (

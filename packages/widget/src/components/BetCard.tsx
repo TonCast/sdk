@@ -179,11 +179,11 @@ export function BetCard({ pariId, initialSide = "yes", onBetSent }: BetCardProps
               </>
             )}
 
-            {bet.selectedCoin && bet.maxTickets > 0 && bet.mode !== "market" && (
+            {bet.selectedCoin && bet.sliderMaxTickets > 0 && bet.mode !== "market" && (
               <BetTicketsInput bet={bet} />
             )}
 
-            {bet.selectedCoin && bet.mode === "market" && bet.maxTickets > 0 && (
+            {bet.selectedCoin && bet.mode === "market" && bet.sliderMaxTickets > 0 && (
               <BetAmountInput bet={bet} sourceSym={sourceSym} sourceDecimals={sourceDecimals} />
             )}
 

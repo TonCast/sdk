@@ -135,7 +135,7 @@ export interface UseBetResult {
   setTickets: (n: number) => void;
   /** Tickets after wallet / uint32 clamping — used for quotes and sliders. */
   effectiveTickets: number;
-  /** True when the raw ticket input exceeds {@link maxTickets}. */
+  /** True when the raw ticket input exceeds the wallet-funded {@link maxTickets} cap. */
   ticketsOverCap: boolean;
 
   // ─── Data ─────────────────────────────────────────────────────────────────
@@ -148,10 +148,16 @@ export interface UseBetResult {
 
   // ─── Limits ───────────────────────────────────────────────────────────────
   minTickets: number;
-  /** Hard cap for ticket inputs / steppers / sliders — the greater of the
-   *  wallet-funded cap and the order-book exploration cap so low-balance
-   *  users can still explore coefficients and ticket counts. */
+  /** Wallet-funded ticket cap — the honest limit based on the connected wallet
+   *  balance. Used for seeding the default value, the over-cap warning, and
+   *  the amount-input range hint. `0` when the wallet cannot cover even one
+   *  ticket (use {@link sliderMaxTickets} in that case to keep the UI interactive). */
   maxTickets: number;
+  /** Upper bound for sliders and steppers — `Math.max(maxTickets, bookExploration)`.
+   *  May exceed `maxTickets` when wallet balance is insufficient so low-balance
+   *  users can still explore ticket counts and see preview quotes.
+   *  Always use this for `<Slider max>` and stepper `canIncrement` checks. */
+  sliderMaxTickets: number;
   /** True when the order book has no counter-side liquidity for the current
    *  side in market mode.  Integrators should surface a "be the first to bet"
    *  prompt and offer Limit / Fixed as alternatives. */
@@ -173,7 +179,9 @@ export interface UseBetResult {
   /** Spread onto a Radix-like Slider. Slider value is "decimal-multiplier-friendly":
    *  low coefficient on the left, high on the right. */
   oddsSliderProps: SliderProps;
-  /** Spread onto a Radix-like Slider. Tickets, capped by wallet capacity. */
+  /** Spread onto a Radix-like Slider. Tickets, capped by the wallet-funded
+   *  {@link maxTickets} so the slider range reflects what the user can actually afford.
+   *  The amount input accepts values up to {@link sliderMaxTickets} for exploration. */
   ticketsSliderProps: SliderProps;
   oddsStepper: StepperState;
   ticketsStepper: StepperState;
@@ -327,7 +335,8 @@ export function useBet(params: UseBetParams): UseBetResult {
     [mode, yesOdds, isYes, isBookEmpty, summary.data, affordableOnBook],
   );
 
-  const maxTickets = Math.max(walletMaxTickets, bookExplorationMaxTickets);
+  const maxTickets = walletMaxTickets;
+  const sliderMaxTickets = Math.max(walletMaxTickets, bookExplorationMaxTickets);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: first-sight seed only.
   useEffect(() => {
@@ -337,31 +346,36 @@ export function useBet(params: UseBetParams): UseBetResult {
       seededRef.current.add(ticketsKey);
       return;
     }
-    if (maxTickets <= 0) return;
-    const initial = defaultTickets ?? Math.max(1, Math.floor(maxTickets / 2));
+    if (sliderMaxTickets <= 0) return;
+    // Seed from the wallet cap when the user has funds (sensible default = half
+    // of what they can afford). Fall back to 1 ticket for exploration when the
+    // wallet is empty so the user still sees a preview quote.
+    const initial =
+      defaultTickets ?? (walletMaxTickets > 0 ? Math.max(1, Math.floor(walletMaxTickets / 2)) : 1);
     seededRef.current.add(ticketsKey);
     setTicketsByKey((prev) => ({ ...prev, [ticketsKey]: initial }));
-  }, [ticketsKey, selectedCoin, maxTickets, isYes]);
+  }, [ticketsKey, selectedCoin, walletMaxTickets, sliderMaxTickets, isYes]);
 
   const effectiveTickets = useMemo(() => {
-    if (tickets <= 0 || maxTickets <= 0) return 0;
-    return clampTicketCount(tickets, maxTickets);
-  }, [tickets, maxTickets]);
+    if (tickets <= 0 || sliderMaxTickets <= 0) return 0;
+    return clampTicketCount(tickets, sliderMaxTickets);
+  }, [tickets, sliderMaxTickets]);
 
-  // When the cap shrinks (e.g. coefficient changed in Fixed/Limit mode) pull
-  // the stored ticket count down to the new max so the input field stays in
-  // sync. Uses a functional update to avoid reading `tickets` as a dep — the
-  // effect should only fire when `maxTickets` or `ticketsKey` itself changes.
+  // When the slider cap shrinks (e.g. coefficient changed in Fixed/Limit mode,
+  // or book depth narrowed) pull the stored ticket count down to the new slider
+  // max so the input field stays in sync.
   useEffect(() => {
-    if (maxTickets > 0 && ticketsKey) {
+    if (sliderMaxTickets > 0 && ticketsKey) {
       setTicketsByKey((prev) => {
         const cur = prev[ticketsKey] ?? 0;
-        if (cur <= maxTickets) return prev;
-        return { ...prev, [ticketsKey]: maxTickets };
+        if (cur <= sliderMaxTickets) return prev;
+        return { ...prev, [ticketsKey]: sliderMaxTickets };
       });
     }
-  }, [maxTickets, ticketsKey]);
+  }, [sliderMaxTickets, ticketsKey]);
 
+  // Over-cap warning fires against the wallet cap — `sliderMaxTickets` can
+  // legitimately exceed wallet capacity during exploration.
   const ticketsOverCap = maxTickets > 0 && tickets > maxTickets;
 
   // ─── Quote ────────────────────────────────────────────────────────────────
@@ -503,15 +517,15 @@ export function useBet(params: UseBetParams): UseBetResult {
   }, [yesOdds, isYes]);
 
   const ticketsStepper: StepperState = useMemo(() => {
-    const cap = maxTickets > 0 ? maxTickets : Number.POSITIVE_INFINITY;
+    const cap = sliderMaxTickets > 0 ? sliderMaxTickets : Number.POSITIVE_INFINITY;
     return {
       value: effectiveTickets,
       canIncrement: effectiveTickets < cap,
       canDecrement: effectiveTickets > 1,
-      increment: () => setTickets(clampTicketCount(effectiveTickets + 1, maxTickets)),
+      increment: () => setTickets(clampTicketCount(effectiveTickets + 1, sliderMaxTickets)),
       decrement: () => setTickets(Math.max(1, effectiveTickets - 1)),
     };
-  }, [effectiveTickets, maxTickets, setTickets]);
+  }, [effectiveTickets, sliderMaxTickets, setTickets]);
 
   const liquidityMarkers = useMemo(
     () => getLiquidityMarkers(summary.data, isYes),
@@ -563,6 +577,7 @@ export function useBet(params: UseBetParams): UseBetResult {
     quote,
     minTickets,
     maxTickets,
+    sliderMaxTickets,
     isBookEmpty,
     sourceAmount,
     tonToSource,
