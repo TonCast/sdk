@@ -14,22 +14,6 @@ export interface UseInfiniteScrollOptions {
 /**
  * Observes a sentinel node and calls `onLoadMore` when it enters the widget
  * scroll container (`.tc-content`).
- *
- * Two non-obvious things this handles:
- *
- * 1. `.tc-content` sets `container-type: inline-size`. In several Chromium
- *    builds (notably the WebView shipped with Android, as used by Telegram
- *    Mini Apps) an `IntersectionObserver` whose `root` is an element with CSS
- *    containment never recomputes intersections — so the sentinel can sit deep
- *    inside `rootMargin` and the callback never fires, and pagination silently
- *    dies after the first page. We therefore back the observer with a plain
- *    scroll-position check, which is reliable everywhere.
- *
- * 2. Both triggers are edge-triggered via `armed`: we load at most one page per
- *    entry into the bottom zone and only re-arm once the sentinel leaves it.
- *    Without this, jumping straight to the bottom (or a short page that keeps
- *    the sentinel in view) cascades through every page at once instead of
- *    advancing page-by-page.
  */
 export function useInfiniteScroll({
   enabled,
