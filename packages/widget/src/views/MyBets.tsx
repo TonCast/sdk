@@ -16,38 +16,35 @@ function BetRow({ bet }: { bet: Bet }) {
   const thumb = pariCoverUrl(bet.pariImage, "w=128,h=128,fit=cover,format=webp,quality=80");
   const { displaySrc, onImgError } = useReliablePariCoverUrl(thumb);
 
+  // The whole card navigates to the pari detail, so a single button wraps the
+  // entire body (including its padding and gaps) instead of just the thumb and
+  // name — making the full card area clickable.
   return (
     <div className="tc-card">
-      <div className="tc-card-body">
+      <button
+        type="button"
+        className="tc-card-body tc-bet-row-card-btn"
+        onClick={() => navigate({ name: "detail", pariId: bet.pariAddress })}
+      >
         <div className="tc-bet-row">
-          <button
-            type="button"
-            className="tc-bet-row-thumb tc-bet-row-thumb-btn"
-            onClick={() => navigate({ name: "detail", pariId: bet.pariAddress })}
-          >
+          <div className="tc-bet-row-thumb">
             {displaySrc ? (
               <img src={displaySrc} alt="" loading="lazy" onError={onImgError} />
             ) : (
               <div className="tc-bet-row-thumb-placeholder" />
             )}
-          </button>
+          </div>
           <div className="tc-bet-row-body">
             <BetRowBadges bet={bet} />
             {bet.pariName ? (
-              <button
-                type="button"
-                className="tc-bet-row-name tc-bet-row-name-btn"
-                onClick={() => navigate({ name: "detail", pariId: bet.pariAddress })}
-              >
-                {bet.pariName}
-              </button>
+              <div className="tc-bet-row-name">{bet.pariName}</div>
             ) : (
               <div className="tc-bet-row-meta tc-bet-row-meta-mono">{bet.pariAddress}</div>
             )}
             <BetRowBetSummary bet={bet} />
           </div>
         </div>
-      </div>
+      </button>
     </div>
   );
 }
