@@ -140,6 +140,25 @@
 }
 
 /* ===== MY BETS ===== */
+/* Whole-card click target: resets <button> chrome and fills the card body so
+   the entire padded area (not just the thumb/name) navigates to the pari. */
+.tc-bet-row-card-btn {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tc-bet-row-card-btn:hover {
+    background: var(--tc-bg-hover);
+  }
+}
 .tc-bet-row {
   display: flex;
   align-items: center;
