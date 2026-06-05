@@ -23,6 +23,7 @@ describe("@toncast/sdk public API", () => {
       "ToncastUnauthorizedError",
       "ToncastValidationError",
       "ToncastWsError",
+      "betQuoteReasonKey",
       "classifyBetFlowError",
       "createTonClient",
       "formatBetQuoteReason",
