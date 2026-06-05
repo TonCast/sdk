@@ -5,7 +5,7 @@ import type { ConstructorConfig } from "../types";
 import { PLACEHOLDER_DOMAIN } from "../utils/buildWidgetConfig";
 import { copyTextToClipboard } from "../utils/copyTextToClipboard";
 import { downloadZip } from "../utils/generateZip";
-import { buildManifestJson } from "../utils/manifest";
+import { buildManifestJson, safeHttpUrl } from "../utils/manifest";
 import { buildJsSnippet, buildReactSnippet } from "../utils/snippets";
 
 function CopyButton({ text }: { text: string }) {
@@ -121,7 +121,10 @@ export function ExportTab({ config }: { config: ConstructorConfig }) {
         {iconUrlMissing && !domainError && (
           <p className="mb-3 rounded-md bg-amber-900/20 border border-amber-700/40 px-3 py-2 text-[11px] text-amber-400/90 leading-snug text-left">
             <strong>Wallet icon:</strong> No App icon URL set — manifest will reference{" "}
-            <code className="text-amber-300/80">{config.domain}/icon-192.png</code>. Upload a square
+            <code className="text-amber-300/80">
+              {safeHttpUrl(config.domain) ?? PLACEHOLDER_DOMAIN}/icon-192.png
+            </code>
+            . Upload a square
             PNG (&ge;180&times;180 px) to that path after deploy, or set the{" "}
             <strong>App icon URL</strong> in the Config tab.
           </p>
