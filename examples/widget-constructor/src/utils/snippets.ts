@@ -123,12 +123,17 @@ export function buildIndexHtml(config: ConstructorConfig): string {
   <body>
     <div id="toncast-widget"></div>
 
-    <script src="${TELEGRAM_WEB_APP_SCRIPT_URL}"></script>
-    <script src="${WIDGET_CDN_JS_URL}"></script>
+    <!-- defer: both bundles download in parallel and never block page rendering.
+         Deferred scripts execute in order before DOMContentLoaded, so the init
+         below always sees window.Telegram and window.ToncastWidget ready. -->
+    <script src="${TELEGRAM_WEB_APP_SCRIPT_URL}" defer></script>
+    <script src="${WIDGET_CDN_JS_URL}" defer></script>
     <script>
-      ${buildTelegramHostInitScript()}
-      const widget = new window.ToncastWidget.ToncastWidget(${stringifyForScript(widgetConfig, 6).replace(/^/gm, "      ").trimStart()});
-      widget.mount(document.getElementById('toncast-widget'));
+      window.addEventListener('DOMContentLoaded', function () {
+        ${buildTelegramHostInitScript()}
+        const widget = new window.ToncastWidget.ToncastWidget(${stringifyForScript(widgetConfig, 8).replace(/^/gm, "        ").trimStart()});
+        widget.mount(document.getElementById('toncast-widget'));
+      });
     </script>
   </body>
 </html>
@@ -142,10 +147,15 @@ export function buildJsSnippet(config: ConstructorConfig): string {
   return `<!-- Telegram Mini App: load ${TELEGRAM_WEB_APP_SCRIPT_URL} and run initToncastTelegramHost() from telegramMiniAppHost.ts before mount. -->
 <div id="toncast-widget"></div>
 
-<script src="${WIDGET_CDN_JS_URL}"></script>
+<!-- defer: the bundle downloads in parallel and never blocks the rest of your page. -->
+<script src="${WIDGET_CDN_JS_URL}" defer></script>
 <script>
-  const widget = new window.ToncastWidget.ToncastWidget(${stringifyForScript(widgetConfig, 4).replace(/\n/g, "\n  ")});
-  widget.mount(document.getElementById('toncast-widget'));
+  // Runs after the deferred bundle above has executed (DOMContentLoaded fires
+  // after all defer scripts), so window.ToncastWidget is guaranteed to be ready.
+  window.addEventListener('DOMContentLoaded', function () {
+    const widget = new window.ToncastWidget.ToncastWidget(${stringifyForScript(widgetConfig, 4).replace(/\n/g, "\n    ")});
+    widget.mount(document.getElementById('toncast-widget'));
+  });
 </script>`;
 }
 

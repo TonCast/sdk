@@ -44,6 +44,25 @@ describe("widget export snippets", () => {
     expect(snippet).not.toContain("data-toncast-widget-css");
   });
 
+  it("loads bundles with defer so page rendering is never blocked", () => {
+    const c = config({});
+
+    // Full HTML page: both external scripts must be deferred (non-blocking).
+    const html = buildIndexHtml(c);
+    expect(html).toContain('src="https://widget.toncast.me/v0/index.iife.js" defer');
+    expect(html).toContain('src="https://telegram.org/js/telegram-web-app.js" defer');
+    // No plain (parser-blocking) external bundle tag.
+    expect(html).not.toContain('src="https://widget.toncast.me/v0/index.iife.js"></script>');
+    // Init is gated on DOMContentLoaded so the deferred bundle is ready.
+    expect(html).toContain("DOMContentLoaded");
+
+    // Paste-in JS snippet: deferred bundle + DOMContentLoaded-gated mount.
+    const snippet = buildJsSnippet(c);
+    expect(snippet).toContain('src="https://widget.toncast.me/v0/index.iife.js" defer');
+    expect(snippet).not.toContain('src="https://widget.toncast.me/v0/index.iife.js"></script>');
+    expect(snippet).toContain("DOMContentLoaded");
+  });
+
   it("emits standalone Toncast API baseUrl when configured", () => {
     const c = config({ apiBaseUrl: "https://api.staging.toncast.test" });
 

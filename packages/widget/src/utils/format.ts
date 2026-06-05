@@ -1,4 +1,21 @@
-import { fromNano } from "@ton/core";
+import { Address, fromNano } from "@ton/core";
+
+/**
+ * Normalises a TON address to its user-friendly, non-bounceable form (`UQ…`).
+ *
+ * TonConnect exposes `account.address` in **raw** form (`0:<hex>`); this converts
+ * it to the wallet-display convention. Accepts raw *or* already-friendly input
+ * (idempotent) and returns the original string unchanged if it cannot be parsed
+ * (e.g. empty / not yet connected).
+ */
+export function toFriendlyAddress(addr: string): string {
+  if (!addr) return addr;
+  try {
+    return Address.parse(addr).toString({ urlSafe: true, bounceable: false });
+  } catch {
+    return addr;
+  }
+}
 
 /** Thrown when a string like `35.572` cannot be parsed safely for the locale. */
 export class AmbiguousLocalizedDecimalError extends Error {
