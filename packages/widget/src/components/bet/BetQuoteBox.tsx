@@ -1,6 +1,7 @@
-import { classifyBetFlowError, formatBetQuoteReason } from "@toncast/sdk";
+import { betQuoteReasonKey, classifyBetFlowError } from "@toncast/sdk";
 import type { useBet } from "@toncast/sdk-react";
 import { useI18n } from "../../i18n/I18nProvider";
+import type { TranslationKey } from "../../i18n/translations";
 import { useT } from "../../i18n/useT";
 import { Skeleton } from "../ui/Skeleton";
 import { resolveBetQuoteErrorTranslationKey } from "./resolveBetQuoteErrorTranslationKey";
@@ -36,7 +37,9 @@ export function BetQuoteBox({ bet, sourceSym }: { bet: Bet; sourceSym: string })
           {bet.quote.reason && (
             <div className="tc-notice tc-notice-warn tc-quote-notice">
               {t("bet.previewOnly", {
-                reason: formatBetQuoteReason(bet.quote.reason, { sourceSymbol: sourceSym }),
+                reason: t(betQuoteReasonKey(bet.quote.reason) as TranslationKey, {
+                  sourceSymbol: sourceSym,
+                }),
               })}
             </div>
           )}
