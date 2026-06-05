@@ -196,7 +196,15 @@ export function App() {
           >
             Reset all
           </button>
-          {tab !== "export" ? (
+          <a
+            href="https://docs.toncast.me/sdk/widget"
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs font-medium px-2 py-1.5 rounded-md border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors shrink-0"
+          >
+            Docs
+          </a>
+          {tab !== "export" && (
             <button
               type="button"
               onClick={() => {
@@ -208,15 +216,6 @@ export function App() {
             >
               Next: {nextTab?.label ?? ""} →
             </button>
-          ) : (
-            <a
-              href="https://docs.toncast.me/sdk/widget"
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs text-slate-500 hover:text-sky-400 transition-colors"
-            >
-              Docs →
-            </a>
           )}
         </div>
       </aside>
