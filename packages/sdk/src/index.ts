@@ -27,7 +27,7 @@ export {
   toTonConnectMessages,
   yesOddsToDecimalOdds,
 } from "./betting";
-export { type BetReasonContext, formatBetQuoteReason } from "./betting/reasons";
+export { type BetReasonContext, betQuoteReasonKey, formatBetQuoteReason } from "./betting/reasons";
 export type {
   Logger,
   ReferralConfig,

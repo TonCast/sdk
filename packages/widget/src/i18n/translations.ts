@@ -52,6 +52,22 @@ const en = {
   "bet.required": "Required",
   "bet.winnings": "Winnings if {side} wins",
   "bet.previewOnly": "Preview — {reason}",
+  "betQuote.reason.insufficient_balance":
+    "Your {sourceSymbol} balance is too low for this bet. Top up the wallet to confirm.",
+  "betQuote.reason.insufficient_ton_for_gas":
+    "Not enough TON in the wallet to cover swap gas. Add a bit of TON to confirm.",
+  "betQuote.reason.slippage_exceeds_limit":
+    "Pool price moved past your slippage limit. Try again or raise the slippage.",
+  "betQuote.reason.no_route": "No swap route from {sourceSymbol} to TON right now. Pick another coin.",
+  "betQuote.reason.network_error": "Network hiccup while pricing the route. Try again in a moment.",
+  "betQuote.reason.ton_client_required":
+    "Wallet is missing — connect a TON wallet to use this coin.",
+  "betQuote.reason.source_not_viable":
+    "{sourceSymbol} can't fund this bet (no route or value below swap gas).",
+  "betQuote.reason.source_not_in_priced_coins":
+    "Selected coin missing from the price snapshot. Reopen the modal.",
+  "betQuote.reason.budget_too_small_for_single_entry":
+    "The amount is too small to place even one ticket.",
   "bet.connectPrompt": "Connect your wallet to place a bet.",
   "bet.previewHint":
     "Connect your wallet to place a bet. You can explore odds, modes, and amounts below.",
@@ -198,6 +214,23 @@ const ru = {
   "bet.required": "Необходимо",
   "bet.winnings": "Выигрыш при победе {side}",
   "bet.previewOnly": "Предпросмотр — {reason}",
+  "betQuote.reason.insufficient_balance":
+    "Баланс {sourceSymbol} слишком мал для этой ставки. Пополните кошелёк, чтобы подтвердить.",
+  "betQuote.reason.insufficient_ton_for_gas":
+    "Недостаточно TON в кошельке для оплаты газа свопа. Добавьте немного TON, чтобы подтвердить.",
+  "betQuote.reason.slippage_exceeds_limit":
+    "Цена в пуле вышла за ваш лимит проскальзывания. Повторите или увеличьте проскальзывание.",
+  "betQuote.reason.no_route":
+    "Сейчас нет маршрута свопа из {sourceSymbol} в TON. Выберите другую монету.",
+  "betQuote.reason.network_error": "Сбой сети при расчёте маршрута. Повторите через момент.",
+  "betQuote.reason.ton_client_required":
+    "Кошелёк не подключён — подключите TON-кошелёк, чтобы использовать эту монету.",
+  "betQuote.reason.source_not_viable":
+    "{sourceSymbol} не может оплатить эту ставку (нет маршрута или сумма ниже газа свопа).",
+  "betQuote.reason.source_not_in_priced_coins":
+    "Выбранной монеты нет в снимке цен. Откройте окно заново.",
+  "betQuote.reason.budget_too_small_for_single_entry":
+    "Сумма слишком мала, чтобы поставить хотя бы один билет.",
   "bet.connectPrompt": "Подключите кошелёк для ставки.",
   "bet.previewHint":
     "Подключите кошелёк, чтобы сделать ставку. Ниже можно посмотреть коэффициенты, режимы и сумму.",
@@ -339,6 +372,22 @@ const hi = {
   "bet.required": "आवश्यक",
   "bet.winnings": "यदि {side} जीते तो जीत",
   "bet.previewOnly": "पूर्वावलोकन — {reason}",
+  "betQuote.reason.insufficient_balance":
+    "इस दांव के लिए आपका {sourceSymbol} बैलेंस बहुत कम है। पुष्टि करने के लिए वॉलेट में टॉप-अप करें।",
+  "betQuote.reason.insufficient_ton_for_gas":
+    "स्वैप गैस के लिए वॉलेट में पर्याप्त TON नहीं है। पुष्टि के लिए थोड़ा TON जोड़ें।",
+  "betQuote.reason.slippage_exceeds_limit":
+    "पूल की कीमत आपकी स्लिपेज सीमा से आगे निकल गई। फिर से कोशिश करें या स्लिपेज बढ़ाएँ।",
+  "betQuote.reason.no_route": "अभी {sourceSymbol} से TON का कोई स्वैप रूट नहीं है। कोई और सिक्का चुनें।",
+  "betQuote.reason.network_error": "रूट की कीमत लगाते समय नेटवर्क समस्या। एक पल बाद फिर कोशिश करें।",
+  "betQuote.reason.ton_client_required":
+    "वॉलेट मौजूद नहीं है — इस सिक्के का उपयोग करने के लिए TON वॉलेट कनेक्ट करें।",
+  "betQuote.reason.source_not_viable":
+    "{sourceSymbol} इस दांव को फंड नहीं कर सकता (कोई रूट नहीं या मूल्य स्वैप गैस से कम)।",
+  "betQuote.reason.source_not_in_priced_coins":
+    "चुना गया सिक्का प्राइस स्नैपशॉट में नहीं है। मोडल फिर से खोलें।",
+  "betQuote.reason.budget_too_small_for_single_entry":
+    "राशि इतनी कम है कि एक भी टिकट नहीं लगाया जा सकता।",
   "bet.connectPrompt": "बाज़ी के लिए वॉलेट कनेक्ट करें।",
   "bet.previewHint": "बाज़ी लगाने के लिए वॉलेट कनेक्ट करें। नीचे ऑड्स, मोड और राशि देख सकते हैं।",
   "bet.quoteWillAppear": "राशि दर्ज करने के बाद कोट दिखेगा।",
@@ -459,6 +508,24 @@ const es = {
   "bet.required": "Requerido",
   "bet.winnings": "Ganancias si gana {side}",
   "bet.previewOnly": "Vista previa — {reason}",
+  "betQuote.reason.insufficient_balance":
+    "Tu saldo de {sourceSymbol} es demasiado bajo para esta apuesta. Recarga la cartera para confirmar.",
+  "betQuote.reason.insufficient_ton_for_gas":
+    "No hay suficiente TON en la cartera para cubrir el gas del swap. Añade un poco de TON para confirmar.",
+  "betQuote.reason.slippage_exceeds_limit":
+    "El precio del pool superó tu límite de slippage. Inténtalo de nuevo o aumenta el slippage.",
+  "betQuote.reason.no_route":
+    "Ahora no hay ruta de swap de {sourceSymbol} a TON. Elige otra moneda.",
+  "betQuote.reason.network_error":
+    "Problema de red al calcular la ruta. Inténtalo de nuevo en un momento.",
+  "betQuote.reason.ton_client_required":
+    "Falta la cartera — conecta una cartera TON para usar esta moneda.",
+  "betQuote.reason.source_not_viable":
+    "{sourceSymbol} no puede financiar esta apuesta (sin ruta o valor inferior al gas del swap).",
+  "betQuote.reason.source_not_in_priced_coins":
+    "La moneda seleccionada no está en la instantánea de precios. Vuelve a abrir la ventana.",
+  "betQuote.reason.budget_too_small_for_single_entry":
+    "El importe es demasiado pequeño para colocar siquiera un boleto.",
   "bet.connectPrompt": "Conecta tu cartera para apostar.",
   "bet.previewHint":
     "Conecta tu cartera para apostar. Puedes explorar cuotas, modos e importes abajo.",
@@ -592,6 +659,17 @@ const zh = {
   "bet.required": "需要",
   "bet.winnings": "若 {side} 胜出可赢得",
   "bet.previewOnly": "预览 — {reason}",
+  "betQuote.reason.insufficient_balance":
+    "您的 {sourceSymbol} 余额不足以进行此投注。请为钱包充值后确认。",
+  "betQuote.reason.insufficient_ton_for_gas": "钱包中的 TON 不足以支付兑换 gas。请添加少量 TON 后确认。",
+  "betQuote.reason.slippage_exceeds_limit": "矿池价格已超出您的滑点上限。请重试或提高滑点。",
+  "betQuote.reason.no_route": "目前没有从 {sourceSymbol} 到 TON 的兑换路径。请选择其他币种。",
+  "betQuote.reason.network_error": "计算路径时网络出现波动。请稍后重试。",
+  "betQuote.reason.ton_client_required": "缺少钱包 — 请连接 TON 钱包以使用此币种。",
+  "betQuote.reason.source_not_viable":
+    "{sourceSymbol} 无法为此投注提供资金（无路径或金额低于兑换 gas）。",
+  "betQuote.reason.source_not_in_priced_coins": "所选币种不在价格快照中。请重新打开弹窗。",
+  "betQuote.reason.budget_too_small_for_single_entry": "金额太小，连一张票都无法下注。",
   "bet.connectPrompt": "连接钱包以投注。",
   "bet.previewHint": "连接钱包后可下注。下方可预览赔率、模式和金额。",
   "bet.quoteWillAppear": "输入金额后将显示报价。",
@@ -712,6 +790,24 @@ const fr = {
   "bet.required": "Requis",
   "bet.winnings": "Gains si {side} gagne",
   "bet.previewOnly": "Aperçu — {reason}",
+  "betQuote.reason.insufficient_balance":
+    "Votre solde {sourceSymbol} est trop faible pour ce pari. Rechargez le portefeuille pour confirmer.",
+  "betQuote.reason.insufficient_ton_for_gas":
+    "Pas assez de TON dans le portefeuille pour couvrir les frais de swap. Ajoutez un peu de TON pour confirmer.",
+  "betQuote.reason.slippage_exceeds_limit":
+    "Le prix du pool a dépassé votre limite de slippage. Réessayez ou augmentez le slippage.",
+  "betQuote.reason.no_route":
+    "Aucune route de swap de {sourceSymbol} vers TON pour le moment. Choisissez une autre pièce.",
+  "betQuote.reason.network_error":
+    "Problème réseau lors du calcul de la route. Réessayez dans un instant.",
+  "betQuote.reason.ton_client_required":
+    "Portefeuille manquant — connectez un portefeuille TON pour utiliser cette pièce.",
+  "betQuote.reason.source_not_viable":
+    "{sourceSymbol} ne peut pas financer ce pari (pas de route ou valeur inférieure aux frais de swap).",
+  "betQuote.reason.source_not_in_priced_coins":
+    "La pièce sélectionnée est absente de l'instantané des prix. Rouvrez la fenêtre.",
+  "betQuote.reason.budget_too_small_for_single_entry":
+    "Le montant est trop faible pour placer ne serait-ce qu'un ticket.",
   "bet.connectPrompt": "Connectez votre portefeuille pour parier.",
   "bet.previewHint":
     "Connectez votre portefeuille pour parier. Explorez les cotes, modes et montants ci-dessous.",
@@ -845,6 +941,24 @@ const de = {
   "bet.required": "Erforderlich",
   "bet.winnings": "Gewinn bei Sieg von {side}",
   "bet.previewOnly": "Vorschau — {reason}",
+  "betQuote.reason.insufficient_balance":
+    "Dein {sourceSymbol}-Guthaben ist zu niedrig für diese Wette. Lade die Wallet auf, um zu bestätigen.",
+  "betQuote.reason.insufficient_ton_for_gas":
+    "Nicht genug TON in der Wallet für die Swap-Gebühren. Füge etwas TON hinzu, um zu bestätigen.",
+  "betQuote.reason.slippage_exceeds_limit":
+    "Der Pool-Preis hat dein Slippage-Limit überschritten. Versuche es erneut oder erhöhe das Slippage.",
+  "betQuote.reason.no_route":
+    "Derzeit keine Swap-Route von {sourceSymbol} zu TON. Wähle eine andere Münze.",
+  "betQuote.reason.network_error":
+    "Netzwerkproblem bei der Routenberechnung. Versuche es gleich noch einmal.",
+  "betQuote.reason.ton_client_required":
+    "Wallet fehlt — verbinde eine TON-Wallet, um diese Münze zu nutzen.",
+  "betQuote.reason.source_not_viable":
+    "{sourceSymbol} kann diese Wette nicht finanzieren (keine Route oder Wert unter den Swap-Gebühren).",
+  "betQuote.reason.source_not_in_priced_coins":
+    "Die gewählte Münze fehlt im Preis-Snapshot. Öffne das Fenster erneut.",
+  "betQuote.reason.budget_too_small_for_single_entry":
+    "Der Betrag ist zu klein, um auch nur ein Ticket zu platzieren.",
   "bet.connectPrompt": "Wallet verbinden, um zu wetten.",
   "bet.previewHint":
     "Wallet verbinden, um zu wetten. Unten können Sie Quoten, Modi und Beträge ausprobieren.",
@@ -978,6 +1092,24 @@ const pt = {
   "bet.required": "Obrigatório",
   "bet.winnings": "Ganhos se {side} vencer",
   "bet.previewOnly": "Pré-visualização — {reason}",
+  "betQuote.reason.insufficient_balance":
+    "Seu saldo de {sourceSymbol} é baixo demais para esta aposta. Recarregue a carteira para confirmar.",
+  "betQuote.reason.insufficient_ton_for_gas":
+    "Não há TON suficiente na carteira para cobrir o gas do swap. Adicione um pouco de TON para confirmar.",
+  "betQuote.reason.slippage_exceeds_limit":
+    "O preço do pool ultrapassou seu limite de slippage. Tente novamente ou aumente o slippage.",
+  "betQuote.reason.no_route":
+    "Não há rota de swap de {sourceSymbol} para TON agora. Escolha outra moeda.",
+  "betQuote.reason.network_error":
+    "Instabilidade de rede ao calcular a rota. Tente novamente em instantes.",
+  "betQuote.reason.ton_client_required":
+    "Carteira ausente — conecte uma carteira TON para usar esta moeda.",
+  "betQuote.reason.source_not_viable":
+    "{sourceSymbol} não pode financiar esta aposta (sem rota ou valor abaixo do gas do swap).",
+  "betQuote.reason.source_not_in_priced_coins":
+    "A moeda selecionada não está na instantânea de preços. Reabra a janela.",
+  "betQuote.reason.budget_too_small_for_single_entry":
+    "O valor é pequeno demais para colocar sequer um bilhete.",
   "bet.connectPrompt": "Conecte sua carteira para apostar.",
   "bet.previewHint": "Conecte sua carteira para apostar. Explore odds, modos e valores abaixo.",
   "bet.quoteWillAppear": "A cotação aparece após informar o valor.",
@@ -1106,6 +1238,23 @@ const fa = {
   "bet.required": "لازم",
   "bet.winnings": "برد در صورت پیروزی {side}",
   "bet.previewOnly": "پیش‌نمایش — {reason}",
+  "betQuote.reason.insufficient_balance":
+    "موجودی {sourceSymbol} شما برای این شرط خیلی کم است. برای تأیید، کیف پول را شارژ کنید.",
+  "betQuote.reason.insufficient_ton_for_gas":
+    "TON کافی برای پرداخت کارمزد سواپ در کیف پول نیست. برای تأیید کمی TON اضافه کنید.",
+  "betQuote.reason.slippage_exceeds_limit":
+    "قیمت استخر از حد لغزش شما عبور کرد. دوباره تلاش کنید یا حد لغزش را افزایش دهید.",
+  "betQuote.reason.no_route":
+    "در حال حاضر مسیری برای سواپ از {sourceSymbol} به TON وجود ندارد. سکهٔ دیگری انتخاب کنید.",
+  "betQuote.reason.network_error": "اختلال شبکه هنگام محاسبهٔ مسیر. لحظه‌ای بعد دوباره تلاش کنید.",
+  "betQuote.reason.ton_client_required":
+    "کیف پول موجود نیست — برای استفاده از این سکه یک کیف پول TON متصل کنید.",
+  "betQuote.reason.source_not_viable":
+    "{sourceSymbol} نمی‌تواند این شرط را تأمین کند (بدون مسیر یا ارزش کمتر از کارمزد سواپ).",
+  "betQuote.reason.source_not_in_priced_coins":
+    "سکهٔ انتخاب‌شده در عکس فوری قیمت‌ها نیست. پنجره را دوباره باز کنید.",
+  "betQuote.reason.budget_too_small_for_single_entry":
+    "مبلغ آن‌قدر کم است که حتی یک بلیط هم نمی‌توان ثبت کرد.",
   "bet.connectPrompt": "برای شرط، کیف را وصل کنید.",
   "bet.previewHint":
     "برای ثبت شرط کیف را وصل کنید. می‌توانید ضرایب، حالت‌ها و مبلغ را در پایین امتحان کنید.",
@@ -1229,6 +1378,22 @@ const ar = {
   "bet.required": "مطلوب",
   "bet.winnings": "الأرباح إذا فاز {side}",
   "bet.previewOnly": "معاينة — {reason}",
+  "betQuote.reason.insufficient_balance":
+    "رصيد {sourceSymbol} لديك منخفض جدًا لهذا الرهان. اشحن المحفظة للتأكيد.",
+  "betQuote.reason.insufficient_ton_for_gas":
+    "لا يوجد TON كافٍ في المحفظة لتغطية رسوم المبادلة. أضف بعض TON للتأكيد.",
+  "betQuote.reason.slippage_exceeds_limit":
+    "تجاوز سعر التجمّع حد الانزلاق لديك. أعد المحاولة أو ارفع حد الانزلاق.",
+  "betQuote.reason.no_route": "لا يوجد مسار مبادلة من {sourceSymbol} إلى TON الآن. اختر عملة أخرى.",
+  "betQuote.reason.network_error": "تعذّر الاتصال بالشبكة أثناء تسعير المسار. أعد المحاولة بعد لحظات.",
+  "betQuote.reason.ton_client_required":
+    "المحفظة غير موجودة — صِل محفظة TON لاستخدام هذه العملة.",
+  "betQuote.reason.source_not_viable":
+    "لا يمكن لـ {sourceSymbol} تمويل هذا الرهان (لا مسار أو القيمة أقل من رسوم المبادلة).",
+  "betQuote.reason.source_not_in_priced_coins":
+    "العملة المختارة غير موجودة في لقطة الأسعار. أعد فتح النافذة.",
+  "betQuote.reason.budget_too_small_for_single_entry":
+    "المبلغ صغير جدًا لوضع تذكرة واحدة حتى.",
   "bet.connectPrompt": "صِل محفظتك لوضع رهان.",
   "bet.previewHint": "صِل محفظتك لوضع رهان. يمكنك استكشاف الاحتمالات والأوضاع والمبالغ أدناه.",
   "bet.quoteWillAppear": "يظهر السعر بعد إدخال المبلغ.",
