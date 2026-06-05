@@ -21,6 +21,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { toFriendlyAddress } from "../utils/format";
 import { tryTonConnectManifestUrl } from "./domain";
 import { tonConnectThemeFromWidget } from "./tonconnectTheme";
 
@@ -71,7 +72,8 @@ function TonConnectThemeSync({ theme }: { theme: Theme }) {
 
 function StandaloneBridge({ children }: { children: ReactNode }) {
   const [tc] = useTonConnectUI();
-  const address = useTonAddress();
+  const rawAddress = useTonAddress();
+  const address = useMemo(() => toFriendlyAddress(rawAddress), [rawAddress]);
   const restored = useIsConnectionRestored();
 
   const connect = useCallback(() => void tc.openModal(), [tc]);
@@ -139,15 +141,15 @@ export function IntegratedProvider({
   widgetTheme?: "light" | "dark" | "system";
   children: ReactNode;
 }) {
-  const [address, setAddress] = useState(() => instance.account?.address ?? "");
+  const [address, setAddress] = useState(() => toFriendlyAddress(instance.account?.address ?? ""));
   const [restored, setRestored] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     // Re-sync in case the wallet connected/restored between initial render and this effect.
-    setAddress(instance.account?.address ?? "");
+    setAddress(toFriendlyAddress(instance.account?.address ?? ""));
     const unsubscribe = instance.onStatusChange((wallet) => {
-      setAddress(wallet?.account?.address ?? "");
+      setAddress(toFriendlyAddress(wallet?.account?.address ?? ""));
     });
     // Wait for TonConnectUI's own restoration promise so the bet form is
     // only unlocked after the wallet session is truly ready (not just
