@@ -124,8 +124,7 @@ export function ExportTab({ config }: { config: ConstructorConfig }) {
             <code className="text-amber-300/80">
               {safeHttpUrl(config.domain) ?? PLACEHOLDER_DOMAIN}/icon-192.png
             </code>
-            . Upload a square
-            PNG (&ge;180&times;180 px) to that path after deploy, or set the{" "}
+            . Upload a square PNG (&ge;180&times;180 px) to that path after deploy, or set the{" "}
             <strong>App icon URL</strong> in the Config tab.
           </p>
         )}

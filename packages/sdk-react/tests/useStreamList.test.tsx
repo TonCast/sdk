@@ -111,7 +111,7 @@ describe("useStreamList", () => {
     const { result, rerender } = renderHook(
       ({ feed }: { feed: "active" | "finished" }) =>
         useStreamList({ feed }, { keepPreviousData: false }),
-      { initialProps: { feed: "active" as const } },
+      { initialProps: { feed: "active" as "active" | "finished" } },
     );
 
     await act(async () => fakeStream.emit([pari("A1")], true));
@@ -128,7 +128,7 @@ describe("useStreamList", () => {
   it("keeps previous data when keepPreviousData is true (default)", async () => {
     const { result, rerender } = renderHook(
       ({ feed }: { feed: "active" | "finished" }) => useStreamList({ feed }),
-      { initialProps: { feed: "active" as const } },
+      { initialProps: { feed: "active" as "active" | "finished" } },
     );
 
     await act(async () => fakeStream.emit([pari("A1")], true));

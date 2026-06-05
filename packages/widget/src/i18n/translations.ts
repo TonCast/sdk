@@ -58,7 +58,8 @@ const en = {
     "Not enough TON in the wallet to cover swap gas. Add a bit of TON to confirm.",
   "betQuote.reason.slippage_exceeds_limit":
     "Pool price moved past your slippage limit. Try again or raise the slippage.",
-  "betQuote.reason.no_route": "No swap route from {sourceSymbol} to TON right now. Pick another coin.",
+  "betQuote.reason.no_route":
+    "No swap route from {sourceSymbol} to TON right now. Pick another coin.",
   "betQuote.reason.network_error": "Network hiccup while pricing the route. Try again in a moment.",
   "betQuote.reason.ton_client_required":
     "Wallet is missing — connect a TON wallet to use this coin.",
@@ -661,7 +662,8 @@ const zh = {
   "bet.previewOnly": "预览 — {reason}",
   "betQuote.reason.insufficient_balance":
     "您的 {sourceSymbol} 余额不足以进行此投注。请为钱包充值后确认。",
-  "betQuote.reason.insufficient_ton_for_gas": "钱包中的 TON 不足以支付兑换 gas。请添加少量 TON 后确认。",
+  "betQuote.reason.insufficient_ton_for_gas":
+    "钱包中的 TON 不足以支付兑换 gas。请添加少量 TON 后确认。",
   "betQuote.reason.slippage_exceeds_limit": "矿池价格已超出您的滑点上限。请重试或提高滑点。",
   "betQuote.reason.no_route": "目前没有从 {sourceSymbol} 到 TON 的兑换路径。请选择其他币种。",
   "betQuote.reason.network_error": "计算路径时网络出现波动。请稍后重试。",
@@ -1385,15 +1387,14 @@ const ar = {
   "betQuote.reason.slippage_exceeds_limit":
     "تجاوز سعر التجمّع حد الانزلاق لديك. أعد المحاولة أو ارفع حد الانزلاق.",
   "betQuote.reason.no_route": "لا يوجد مسار مبادلة من {sourceSymbol} إلى TON الآن. اختر عملة أخرى.",
-  "betQuote.reason.network_error": "تعذّر الاتصال بالشبكة أثناء تسعير المسار. أعد المحاولة بعد لحظات.",
-  "betQuote.reason.ton_client_required":
-    "المحفظة غير موجودة — صِل محفظة TON لاستخدام هذه العملة.",
+  "betQuote.reason.network_error":
+    "تعذّر الاتصال بالشبكة أثناء تسعير المسار. أعد المحاولة بعد لحظات.",
+  "betQuote.reason.ton_client_required": "المحفظة غير موجودة — صِل محفظة TON لاستخدام هذه العملة.",
   "betQuote.reason.source_not_viable":
     "لا يمكن لـ {sourceSymbol} تمويل هذا الرهان (لا مسار أو القيمة أقل من رسوم المبادلة).",
   "betQuote.reason.source_not_in_priced_coins":
     "العملة المختارة غير موجودة في لقطة الأسعار. أعد فتح النافذة.",
-  "betQuote.reason.budget_too_small_for_single_entry":
-    "المبلغ صغير جدًا لوضع تذكرة واحدة حتى.",
+  "betQuote.reason.budget_too_small_for_single_entry": "المبلغ صغير جدًا لوضع تذكرة واحدة حتى.",
   "bet.connectPrompt": "صِل محفظتك لوضع رهان.",
   "bet.previewHint": "صِل محفظتك لوضع رهان. يمكنك استكشاف الاحتمالات والأوضاع والمبالغ أدناه.",
   "bet.quoteWillAppear": "يظهر السعر بعد إدخال المبلغ.",

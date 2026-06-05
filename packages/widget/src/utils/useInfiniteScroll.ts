@@ -39,8 +39,7 @@ export function useInfiniteScroll({
     if (!(root instanceof HTMLElement)) return;
 
     const marginPx = Number.parseInt(rootMargin, 10) || 0;
-    const inBottomZone = () =>
-      root.scrollHeight - root.scrollTop - root.clientHeight <= marginPx;
+    const inBottomZone = () => root.scrollHeight - root.scrollTop - root.clientHeight <= marginPx;
 
     // Edge-trigger: one load per entry into the bottom zone.
     let armed = true;

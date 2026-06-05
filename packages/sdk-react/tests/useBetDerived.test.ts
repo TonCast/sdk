@@ -75,6 +75,7 @@ describe("useBet derived helpers", () => {
       yesOdds: 50,
       isYes: true,
       isBookEmpty: false,
+      oddsState: undefined,
       bookAffordableTickets: 42,
     });
 

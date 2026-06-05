@@ -126,7 +126,10 @@ export function BetAmountInput({ bet, sourceSym, sourceDecimals }: Props) {
         <span>
           {t("bet.maxOf", {
             current: formatIntegerCount(bet.effectiveTickets, lang),
-            max: formatIntegerCount(bet.maxTickets > 0 ? bet.maxTickets : bet.sliderMaxTickets, lang),
+            max: formatIntegerCount(
+              bet.maxTickets > 0 ? bet.maxTickets : bet.sliderMaxTickets,
+              lang,
+            ),
           })}
         </span>
       </div>
